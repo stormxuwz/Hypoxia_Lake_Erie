@@ -1,11 +1,9 @@
-
 findMinimumPeak <- function(series){
     # Automatically find the minimum value of a series
     backward <- diff(series)
     n <- length(backward)
     
     switches <- backward[1:n-1]*backward[2:n]
-    
     minimumPoints <- which(switches<0)
     
     for(i in minimumPoints){

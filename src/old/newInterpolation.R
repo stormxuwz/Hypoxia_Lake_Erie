@@ -58,17 +58,4 @@ idwInterpolation <- function(DO_data, loggerInfo, grid, folder="./"){
 }
 
 
-createGrid <- function(loggerInfo){
-	require("dismo")
-
-	longitudeRange <- range(loggerInfo$longitude)
-	latitudeRange <- range(loggerInfo$latitude)
-	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by=0.01),latitude=seq(latitudeRange[1],latitudeRange[2],by=0.02))
-
-	convexHullModel<-convHull(loggerInfo[,c("longitude","latitude")])
-	convexIndex <- predict(convexHullModel,grid)
-	grid <- subset(grid,convexIndex==1)
-	return(grid)
-}
-
 interpolation(2015,area="whole")

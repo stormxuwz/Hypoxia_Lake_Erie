@@ -1,0 +1,1222 @@
+{
+	"auto_complete":
+	{
+		"selected_items":
+		[
+			[
+				"Sebi",
+				"Seabird_cutoff"
+			],
+			[
+				"trans",
+				"transmatrix"
+			],
+			[
+				"seab",
+				"seabirdAnchorIndex"
+			],
+			[
+				"Manitowoc",
+				"Manitowoc_01.csv"
+			],
+			[
+				"Seabird",
+				"Seabird_depth"
+			],
+			[
+				"seabr",
+				"seabirdIndex"
+			],
+			[
+				"timeS",
+				"timePassSecond"
+			],
+			[
+				"strip",
+				"strptime	{base}"
+			],
+			[
+				"end",
+				"end{document}	Triaxus.tex"
+			],
+			[
+				"colorBar",
+				"colorBarColor"
+			],
+			[
+				"previous",
+				"previousGeoData"
+			],
+			[
+				"Lon",
+				"longitude"
+			],
+			[
+				"Fa",
+				"FALSE"
+			],
+			[
+				"allVa",
+				"allVals"
+			],
+			[
+				"base",
+				"basename	{base}"
+			],
+			[
+				"outelr",
+				"outlierIndex"
+			],
+			[
+				"outlier",
+				"outlierIndex"
+			],
+			[
+				"v_90",
+				"v_90_model_sph"
+			],
+			[
+				"trend",
+				"trendSurface"
+			],
+			[
+				"detrending",
+				"detrending_result"
+			],
+			[
+				"dateR",
+				"dateRangeVariogram"
+			],
+			[
+				"comapr",
+				"comparison_notDetected"
+			],
+			[
+				"group",
+				"group_by	{dplyr}"
+			],
+			[
+				"compari",
+				"comparison"
+			],
+			[
+				"comparis",
+				"comparison_2"
+			],
+			[
+				"algori",
+				"algorithmDiff"
+			],
+			[
+				"f",
+				"fitness	statement"
+			],
+			[
+				"co",
+				"corr	statement"
+			],
+			[
+				"i",
+				"INFO	statement"
+			],
+			[
+				"stab",
+				"stable_gradient"
+			],
+			[
+				"rightS",
+				"rightShape_corr	statement"
+			],
+			[
+				"leftshap",
+				"leftShape_corr"
+			],
+			[
+				"righ",
+				"rightShape	statement"
+			],
+			[
+				"tsS",
+				"tsSegModelResults	statement"
+			],
+			[
+				"shape_",
+				"shape_height	statement"
+			],
+			[
+				"DCL",
+				"DCL_future	statement"
+			],
+			[
+				"exper",
+				"expert_thermocline"
+			],
+			[
+				"DCL_",
+				"DCL_peak_index	statement"
+			],
+			[
+				"left_",
+				"left_index"
+			],
+			[
+				"tsSeg",
+				"tsSegModelResults	statement"
+			],
+			[
+				"ts",
+				"tsSeg_hyp	statement"
+			],
+			[
+				"hmm",
+				"hmm_hyp	statement"
+			],
+			[
+				"future",
+				"futureFeature	module"
+			],
+			[
+				"feature",
+				"featureExtraction"
+			],
+			[
+				"bo",
+				"bottomUp	class"
+			],
+			[
+				"inter",
+				"interestVarList	param"
+			],
+			[
+				"plot",
+				"plot_all	function"
+			],
+			[
+				"signal",
+				"signalFeature	statement"
+			],
+			[
+				"sign",
+				"signalFeature	statement"
+			],
+			[
+				"windo",
+				"window_fft"
+			],
+			[
+				"hmm_",
+				"hmmModel_2"
+			],
+			[
+				"clear",
+				"clearPopups"
+			],
+			[
+				"logg",
+				"loggerID"
+			],
+			[
+				"bath",
+				"bathymetry"
+			],
+			[
+				"Ve",
+				"Vegas"
+			],
+			[
+				"Las",
+				"LasVegas"
+			],
+			[
+				"hend",
+				"henderson"
+			],
+			[
+				"char",
+				"charlotte_sql"
+			],
+			[
+				"tem",
+				"tempe_sql"
+			],
+			[
+				"bui",
+				"businessSub"
+			],
+			[
+				"change",
+				"changeColor"
+			],
+			[
+				"logger",
+				"loggerInfo"
+			],
+			[
+				"creat",
+				"createGrid"
+			],
+			[
+				"loca",
+				"locationInfo"
+			],
+			[
+				"conve",
+				"convexHullModel"
+			],
+			[
+				"lati",
+				"latitudeRange"
+			],
+			[
+				"longi",
+				"longitudeRange"
+			],
+			[
+				"effec",
+				"effectiveLogger"
+			],
+			[
+				"SQL_en",
+				"SQL_engine_2014"
+			],
+			[
+				"dum",
+				"dumps	function"
+			],
+			[
+				"retu",
+				"returnData"
+			],
+			[
+				"pro",
+				"promise"
+			],
+			[
+				"DO_l",
+				"DO_raw_list"
+			],
+			[
+				"DO_",
+				"DO_raw_list"
+			],
+			[
+				"ind_",
+				"ind_y"
+			],
+			[
+				"ind",
+				"ind_x"
+			],
+			[
+				"bathymet",
+				"bathymetry_raster"
+			],
+			[
+				"Test_nu",
+				"Test_numOfWords"
+			],
+			[
+				"Train_nu",
+				"Train_numOfWords"
+			],
+			[
+				"crea",
+				"createNew"
+			],
+			[
+				"train",
+				"trainLabel"
+			],
+			[
+				"emp",
+				"emptyset	latex-mathsymbols"
+			],
+			[
+				"ci",
+				"cite{keylist}	latex-document"
+			],
+			[
+				"unique",
+				"uniqueIndex"
+			],
+			[
+				"xbgo",
+				"xgboost_predict"
+			],
+			[
+				"c_in",
+				"c_ingredientsDTM"
+			],
+			[
+				"ing",
+				"ingredients"
+			],
+			[
+				"meta",
+				"allMeta"
+			],
+			[
+				"push",
+				"push2SQL"
+			],
+			[
+				"data",
+				"DataFrame"
+			],
+			[
+				"pu",
+				"push2SQL"
+			],
+			[
+				"origin",
+				"originalFile"
+			],
+			[
+				"csv",
+				"csvFolder"
+			],
+			[
+				"seabi",
+				"seabird2SQL"
+			],
+			[
+				"if",
+				"ifmain	if __name__ == '__main__'"
+			],
+			[
+				"cite",
+				"\\citealp"
+			],
+			[
+				"bib",
+				"bibliography{file}	latex-document"
+			],
+			[
+				"bi",
+				"bibliography{file}	latex-document"
+			]
+		]
+	},
+	"buffers":
+	[
+		{
+			"contents": "require(rgdal)\nrequire(raster)\n\nfindBathy <- function(spData){\n	\n	coordinates(spData)=~Long+Lat\n	# spData must be a sp data class\n	bathymetry_raster = raster(\"~/Downloads/erie_lld/erie_lld.asc\")\n	bathymetry <- extract(bathymetry_raster,spData)\n	return(bathymetry)\n}\n\n\nfindIndex <- function(spData){\n	require(ncdf)\n	# library(abline)\n	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",\"e201415100.out1.nc\",sep=\"\"))\n	lat <- c(get.var.ncdf(ncFile,\"lat\"))\n    lon <- c(get.var.ncdf(ncFile,\"lon\"))\n\n    grid <- data.frame(Long=lon,Lat=lat)\n    coordinates(spData)=~Long+Lat\n    coordinates(grid)=~Long+Lat\n    projection(spData)=CRS(\"+init=epsg:4326\")\n    projection(grid)=CRS(\"+init=epsg:4326\")\n    spMatrix <- spDists(spData,grid)\n    return(apply(spMatrix,1,which.min))\n}\n\n\ngetInfoNCFile <- function(index,var=\"2Dwave\"){\n    require(ncdf)\n    library(abind)\n\n    ny <- 87\n    nx <- 193\n\n    ind_y <- ceiling(index/nx)\n    ind_x <- index%%nx\n    ind_x <- ifelse(ind_x==0,nx,ind_x)\n\n    startTime <- strptime(\"2014-6-1 00:00\",\"%Y-%m-%d %H:%M\")\n\n    if(var==\"2Dwave\"){\n        fileNameList <- c(\"e201415100.out1.nc\",\"e201420100.out1.nc\",\"e201425100.out1.nc\")\n        timeSeries <- seq(from=startTime,by=3600*1,length.out=1200*3)\n        myuc <- rep(-1,length.out=1200*3)\n        myvc <- myuc \n        mywvd <- myuc \n        \n        for(i in 1:3){\n        	seriesRange <- ((i-1)*1200+1):((i)*1200)\n\n        	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",fileNameList[i],sep=\"\"))\n	        uc <- get.var.ncdf(ncFile,\"uc\")\n	        vc <- get.var.ncdf(ncFile,\"vc\")\n	        wvd <- get.var.ncdf(ncFile,\"wvd\")\n	 		\n	 		lat <- get.var.ncdf(ncFile,\"lat\")\n        	lon <- get.var.ncdf(ncFile,\"lon\")	\n\n        	cat(lat[ind_x,ind_y],lon[ind_x,ind_y],\"\\n\")\n\n	 		myuc[seriesRange] <- uc[ind_x,ind_y,]\n	 		myvc[seriesRange] <- vc[ind_x,ind_y,]\n	 		mywvd[seriesRange] <- wvd[ind_x,ind_y,]\n\n        	close.ncdf(ncFile)\n        }\n        return(data.frame(time=timeSeries,uc=myuc,vc=myvc,wvd=mywvd))\n    }\n    else if(var==\"Temp\"){\n    	fileNameList <- c(\"e201415100.out3.nc\",\"e201420100.out3.nc\",\"e201425100.out3.nc\")\n    	timeSeries <- seq(from=startTime,by=3600*3,length.out=400*3)\n    	myTemp <- rep(-1,length.out=400*3*20)\n    	myTemp <- matrix(myTemp,400*3,20)\n      	# float d3d[nx,ny,nsigma]  Longname:3D Depth at Nodes Missval:1e+30\"\n\n        for(i in 1:3){\n        	seriesRange <- ((i-1)*400+1):((i)*400)\n\n        	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",fileNameList[i],sep=\"\"))\n        	temp <- get.var.ncdf(ncFile,\"temp\")\n        	d3d <- get.var.ncdf(ncFile,\"d3d\")\n        	bathy <- get.var.ncdf(ncFile,\"depth\")\n        	# float temp[nx,ny,nsigma,time]  Longname:Temperature Missval:-99999\n\n        	myTemp[seriesRange,] <- t(temp[ind_x,ind_y,,])\n        	myd3d <- d3d[ind_x,ind_y,]\n        	mybathy <- bathy[ind_x,ind_y]\n        }\n        myTemp <- as.data.frame(myTemp)\n        # names(myTemp) <- as.character(myd3d)\n        myTemp$time <- timeSeries\n        return(list(myTemp=myTemp,d3d=myd3d,bathy= mybathy))\n    }\n}\n        \nscale2Unit <- function(s){\n	return((s-min(s,na.rm=T))/(max(s,na.rm=T)-min(s,na.rm=T)))\n}     \n\nfind2dWaveData <- function(meta){\n	logger_index_inNCFile <- findIndex(meta)\n\n	waveData <- list()\n	for(i in 1:length(logger_index_inNCFile) ){\n		print(i)\n		loggerName <- paste(\"logger_\",meta$No[i],sep=\"\")\n		waveData[[loggerName]] <- getInfoNCFile(logger_index_inNCFile[i],var=\"2Dwave\")\n	}\n	saveRDS(waveData,\"2DwaveData.rds\")\n}\n\nfind3dTempData <- function(meta){\n	logger_index_inNCFile <- findIndex(meta)\n\n	tempData <- list()\n	for(i in 1:length(logger_index_inNCFile) ){\n		print(i)\n		loggerName <- paste(\"logger_\",meta$No[i],sep=\"\")\n		tempData[[loggerName]] <- getInfoNCFile(logger_index_inNCFile[i],var=\"Temp\")\n	}\n\n	saveRDS(tempData,\"3DtempData.rds\")\n	return(tempData)\n}\n\nplot_wave_DO <- function(meta_available){\n	for(i in 1:nrow(meta_available)) {\n		loggerName <- paste(\"logger_\",meta_available$No[i],sep=\"\")\n		DO_data <- DO_raw_list[[as.character(meta_available$No[i])]]\n		wave_data <- waveData[[loggerName]]\n\n		p1=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(uc^2+vc^2)),data=wave_data,color=\"red\")\n		p2=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(uc)),data=wave_data,color=\"yellow\")\n		p3=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(vc)),data=wave_data,color=\"green\")\n		p4=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(wvd)),data=wave_data,color=\"blue\")\n\n		png(paste(loggerName,\"wave.png\"),width=800,height=1200)\n		grid.arrange(p1,p2,p3,p4,nrow=4)\n		dev.off()\n	}\n}\n\nft2meter <- function(ft){\n	return(ft/3.2808399)\n}\n\n\nplotMultipleDO <- function(startTime,endTime,loggerList=c(),colorList=c()){\n	p <- ggplot()\n	if(length(loggerList)!=length(colorList)){\n		cat(\"!!\")\n		return()\n	}\n	startTime <- as.POSIXct(startTime,tz=\"EST\")\n	endTime <- as.POSIXct(endTime,tz=\"EST\")\n\n	for(i in 1:length(loggerList)){\n		logger <- loggerList[i]\n		col <- colorList[i]\n		data <- subset(DO_raw_list[[as.character(logger)]],Time>startTime & Time < endTime)\n		p <- p+geom_line(aes(Time,DO),data=data,color=col)+geom_point(aes(Time,DO),data=data,color=col)\n	}\n	return(p)\n}\n\n\nsendtoSQL_loggerData <- function(DO_raw_list){\n	alldf <- data.frame(Time=c(),DO=c(),Temp=c(),logger=c())\n\n	for(i in 1:length(DO_raw_list)){\n		data <- DO_raw_list[[i]]\n		data <- na.omit(data)\n		n <- nrow(data)\n		data <- data[10:(n-10),]\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(names(DO_raw_list)[i])\n\n		if(max(data$Temp,na.rm = T)>50){\n			data$Temp <- (data$Temp - 32) *5/9\n		}\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data[,-1])\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"loggerData\", alldf, overwrite = TRUE,row.names=F)\n}\n\n\nsendtoSQL_waveData <- function(wave){\n	alldf <- data.frame(Time=c(),uc=c(),vc=c(),wvd=c(),logger=c())\n	# wave <- readRDS(\"2DwaveData.rds\")\n\n	for(i in 1:length(wave)){\n		data <- wave[[i]]\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(unlist(strsplit(names(wave)[i],\"_\"))[2])\n		names(data)[1] <- \"Time\"\n\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data)\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"waveData\", alldf, overwrite = TRUE,row.names=F)\n}\n\nsendtoSQL_tempData <- function(tempData){\n	alldf <- data.frame()\n\n	for(i in 1:length(tempData)){\n		data <- tempData[[i]]$myTemp\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(unlist(strsplit(names(tempData)[i],\"_\"))[2])\n		names(data)[21] <- \"Time\"\n\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data)\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"3DtempData\", alldf, overwrite = TRUE,row.names=F)\n}\n\n\n# meta_new <- dbReadTable(conn,\"loggerInfo\")\n# d3dMatrix <- matrix(-1,30,20)\n# for(i in 1:length(tempData)){\n# 	d3dMatrix[i,] <- tempData[[i]]$d3d\n# }\n# colnames(d3dMatrix) <- paste(\"depth\",1:20,sep=\"\")\n# meta_new2 <- cbind(meta_new,d3dMatrix)\n",
+			"file": "src/findBathy.R",
+			"file_size": 7093,
+			"file_write_time": 130998988920000000,
+			"settings":
+			{
+				"buffer_size": 7093,
+				"line_ending": "Unix"
+			}
+		}
+	],
+	"build_system": "",
+	"build_system_choices":
+	[
+		[
+			[
+				[
+					"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+					"Force"
+				]
+			],
+			[
+				"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+					"Force"
+				],
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					"Clean up Files"
+				],
+				[
+					"Packages/User/myLatex.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/LaTeX-Plus/support/LaTex-Plus.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXing/LaTeX (TikZ).sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXing/LaTeX (TikZ).sublime-build",
+					"Clean up Files"
+				]
+			],
+			[
+				"Packages/LaTeXing/LaTeX (TikZ).sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					"Clean up Files"
+				]
+			],
+			[
+				"Packages/LaTeXing/LaTeX.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					"Clean up Files"
+				],
+				[
+					"Packages/LaTeXTools/LaTeX.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/LaTeXing/LaTeX.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					""
+				],
+				[
+					"Packages/LaTeXing/LaTeX.sublime-build",
+					"Clean up Files"
+				],
+				[
+					"Packages/User/myLatex.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/LaTeXing/LaTeX.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		],
+		[
+			[
+				[
+					"Packages/Python/Python.sublime-build",
+					""
+				],
+				[
+					"Packages/Python/Python.sublime-build",
+					"Syntax Check"
+				],
+				[
+					"Packages/SublimeREPL/sublimerepl_build_system_hack.sublime-build",
+					""
+				]
+			],
+			[
+				"Packages/Python/Python.sublime-build",
+				""
+			]
+		]
+	],
+	"build_varint": "",
+	"command_palette":
+	{
+		"height": 392.0,
+		"last_filter": "sync",
+		"selected_items":
+		[
+			[
+				"sync",
+				"LaTeXing: Synchronise Remote Data"
+			],
+			[
+				"latex",
+				"LaTeXing: Version"
+			],
+			[
+				"evernote",
+				"Evernote: Open Evernote Note"
+			],
+			[
+				"Evernote",
+				"Evernote Settings: Reconfigure Authorization"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"synchro",
+				"LaTeXing: Synchronise Remote Data"
+			],
+			[
+				"insta",
+				"Package Control: Install Package"
+			],
+			[
+				"remove",
+				"Package Control: Remove Package"
+			],
+			[
+				"instal",
+				"Package Control: Advanced Install Package"
+			],
+			[
+				"intsall",
+				"Package Control: Install Package"
+			],
+			[
+				"remo",
+				"Package Control: Remove Package"
+			],
+			[
+				"repl r",
+				"SublimeREPL: R"
+			],
+			[
+				"sublim",
+				"SublimeREPL: R"
+			],
+			[
+				"ipyt",
+				"SublimeREPL: Python - IPython"
+			],
+			[
+				"sublime",
+				"SublimeREPL: R"
+			],
+			[
+				"ipy",
+				"SublimeREPL: Python - IPython"
+			],
+			[
+				"sub",
+				"SublimeREPL: Python"
+			],
+			[
+				"r-box",
+				"R-Box: Choose Program"
+			],
+			[
+				"ins",
+				"Package Control: Install Package"
+			],
+			[
+				"R-bo",
+				"R-Box: Choose Program"
+			],
+			[
+				"Package Control: ",
+				"Package Control: Upgrade Package"
+			],
+			[
+				"upda",
+				"Package Control: Upgrade/Overwrite All Packages"
+			],
+			[
+				"Rbo",
+				"R-Box: Choose Program"
+			],
+			[
+				"R",
+				"R-Box: Choose Program"
+			],
+			[
+				"install pack",
+				"Package Control: Install Package"
+			],
+			[
+				"in",
+				"Package Control: Install Package"
+			],
+			[
+				"latexing",
+				"LaTeXing: Check System"
+			],
+			[
+				"install pac",
+				"Package Control: Install Package"
+			],
+			[
+				"latexing sy",
+				"LaTeXing: Synchronise Remote Data"
+			],
+			[
+				"latexing syn",
+				"LaTeXing: Synchronise Remote Data"
+			],
+			[
+				"linstall ",
+				"Package Control: Install Package"
+			]
+		],
+		"width": 593.0
+	},
+	"console":
+	{
+		"height": 160.0,
+		"history":
+		[
+			"import urllib.request,os,hashlib; h = '2915d1851351e5ee549c20394736b442' + '8bc59f460fa1548d1514676163dafc88'; pf = 'Package Control.sublime-package'; ipp = sublime.installed_packages_path(); urllib.request.install_opener( urllib.request.build_opener( urllib.request.ProxyHandler()) ); by = urllib.request.urlopen( 'http://packagecontrol.io/' + pf.replace(' ', '%20')).read(); dh = hashlib.sha256(by).hexdigest(); print('Error validating download (got %s instead of %s), please try manual install' % (dh, h)) if dh != h else open(os.path.join( ipp, pf), 'wb' ).write(by)"
+		]
+	},
+	"distraction_free":
+	{
+		"menu_visible": true,
+		"show_minimap": false,
+		"show_open_files": false,
+		"show_tabs": false,
+		"side_bar_visible": false,
+		"status_bar_visible": false
+	},
+	"file_history":
+	[
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/main.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/varianceAnalysis.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/ui.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/tmp.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/spkrig.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/server.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/R_sql.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/pythonSQL.py",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/findBathy.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/dynamic_time_warping.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/dbconn.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/createGrid.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/chaotic.R",
+		"/Users/WenzhaoXu/Developer/Seabird/SeabirdCode/summary.py",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/main.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/plot.R",
+		"/Users/WenzhaoXu/Developer/Seabird/SeabirdCode/main.py",
+		"/Users/WenzhaoXu/Developer/Seabird/SeabirdCode/seabird/seabirdGUI.py",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/interpolation.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/server.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/src/preprocessing.R",
+		"/Users/WenzhaoXu/Developer/Triaxus/TriaxusCode/Triaxus.sublime-project",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/tmp3.R",
+		"/Users/WenzhaoXu/Developer/Project_IO/DO_LakeErie/Original_backup/EPA stations/(10528846).hobo",
+		"/Users/WenzhaoXu/Developer/Triaxus_Analysis/Triaxus_code/clusterAnalysis.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source_old/Triaxus.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Analysis/Triaxus_code/dataPreparation.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Analysis/Triaxus_code/Main.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/main.R",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Proj_Triaxus/Data/rawCSV/clean_Manitowoc_01.csv",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/Triaxus.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/Triaxus.aux",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/discussion_conclusion.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/methodology.tex [4] <fig/placeholder.jpg",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/caseStudy.txt",
+		"/Users/WenzhaoXu/Downloads/elsarticle_dummy/elsarticle-template-1-num.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/methodology.txt",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/draft.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/introduction.tex",
+		"/Users/WenzhaoXu/Desktop/elsarticle/elsarticle.ins",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/doc/elsdoc.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Triaxus/elsdoc.tex",
+		"/Users/WenzhaoXu/Desktop/elsdoc.tex",
+		"/Users/WenzhaoXu/Downloads/elsarticle/doc/elsdoc.tex",
+		"/Users/WenzhaoXu/Downloads/elsarticle/README",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/Triaxus_class.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/clustering.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/ui.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Analysis/Triaxus_code/PlotFunc.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Analysis/Triaxus_code/Krig_parallel.R",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/NoteTaking/literatureNote/openWeb.sh",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/NoteTaking/Notes & Settings",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Knowledge/R_Python/SampleCode/Rcode_linearclass.R",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Evernote/Evernote.sublime-settings",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/plot.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/clusterAnalysis.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/preprocessing.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/hotspot.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/misc.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/interpolation.R",
+		"/Users/WenzhaoXu/Developer/Triaxus_Shiny/source/config.R",
+		"/Users/WenzhaoXu/Developer/DO_visualization/server.R",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/discussion.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/methodology.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/results.tex",
+		"/Users/WenzhaoXu/Library/Application Support/LaunchBar/Actions/MakeLink.lbaction/Contents/Scripts/default.js",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/NoteTaking/literatureNote/2007_Hanson et al_Assessing the magnitude and significance of deep chlorophyll maxima of the.html",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/NoteTaking/literatureNote/1995_Cui et al_Extension of spatial information, bayesian kriging and updating of prior.html",
+		"/Users/WenzhaoXu/Downloads/GLCFS_Nowcast_Point.csv",
+		"/Users/WenzhaoXu/Desktop/Untitled.ofocus-style",
+		"/Users/WenzhaoXu/Developer/Seabird/analysis/analysis.R",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Research/Prelim/Proposal.tex",
+		"/Users/WenzhaoXu/Library/Mobile Documents/com~apple~CloudDocs/Personal/Activities/Career/Job 2016/resume_2016.tex",
+		"/Users/WenzhaoXu/Developer/Seabird/main.py",
+		"/Users/WenzhaoXu/Developer/Seabird/config/config.json",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/DCL_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/seabird_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/futureFeature/peakDetection.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/futureFeature/timeSeriesSeg.py",
+		"/Users/WenzhaoXu/Developer/Seabird/summary.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/thermocline_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/peak_detection.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/tools/seabird2SQL.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/seabird_thermocline.py",
+		"/Users/WenzhaoXu/Developer/Seabird/test.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird/tools/seabird_preprocessing.py",
+		"/Users/WenzhaoXu/Developer/Seabird/futureFeature/timeSeriesSeg.py",
+		"/Users/WenzhaoXu/Developer/Seabird/__init__.py",
+		"/Users/WenzhaoXu/Developer/Seabird/DCL_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/thermocline_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/tools/misc.py",
+		"/Users/WenzhaoXu/Developer/Seabird/test_ts.py",
+		"/Users/WenzhaoXu/Developer/Seabird/futureFeature/peakDetection.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird_class.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird_thermocline.py",
+		"/Users/WenzhaoXu/Developer/Seabird/test/__init__.py",
+		"/Users/WenzhaoXu/Developer/Seabird/test/test_ts.py",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/Preferences.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Anaconda/Anaconda.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/Anaconda.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Jedi - Python autocompletion/sublime_jedi.sublime-settings",
+		"/Users/WenzhaoXu/Developer/Seabird/peak_detection.py",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird.sublime-project",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird.sublime-workspace",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/SendTextPlus/SendText+.sublime-settings",
+		"/opt/homebrew-cask/Caskroom/macvim/7.4.96/MacVim.app/Contents/Resources/vim/gvimrc",
+		"/Users/WenzhaoXu/Developer/Seabird/testCase.py",
+		"/Users/WenzhaoXu/Developer/Seabird/lake.py",
+		"/Users/WenzhaoXu/Desktop/badFile.csv",
+		"/Users/WenzhaoXu/Developer/Seabird/seabird_plot.py",
+		"/Users/WenzhaoXu/Developer/DO_visualization/ui.R",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/R_sql.R",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/findBathy.R",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/data_reading.R",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/spkrig.R",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/newInterpolation.R",
+		"/Users/WenzhaoXu/Developer/adsa/main.R",
+		"/Users/WenzhaoXu/Developer/adsa/main.py",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/SublimeREPL/SublimeREPL.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/SublimeREPL.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/R-Box.sublime-settings",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/R-Box/R-Box.sublime-settings",
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/pythonSQL.py",
+		"/Users/WenzhaoXu/Downloads/hackathon/subset/ADSA_yelp_checkin_subset.csv",
+		"/Users/WenzhaoXu/Downloads/hackathon/subset/ADSA_yelp_business_subset.csv",
+		"/Users/WenzhaoXu/Developer/DO_visualization/static/js/spatial.js"
+	],
+	"find":
+	{
+		"height": 28.0
+	},
+	"find_in_files":
+	{
+		"height": 96.0,
+		"where_history":
+		[
+			""
+		]
+	},
+	"find_state":
+	{
+		"case_sensitive": true,
+		"find_history":
+		[
+			"./testFile/newFile/",
+			"init",
+			"outlier",
+			"init_filter",
+			"kriging_interpolation",
+			"varForClustering",
+			"clusterButton",
+			"print(su",
+			"hotspot",
+			"resultData",
+			"na.",
+			"na",
+			"clusterResults",
+			"readButton",
+			"print",
+			"nrow(grid)",
+			"nrow(grid) ",
+			"detrending_result",
+			"scale_0_to_1",
+			"print",
+			"plot",
+			"plt.figure()",
+			"plot",
+			"plt",
+			"fitShape",
+			"right_var",
+			"extract",
+			"pep8",
+			"exc",
+			"self",
+			"hmm_",
+			"loggerId",
+			"python",
+			"map",
+			"grid",
+			"engin",
+			"test",
+			"myData",
+			"rSub",
+			"bayesian",
+			"naive",
+			"svm",
+			"kaggle",
+			"xgboosting",
+			"70",
+			"-2",
+			"ﬂourescence",
+			"duration",
+			"img/dummy",
+			"ncsa",
+			"Longhi2009Environmental",
+			"Barbiero2004Deep",
+			"file",
+			"command",
+			"latex",
+			"zotero"
+		],
+		"highlight": true,
+		"in_selection": false,
+		"preserve_case": false,
+		"regex": false,
+		"replace_history":
+		[
+			"../input/",
+			"Bayesian",
+			"Naive",
+			"SVM",
+			"Kaggle",
+			"xgboost",
+			"figure/placeholder"
+		],
+		"reverse": false,
+		"show_context": true,
+		"use_buffer2": true,
+		"whole_word": false,
+		"wrap": true
+	},
+	"groups":
+	[
+		{
+			"selected": 0,
+			"sheets":
+			[
+				{
+					"buffer": 0,
+					"file": "src/findBathy.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 7093,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								14,
+								14
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": -0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 0,
+					"type": "text"
+				}
+			]
+		}
+	],
+	"incremental_find":
+	{
+		"height": 28.0
+	},
+	"input":
+	{
+		"height": 36.0
+	},
+	"layout":
+	{
+		"cells":
+		[
+			[
+				0,
+				0,
+				1,
+				1
+			]
+		],
+		"cols":
+		[
+			0.0,
+			1.0
+		],
+		"rows":
+		[
+			0.0,
+			1.0
+		]
+	},
+	"menu_visible": true,
+	"output.exec":
+	{
+		"height": 228.0
+	},
+	"output.find_results":
+	{
+		"height": 0.0
+	},
+	"pinned_build_system": "Packages/Python/Python.sublime-build",
+	"project": "DO.sublime-project",
+	"replace":
+	{
+		"height": 52.0
+	},
+	"save_all_on_build": true,
+	"select_file":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+			[
+				"plot",
+				"src/plot.R"
+			],
+			[
+				"ser",
+				"src/server.R"
+			],
+			[
+				"mai",
+				"main.R"
+			],
+			[
+				"pre",
+				"source/preprocessing.R"
+			],
+			[
+				"tria",
+				"source_old/Triaxus.R"
+			],
+			[
+				"conf",
+				"source/config.R"
+			],
+			[
+				"prep",
+				"source/preprocessing.R"
+			],
+			[
+				"inter",
+				"source/interpolation.R"
+			],
+			[
+				"ui",
+				"ui.R"
+			],
+			[
+				"dis",
+				"discussion.tex"
+			],
+			[
+				"me",
+				"methodology.tex"
+			],
+			[
+				"draft",
+				"draft.tex"
+			],
+			[
+				"result",
+				"results.tex"
+			],
+			[
+				"met",
+				"methodology.tex"
+			],
+			[
+				"dr",
+				"draft.tex"
+			],
+			[
+				"res",
+				"results.tex"
+			],
+			[
+				"su",
+				"summary.py"
+			],
+			[
+				"main",
+				"main.py"
+			],
+			[
+				"",
+				"seabird/thermocline_class.py"
+			],
+			[
+				"sea",
+				"seabird/seabird_class.py"
+			],
+			[
+				"sql",
+				"seabird/tools/seabird2SQL.py"
+			],
+			[
+				"times",
+				"seabird/futureFeature/timeSeriesSeg.py"
+			],
+			[
+				"ther",
+				"seabird/seabird_thermocline.py"
+			],
+			[
+				"cla",
+				"seabird/seabird_class.py"
+			],
+			[
+				"sum",
+				"summary.py"
+			],
+			[
+				"ma",
+				"main.py"
+			],
+			[
+				"te",
+				"test.py"
+			],
+			[
+				"tes",
+				"test.py"
+			],
+			[
+				"dcl",
+				"seabird/DCL_class.py"
+			],
+			[
+				"future",
+				"futureFeature/peakDetection.py"
+			],
+			[
+				"ts",
+				"test_ts.py"
+			],
+			[
+				"confi",
+				"config/config.json"
+			],
+			[
+				"seab",
+				"seabird_class.py"
+			],
+			[
+				"seabird",
+				"seabird_thermocline.py"
+			],
+			[
+				"time",
+				"futureFeature/timeSeriesSeg.py"
+			],
+			[
+				"tim",
+				"seabird_thermocline.py"
+			],
+			[
+				"peak",
+				"peak_detection.py"
+			],
+			[
+				"seabid_clas",
+				"Seabird/seabird_class.py"
+			]
+		],
+		"width": 0.0
+	},
+	"select_project":
+	{
+		"height": 500.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 380.0
+	},
+	"select_symbol":
+	{
+		"height": 0.0,
+		"last_filter": "",
+		"selected_items":
+		[
+		],
+		"width": 0.0
+	},
+	"selected_group": 0,
+	"settings":
+	{
+	},
+	"show_minimap": false,
+	"show_open_files": false,
+	"show_tabs": true,
+	"side_bar_visible": true,
+	"side_bar_width": 196.0,
+	"status_bar_visible": true,
+	"template_settings":
+	{
+	}
+}

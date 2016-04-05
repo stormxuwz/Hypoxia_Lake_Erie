@@ -1,135 +1,218 @@
 
-otherDataPreprocessing <- function(folder="../Project_IO/DO_LakeErie/OtherData/"){
-    dataList_45130 <- c("C45132_2014-6","C45132_2014-7","C45132_2014-8","C45132_2014-9","C45132_2014-10")
-    data_45132 <- read.csv(paste(folder,dataList_45130[1],".csv",sep=""))
-    for(i in 2:length(dataList_45130)){
-        data_45132=rbind(data_45132,read.csv(paste(folder,dataList_45130[i],".csv",sep="")))
-    }
-    data_45132$OBS_DATE <- as.POSIXct(as.character(data_45132$OBS_DATE),"%Y/%m/%d %H:%M",tz="EST")
-    saveRDS(data_45132,"data_45132.rds")
+
+
+
+# setwd("~/Developer/DO_Sensor_data/")
+# require("ggplot2")
+# require("gridExtra")
+# require("reshape2")
+# source("./settings.R")
+# source("dataPreprocess.R")
+# source("chaotic.R")
+# source("dynamic_time_warping.R")
+# source("dataStatistics.R")
+# library("dplyr")
+# require("sp")
+# source("findBathy.R")
+
+# # Read data
+# meta <- readRDS(paste(dataSource,"meta.rds",sep=""))
+# DO_raw_list <- readRDS(paste(dataSource,"rawFile.rds",sep=""))
+
+# grid <- read.table("grid_final.csv",sep=",")
+
+# badStationNo <- c("10384448","10523440","10523438","10523444","10384450")
+
+# meta_available <- meta[!(as.character(meta$No) %in% badStationNo),]
+
+# # meta_B <- subset(meta_available,position=="B")  # find the bottom site
+# meta_B <- as.data.frame(readRDS("meta_bottom2.rds"))
+
+# # meta_B3 <- subset(meta_available,position=="B3")  # find the bottom site
+
+# stationName=paste("logger",meta_B$No,sep="_")
+# rownames(meta_B) <- stationName
+
+# # Rearrange all data
+# syncDataList <- dataPreprocessing(FALSE)
+
+# DO_upper <- syncDataList$upperDO
+# Temp_upper <- syncDataList$upperTemp
+# DO_upper <- additionTime(DO_upper)
+
+# DO_bottom <- syncDataList$bottomDO
+# Temp_bottom <- syncDataList$bottomTemp
+# DO_bottom <- additionTime(DO_bottom)
+
+# diff_temp <- Temp_upper$logger_10523448-Temp_bottom$logger_10523446
+# diff_DO <- DO_upper$logger_10523448-DO_bottom$logger_10523446
+
+# Time <- DO_bottom$Time
+# qplot(Time,scale(diff_temp))+geom_point(aes(Time,scale(diff_DO)),color="red")
+# # write.csv2(DO_bottom,paste(dataSource,"DO_bottom.csv"))
+
+# # DO_bottom_yday <- aggregateByTime(DO_bottom,"yday")
+# # DO_bottom_hour <- aggregateByTime(DO_bottom,"hour")
+# # DO_bottom_cumHour <- aggregateByTime(DO_bottom,"cumHour")
+
+
+# DO_bottom_dailyMean <- aggregateByTime(DO_bottom,"yday",method="mean")
+# DO_bottom_dailyVar <- aggregateByTime(DO_bottom,"yday",method="var")
+
+# DO_bottom_hourlyMean <- aggregateByTime(DO_bottom,"cumHour",method="mean")
+# DO_bottom_hourlyVar <- aggregateByTime(DO_bottom,"cumHour",method="var")
+
+
+# qplot(cumHour,value,data=DO_bottom_aggregated_reshaped,color= variable)+geom_line()
+
+
+
+
+# # DO_bottom_hour_reshaped <- as.data.frame(scale(DO_bottom_hour,scale=FALSE,center=FALSE))
+# # DO_bottom_hour_reshaped$hour <- DO_bottom_hour$hour
+
+# # DO_bottom_hour_reshaped <- melt(DO_bottom_hour_reshaped,id.vars=c("hour"))
+
+
+# #### Interpolation ####
+
+# # Function to calculate the distance between each loggers
+# distanceMatrix=matrix(0,nrow(meta_B),nrow(meta_B))
+# rownames(distanceMatrix) <- stationName
+# colnames(distanceMatrix) <- stationName
+
+# for(i in 1:nrow(meta_B)){
+#     distanceMatrix[i,] <- spDistsN1(as.matrix(meta_B[,c("Long","Lat")]),as.matrix(meta_B[i,c("Long","Lat")]),TRUE)
+#     # Unit is "km"
+# }
+
+
+# for(i in 1:length(stationName)){
+#     print(stationName[i])
+#     # find the nearest station 
+#     nearestDis <- min(distanceMatrix[i,-i])
+#     j <- which(distanceMatrix[i,]==nearestDis)
+#     # plotStationPlot(DO_bottom_aggregated,"yday",stationName[c(i,j)])
     
+#     dtw_alignment <- dynamic_time_warping(DO_bottom_aggregated,stationName[i],stationName[j])
+# }
+
+#  plotStationPlot <- function(dataTable,aggrOnName,stationName){
+#     dataTable_reshaped <- melt(dataTable[,c(stationName,aggrOnName)],id.vars=c(aggrOnName))
+#     qplot(dataTable_reshaped[,aggrOnName],value,data=dataTable_reshaped,color=variable)+geom_line()
+
+#  }
+
+# # read wind direction
+#   plotDOTemp <- function(loggerName){
+#      if(loggerName %in% names(DO_bottom)){
+#          dataTable_DO <- DO_bottom
+#          dataTable_Temp <- Temp_bottom
+#      }
+#      else if(loggerName %in% names(DO_upper)){
+#          dataTable_DO <- DO_upper
+#          dataTable_Temp <- Temp_upper
+#      }
+#      else{
+#          return(0)
+#      }
+#      Time <- dataTable_DO$Time
+#      DO <- scale(dataTable_DO[,loggerName])
+#      Temp <- scale(dataTable_Temp[,loggerName])
+     
+#      dataTable <- data.frame(Time=Time,DO=DO,Temp=Temp)
+     
+#      p <- ggplot(data=dataTable)+geom_point(aes(Time,DO),label="DO")+geom_point(aes(Time,Temp),label="Temp")+geom_text()
+#      print(p)
+#  }
+
+#  changeToCels <- function(dataTable){
+
+#      for logger in c("logger_10384449","logger_")
+#      tempSeries <- 
+#  }
+
+ 
+
+# dataTable <- data.frame(lat=c(lat),lon=c(lon),depth=c(depth))
+
+# retrivePoint <- function(fileName,lon,lat){
+#     data=0
+#     return(data)
+# }
+
+# # qplot(V2,V1,data=grid,z=V3,color=V3)+stat_contour(bins=25)
+
+
+# # Visualization
+
+
+
+
+
+# # idw_result_matrix <- idwInterpolation(DO_bottom,grid_final,meta_B)
+# # Plot interpolation results
+# # DO_bottom_t=meta_B
+
+
+
+
+
+# for(i in 1:dim(a)[2]){
+#     grid$DO=a[,i]
+#     DO_bottom_t$DO=as.numeric(DO_bottom[i,-c(1,2)])
+#     timeStr=as.character(time_line[i])
+#     colorRange=range(range(grid$DO),range(subset(DO_bottom_t,DO>0)$DO))
+#     colorRange[1]=colorRange[1]-colorRange[1]%%0.2
+#     colorRange[2]=colorRange[2]-colorRange[2]%%0.2+0.2
     
-}
-
-
-
-
-
-readAllNCFile <- function(dataType="2d"){
-    require(ncdf)
-    library(abind)
-    if(dataType=="2d"){
-        fileNameList <- c("e201415100.out1.nc","e201420100.out1.nc","e201425100.out1.nc")
-        ncFile = open.ncdf(paste("../Project_IO/DO_LakeErie/OtherData/",fileNameList[1],sep=""))
-        print(ncFile)
-        #     [1] "file ../Project_IO/DO_LakeErie/OtherData/e201420100.out1.nc has 4 dimensions:"
-        #     [1] "time   Size: 1200"
-        #     [1] "ny   Size: 87"
-        #     [1] "nx   Size: 193"
-        #     [1] "nsigma   Size: 20"
-        #     [1] "------------------------"
-        #     [1] "file ../Project_IO/DO_LakeErie/OtherData/e201420100.out1.nc has 14 variables:"
-        #     [1] "float ci[nx,ny,time]  Longname:Ice concentration Missval:-99999"
-        #     [1] "float depth[nx,ny]  Longname:Bathymetry  Missval:1e+30"
-        #     [1] "float eta[nx,ny,time]  Longname:Height Above Model Sea Level Missval:-99999"
-        #     [1] "float hi[nx,ny,time]  Longname:Ice thickness Missval:-99999"
-        #     [1] "float lat[nx,ny]  Longname:Latitude Missval:1e+30"
-        #     [1] "float lon[nx,ny]  Longname:Longitude Missval:1e+30"
-        #     [1] "float sigma[nsigma]  Longname:Sigma Stretched Vertical Coordinate at Nodes Missval:1e+30"
-        #     [1] "float uc[nx,ny,time]  Longname:Eastward Water Velocity at Surface Missval:-99999"
-        #     [1] "float ui[nx,ny,time]  Longname:Ice u-velocity Missval:-99999"
-        #     [1] "float vc[nx,ny,time]  Longname:Northward Water Velocity at Surface Missval:-99999"
-        #     [1] "float vi[nx,ny,time]  Longname:Ice v-velocity Missval:-99999"
-        #     [1] "float wvd[nx,ny,time]  Longname:Wave Direction Missval:-99999"
-        #     [1] "float wvh[nx,ny,time]  Longname:Significant Wave Height Missval:-99999"
-        #     [1] "float wvp[nx,ny,time]  Longname:Wave Period Missval:-99999"
-        
-        lat <- get.var.ncdf(ncFile,"lat")
-        lon <- get.var.ncdf(ncFile,"lon")
-        uc <- get.var.ncdf(ncFile,"uc") # 
-        vc <- get.var.ncdf(ncFile,"vc")
-        wvd <- get.var.ncdf(ncFile,"uc")
-        bathy <- get.var.ncdf(ncFile,"depth")
-        
-        close.ncdf(ncFile)
-        
-        for(fname in fileNameList[-1]){
-            ncFile = open.ncdf(paste("../Project_IO/DO_LakeErie/OtherData/",fname,sep=""))
-            uc <- abind(uc,get.var.ncdf(ncFile,"uc"),along=3)  
-            vc <- abind(vc,get.var.ncdf(ncFile,"vc"),along=3)  
-            wvd <- abind(wvd,get.var.ncdf(ncFile,"wvd"),along=3)  
-        }
-        
-        return(list(lat=lat,lon=lon,uc=uc,vc=vc,wvd=wvd))
-    }
-        
-        
-    else{
-        fileNameList <- c("e201415100.out3.nc","e201420100.out3.nc","e201425100.out3.nc")
-        ncFile = open.ncdf(paste("../Project_IO/DO_LakeErie/OtherData/",fileNameList[1],sep=""))
-        print(ncFile)
-
-        # [1] "file ../Project_IO/DO_LakeErie/OtherData/e201420100.out3.nc has 4 dimensions:"
-        # [1] "nsigma   Size: 20"
-        # [1] "ny   Size: 87"
-        # [1] "nx   Size: 193"
-        # [1] "time   Size: 400"  # 3 hours interval
-        # [1] "------------------------"
-        # [1] "file ../Project_IO/DO_LakeErie/OtherData/e201420100.out3.nc has 8 variables:"
-        # [1] "float d3d[nx,ny,nsigma]  Longname:3D Depth at Nodes Missval:1e+30"
-        # [1] "float depth[nx,ny]  Longname:Bathymetry  Missval:1e+30"
-        # [1] "float lat[nx,ny]  Longname:Latitude Missval:1e+30"
-        # [1] "float lon[nx,ny]  Longname:Longitude Missval:1e+30"
-        # [1] "float sigma[nsigma]  Longname:Sigma Stretched Vertical Coordinate at Nodes Missval:1e+30"
-        # [1] "float temp[nx,ny,nsigma,time]  Longname:Temperature Missval:-99999"
-        # [1] "float u[nx,ny,nsigma,time]  Longname:Eastward Water Velocity Missval:-99999"
-        # [1] "float v[nx,ny,nsigma,time]  Longname:Northward Water Velocity Missval:-99999"
-        
-        lat <- get.var.ncdf(ncFile,"lat")
-        lon <- get.var.ncdf(ncFile,"lon")
-        bath <- get.var.ncdf(ncFile,"depth")
-        
-        BottomTemperature <- get.var.ncdf(ncFile,"temp")[,,20,]
-        BottomU <- get.var.ncdf(ncFile,"u")[,,20,]
-        BottomV <- get.var.ncdf(ncFile,"v")[,,20,]
-        
-        for(fname in fileNameList[-1]){
-            ncFile = open.ncdf(paste("../Project_IO/DO_LakeErie/OtherData/",fname,sep=""))
-            BottomU <- abind(BottomU,get.var.ncdf(ncFile,"u")[,,20,],along=3)  
-            BottomV <- abind(BottomV,get.var.ncdf(ncFile,"v")[,,20,],along=3)  
-            BottomTemperature <- abind(BottomTemperature,get.var.ncdf(ncFile,"temp")[,,20,],along=3) 
-        }
+#     p=qmplot(Long,Lat,data=grid,color=DO)+scale_color_gradientn(name="DO",colours = topo.colors(10),limit=colorRange)+geom_point(aes(Long,Lat),data=DO_bottom_t,color="black",alpha=0.5,size=3)
     
-    }
-}
-
-startPoint<-as.POSIXlt("2014-6-1 00:00:00",tz="EST")
-endPoint<-as.POSIXlt("2015-1-1 00:00:00",tz="EST")
-timeIndex<-seq(startPoint,by=3600,length.out=3600)
-
-windData <- readAllNCFile()
-saveRDS(windData,"windData.rds")
-
-plotWaveDirection <- function(i){
-    require(ggmap)
-    yday <- unclass(as.POSIXlt(DO_bottom$Time[i]))$yday
-    hour <- unclass(as.POSIXlt(DO_bottom$Time[i]))$hour
-    row <- (yday-151)*24+hour
+#     q=qmplot(Long,Lat,data=DO_bottom_t,color=DO,size=I(5),label=sprintf("%.3f",DO))+scale_color_gradientn(name="DO",colours = topo.colors(10),limit=colorRange)+geom_text(size=4,vjust=-1.5,color="black")
     
-    dataFrame <- data.frame(lat=c(windData$lat),lon=c(windData$lon))
-    
-    # p0 <- ggmap(get_map(location=c(-83.54,41.35,-78.83,42.92)))
-    dataFrame$uc <- c(windData$uc[,,row])
-    dataFrame$vc <- c(windData$vc[,,row])
-    subsampleIndex <- seq(1,nrow(dataFrame),10)
-    p <- ggplot()+geom_segment(aes(x=lon,y=lat,xend=lon+uc,yend=lat+vc),data=dataFrame[subsampleIndex,],arrow=arrow(length = unit(0.1,"cm"))) + geom_point(aes(Long,Lat),data=meta_B,color="red",size=5)+ggtitle(as.character(DO_bottom$Time[i]))+xlim(c(-84,-78))+ylim(c(41.25,43.25))
-    print(p)
-}
+#     jpeg(paste("~/Developer/Project_IO/DO_LakeErie/output/Tps/",i,"_DO.jpg",sep=""),height=1.6*200,width=6*200)
+#     grid.arrange(p,q,ncol=2,main = timeStr)
+#     dev.off()
+# }
 
-trace.animate <- function() {
-    lapply(seq(100,10000,6), function(i) {
-        plotWaveDirection(i)
-    })
-}
 
-saveGIF(trace.animate(), interval = .3, movie.name="trace.gif")
+# require("gridExtra")
+# loggerNameList <- c("10384449","10523447","10384443")
+
+# for(loggerName in loggerNameList){
+#     df <- DO_raw_list[[loggerName]]
+#     df <- df[10:(nrow(df)-10),]
+#     df$Time <- as.POSIXct(df$Time)
+
+#     if(max(df$Temp)>50){
+#         df$Temp  <- (df$Temp - 32)/1.8
+#     }
+#     df <- melt(df[,-1],id.vars=c("Time"))
+#     qplot(Time,value,data=df)+ facet_wrap(~ variable, ncol= 2,scale="free")
+# }
+
+
+# DOdf <- DO_bottom[,c("Time","logger_10384449","logger_10523445")]
+# tempDF <- Temp_bottom[,c("Time","logger_10384449","logger_10523445")]
+
+# tempDF$logger_10384449 <- (tempDF$logger_10384449-32)/1.8
+
+# DOdf<- melt(DOdf,id.vars=c("Time"))
+# tempDF<- melt(tempDF,id.vars=c("Time"))
+
+# DOdf$type <- "DO"
+# tempDF$type <- "Temp"
+
+# final <- rbind(DOdf,tempDF)
+
+# qplot(Time,value,data=DOdf,color=variable)+facet_wrap(. ~ type,nrow=2)
+
+# p1 <- qplot(Time,value,data=DOdf,color=variable,size=I(1))+labs(y = "DO (mg/L)",colour = "loggers")
+# p2 <- qplot(Time,value,data=tempDF,color=variable,size=I(1))+labs(y = "Temp (C)",colour = "loggers")
+
+# grid.arrange(p1,p2,nrow=2)
+
+
+
+
+

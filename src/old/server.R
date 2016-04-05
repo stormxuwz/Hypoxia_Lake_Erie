@@ -8,7 +8,9 @@ library(plotly)
 library(sp)
 library(gstat)
 library(raster)
-source("database.R")
+source("dbconn.R")
+# conn <- dbConnect(MySQL(), dbname = "DO2014", username="root", password="XuWenzhaO", host="127.0.0.1", port=3306)
+# geoLocation <- dbReadTable(conn,"loggerInfo")
 
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 
@@ -45,12 +47,48 @@ shinyServer(function(input,output,session)
 		loggerIndex <- input$selectedID
 		var <- input$var
 		groupRange <- input$GroupRange
-		retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange = NULL)
+
+
+		tmp <- paste("logger =",tmp)
+		tmp <- paste(tmp,collapse=" OR ")
+		tmp <- sprintf("(%s)",tmp)
+		var <- input$var
+		# if(input$dataType=="STD" & input$GroupRange=="daily"){
+		# 	sql <- sprintf("Select date(Time) as Time, STD(%s) as %s, logger from loggerData_%s where %s Group by date(Time),logger",var,var,year,tmp)
+		# 	print(sql)
+		# 	timeFormat="%Y-%m-%d"
+		# }
+		# else if(input$dataType=="STD" & input$GroupRange=="hourly"){
+		# 	sql <- sprintf("Select DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') as Time, STD(%s) as %s, logger from loggerData_%s where %s Group by DATE_FORMAT(Time,'%%Y-%%m-%%d %%H'),logger",var,var,year,tmp)
+		# 	# print(sql)
+		# 	timeFormat="%Y-%m-%d %H"
+		# }
+		# else if(input$dataType=="AVG" & input$GroupRange=="daily"){
+		# 	sql <- sprintf("Select date(Time) as Time, AVG(%s) as %s, logger from loggerData_%s where %s Group by date(Time),logger",var,var,year,tmp)
+		# 	# print(sql)
+		# 	timeFormat="%Y-%m-%d"
+		# }
+		# else if(input$dataType=="AVG" & input$GroupRange=="hourly"){
+		# 	sql <- sprintf("Select DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') as Time, AVG(%s) as %s, logger from loggerData_%s where %s Group by DATE_FORMAT(Time,'%%Y-%%m-%%d %%H'),logger",var,var,year,tmp)
+		# 	# print(sql)
+		# 	timeFormat="%Y-%m-%d %H"
+		# }
+		# else{
+		# 	sql <- sprintf("Select Time, %s, logger from loggerData_%s where %s",var,year,tmp)
+		# 	timeFormat="%Y-%m-%d %H:%M:%S"
+		# }
+		data <- sqlQuery(sql,input$year) %>% dcast(Time~logger,value.var=var)
+		# print(data)
+		data <- zoo(subset(data,select=-Time),order.by=strptime(data$Time,format=timeFormat,tz="GMT"))
+
+		return(data)
 	})
 
 	geoData <- reactive({
 		year <- input$year
-   		retriveGeoData(year,"B")
+		sql <- sprintf("select longitude,latitude,loggerID,bathymetry from loggerInfo where available=1 and loggerPosition='B' and year = %s", year)
+   		mydata <- sqlQuery(sql,year)
+   		return(mydata)
  	})
 
 	colorpal <- reactive({

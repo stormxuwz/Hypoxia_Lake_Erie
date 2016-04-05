@@ -40,28 +40,6 @@ createFaceIndex <- function(rawGrid,convelHullModel){
     return(faceVerticeIndex,outOfBoundaryFaceIndex)
 }
 
-createBathyGrid <- function(sensorMeta){
-    require(dismo,quietly=TRUE)
-
-    convexHullModel<-convHull(sensorMeta[,c("Lat","Long")])
-    bathyInfo <- bathyGrid(sensorMeta)
-    rawGrid <- bathyInfo$rawGrid
-    faces <- createFaceIndex(rawGrid,convexHullModel)
-    
-    rawGrid$convexIndex <- predict(convexHull,rawGrid[,c("Lat","Long")])
-    rawGrid$remainIndex <- 0
-    rawGrid[rawGrid$convexIndex>0,"remainIndex"] <- c(1:sum(rawGrid$convexIndex))
-   
-    # Create Faces
-    faces <- createFaceIndex(rawGrid,convexHullModel)
-    faceVerticeIndex <- faces$faceVerticeIndex
-    omitFaceIndex <- faces$outOfBoundaryFaceIndex
-    faceVerticeIndex <- faceVerticeIndex[-omitFaceIndex,]
-
-    apply(1:nrow(faceVerticeIndex),function(i) {faceVerticeIndex[i,]<<-rawGrid[faceVerticeIndex[i,],"remainIndex"]} )
-
-    return(list(grid=subset(rawGrid,convexIndex>0),faceVerticeIndex=faceVerticeIndex))
-}
 
 # write.table(face_vertices_index_final,file="face_index.csv",col.names=F,row.names=F,sep=",")
 # write.table(grid_final[,c("Lat","Long","depth")],file="grid_final.csv",col.names=F,row.names=F,sep=",")
