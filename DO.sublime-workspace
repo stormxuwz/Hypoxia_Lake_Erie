@@ -4,6 +4,22 @@
 		"selected_items":
 		[
 			[
+				"grou",
+				"GroupRange"
+			],
+			[
+				"selecte",
+				"selectedID"
+			],
+			[
+				"selec",
+				"selectizeInput	{shiny}"
+			],
+			[
+				"logg",
+				"logger"
+			],
+			[
 				"Sebi",
 				"Seabird_cutoff"
 			],
@@ -212,10 +228,6 @@
 				"clearPopups"
 			],
 			[
-				"logg",
-				"loggerID"
-			],
-			[
 				"bath",
 				"bathymetry"
 			],
@@ -400,13 +412,74 @@
 	"buffers":
 	[
 		{
-			"contents": "require(rgdal)\nrequire(raster)\n\nfindBathy <- function(spData){\n	\n	coordinates(spData)=~Long+Lat\n	# spData must be a sp data class\n	bathymetry_raster = raster(\"~/Downloads/erie_lld/erie_lld.asc\")\n	bathymetry <- extract(bathymetry_raster,spData)\n	return(bathymetry)\n}\n\n\nfindIndex <- function(spData){\n	require(ncdf)\n	# library(abline)\n	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",\"e201415100.out1.nc\",sep=\"\"))\n	lat <- c(get.var.ncdf(ncFile,\"lat\"))\n    lon <- c(get.var.ncdf(ncFile,\"lon\"))\n\n    grid <- data.frame(Long=lon,Lat=lat)\n    coordinates(spData)=~Long+Lat\n    coordinates(grid)=~Long+Lat\n    projection(spData)=CRS(\"+init=epsg:4326\")\n    projection(grid)=CRS(\"+init=epsg:4326\")\n    spMatrix <- spDists(spData,grid)\n    return(apply(spMatrix,1,which.min))\n}\n\n\ngetInfoNCFile <- function(index,var=\"2Dwave\"){\n    require(ncdf)\n    library(abind)\n\n    ny <- 87\n    nx <- 193\n\n    ind_y <- ceiling(index/nx)\n    ind_x <- index%%nx\n    ind_x <- ifelse(ind_x==0,nx,ind_x)\n\n    startTime <- strptime(\"2014-6-1 00:00\",\"%Y-%m-%d %H:%M\")\n\n    if(var==\"2Dwave\"){\n        fileNameList <- c(\"e201415100.out1.nc\",\"e201420100.out1.nc\",\"e201425100.out1.nc\")\n        timeSeries <- seq(from=startTime,by=3600*1,length.out=1200*3)\n        myuc <- rep(-1,length.out=1200*3)\n        myvc <- myuc \n        mywvd <- myuc \n        \n        for(i in 1:3){\n        	seriesRange <- ((i-1)*1200+1):((i)*1200)\n\n        	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",fileNameList[i],sep=\"\"))\n	        uc <- get.var.ncdf(ncFile,\"uc\")\n	        vc <- get.var.ncdf(ncFile,\"vc\")\n	        wvd <- get.var.ncdf(ncFile,\"wvd\")\n	 		\n	 		lat <- get.var.ncdf(ncFile,\"lat\")\n        	lon <- get.var.ncdf(ncFile,\"lon\")	\n\n        	cat(lat[ind_x,ind_y],lon[ind_x,ind_y],\"\\n\")\n\n	 		myuc[seriesRange] <- uc[ind_x,ind_y,]\n	 		myvc[seriesRange] <- vc[ind_x,ind_y,]\n	 		mywvd[seriesRange] <- wvd[ind_x,ind_y,]\n\n        	close.ncdf(ncFile)\n        }\n        return(data.frame(time=timeSeries,uc=myuc,vc=myvc,wvd=mywvd))\n    }\n    else if(var==\"Temp\"){\n    	fileNameList <- c(\"e201415100.out3.nc\",\"e201420100.out3.nc\",\"e201425100.out3.nc\")\n    	timeSeries <- seq(from=startTime,by=3600*3,length.out=400*3)\n    	myTemp <- rep(-1,length.out=400*3*20)\n    	myTemp <- matrix(myTemp,400*3,20)\n      	# float d3d[nx,ny,nsigma]  Longname:3D Depth at Nodes Missval:1e+30\"\n\n        for(i in 1:3){\n        	seriesRange <- ((i-1)*400+1):((i)*400)\n\n        	ncFile = open.ncdf(paste(\"../Project_IO/DO_LakeErie/OtherData/\",fileNameList[i],sep=\"\"))\n        	temp <- get.var.ncdf(ncFile,\"temp\")\n        	d3d <- get.var.ncdf(ncFile,\"d3d\")\n        	bathy <- get.var.ncdf(ncFile,\"depth\")\n        	# float temp[nx,ny,nsigma,time]  Longname:Temperature Missval:-99999\n\n        	myTemp[seriesRange,] <- t(temp[ind_x,ind_y,,])\n        	myd3d <- d3d[ind_x,ind_y,]\n        	mybathy <- bathy[ind_x,ind_y]\n        }\n        myTemp <- as.data.frame(myTemp)\n        # names(myTemp) <- as.character(myd3d)\n        myTemp$time <- timeSeries\n        return(list(myTemp=myTemp,d3d=myd3d,bathy= mybathy))\n    }\n}\n        \nscale2Unit <- function(s){\n	return((s-min(s,na.rm=T))/(max(s,na.rm=T)-min(s,na.rm=T)))\n}     \n\nfind2dWaveData <- function(meta){\n	logger_index_inNCFile <- findIndex(meta)\n\n	waveData <- list()\n	for(i in 1:length(logger_index_inNCFile) ){\n		print(i)\n		loggerName <- paste(\"logger_\",meta$No[i],sep=\"\")\n		waveData[[loggerName]] <- getInfoNCFile(logger_index_inNCFile[i],var=\"2Dwave\")\n	}\n	saveRDS(waveData,\"2DwaveData.rds\")\n}\n\nfind3dTempData <- function(meta){\n	logger_index_inNCFile <- findIndex(meta)\n\n	tempData <- list()\n	for(i in 1:length(logger_index_inNCFile) ){\n		print(i)\n		loggerName <- paste(\"logger_\",meta$No[i],sep=\"\")\n		tempData[[loggerName]] <- getInfoNCFile(logger_index_inNCFile[i],var=\"Temp\")\n	}\n\n	saveRDS(tempData,\"3DtempData.rds\")\n	return(tempData)\n}\n\nplot_wave_DO <- function(meta_available){\n	for(i in 1:nrow(meta_available)) {\n		loggerName <- paste(\"logger_\",meta_available$No[i],sep=\"\")\n		DO_data <- DO_raw_list[[as.character(meta_available$No[i])]]\n		wave_data <- waveData[[loggerName]]\n\n		p1=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(uc^2+vc^2)),data=wave_data,color=\"red\")\n		p2=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(uc)),data=wave_data,color=\"yellow\")\n		p3=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(vc)),data=wave_data,color=\"green\")\n		p4=ggplot()+geom_point(aes(Time,scale2Unit(DO)),data=DO_data)+geom_line(aes(time,scale2Unit(wvd)),data=wave_data,color=\"blue\")\n\n		png(paste(loggerName,\"wave.png\"),width=800,height=1200)\n		grid.arrange(p1,p2,p3,p4,nrow=4)\n		dev.off()\n	}\n}\n\nft2meter <- function(ft){\n	return(ft/3.2808399)\n}\n\n\nplotMultipleDO <- function(startTime,endTime,loggerList=c(),colorList=c()){\n	p <- ggplot()\n	if(length(loggerList)!=length(colorList)){\n		cat(\"!!\")\n		return()\n	}\n	startTime <- as.POSIXct(startTime,tz=\"EST\")\n	endTime <- as.POSIXct(endTime,tz=\"EST\")\n\n	for(i in 1:length(loggerList)){\n		logger <- loggerList[i]\n		col <- colorList[i]\n		data <- subset(DO_raw_list[[as.character(logger)]],Time>startTime & Time < endTime)\n		p <- p+geom_line(aes(Time,DO),data=data,color=col)+geom_point(aes(Time,DO),data=data,color=col)\n	}\n	return(p)\n}\n\n\nsendtoSQL_loggerData <- function(DO_raw_list){\n	alldf <- data.frame(Time=c(),DO=c(),Temp=c(),logger=c())\n\n	for(i in 1:length(DO_raw_list)){\n		data <- DO_raw_list[[i]]\n		data <- na.omit(data)\n		n <- nrow(data)\n		data <- data[10:(n-10),]\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(names(DO_raw_list)[i])\n\n		if(max(data$Temp,na.rm = T)>50){\n			data$Temp <- (data$Temp - 32) *5/9\n		}\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data[,-1])\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"loggerData\", alldf, overwrite = TRUE,row.names=F)\n}\n\n\nsendtoSQL_waveData <- function(wave){\n	alldf <- data.frame(Time=c(),uc=c(),vc=c(),wvd=c(),logger=c())\n	# wave <- readRDS(\"2DwaveData.rds\")\n\n	for(i in 1:length(wave)){\n		data <- wave[[i]]\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(unlist(strsplit(names(wave)[i],\"_\"))[2])\n		names(data)[1] <- \"Time\"\n\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data)\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"waveData\", alldf, overwrite = TRUE,row.names=F)\n}\n\nsendtoSQL_tempData <- function(tempData){\n	alldf <- data.frame()\n\n	for(i in 1:length(tempData)){\n		data <- tempData[[i]]$myTemp\n		# data$Time <- as.character(data$Time)\n		data$logger  <- as.numeric(unlist(strsplit(names(tempData)[i],\"_\"))[2])\n		names(data)[21] <- \"Time\"\n\n		# data <- melt(data[,-1],id=c(\"Time\",\"logger\"))\n		alldf<- rbind(alldf,data)\n	}\n	alldf$id=1:nrow(alldf)\n	dbWriteTable(conn, \"3DtempData\", alldf, overwrite = TRUE,row.names=F)\n}\n\n\n# meta_new <- dbReadTable(conn,\"loggerInfo\")\n# d3dMatrix <- matrix(-1,30,20)\n# for(i in 1:length(tempData)){\n# 	d3dMatrix[i,] <- tempData[[i]]$d3d\n# }\n# colnames(d3dMatrix) <- paste(\"depth\",1:20,sep=\"\")\n# meta_new2 <- cbind(meta_new,d3dMatrix)\n",
-			"file": "src/findBathy.R",
-			"file_size": 7093,
-			"file_write_time": 130998988920000000,
+			"file": "src/database.R",
 			"settings":
 			{
-				"buffer_size": 7093,
+				"buffer_size": 6586,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/timeSeries.R",
+			"settings":
+			{
+				"buffer_size": 450,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "server.R",
+			"settings":
+			{
+				"buffer_size": 8341,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "config.R",
+			"settings":
+			{
+				"buffer_size": 186,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "ui.R",
+			"settings":
+			{
+				"buffer_size": 3135,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/spatioTemporal.R",
+			"settings":
+			{
+				"buffer_size": 1151,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/thermocline.R",
+			"settings":
+			{
+				"buffer_size": 519,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/plot.R",
+			"settings":
+			{
+				"buffer_size": 2511,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/spatialHelper.R",
+			"settings":
+			{
+				"buffer_size": 673,
 				"line_ending": "Unix"
 			}
 		}
@@ -570,10 +643,34 @@
 	"build_varint": "",
 	"command_palette":
 	{
-		"height": 392.0,
-		"last_filter": "sync",
+		"height": 127.0,
+		"last_filter": "preview",
 		"selected_items":
 		[
+			[
+				"preview",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"set markd",
+				"Set Syntax: Markdown"
+			],
+			[
+				"install",
+				"Package Control: Install Package"
+			],
+			[
+				"mark",
+				"Markdown Preview: Preview in Browser"
+			],
+			[
+				"evernote",
+				"Evernote: Send to Evernote as new note"
+			],
+			[
+				"send",
+				"SendTextPlus: Choose Program"
+			],
 			[
 				"sync",
 				"LaTeXing: Synchronise Remote Data"
@@ -583,16 +680,8 @@
 				"LaTeXing: Version"
 			],
 			[
-				"evernote",
-				"Evernote: Open Evernote Note"
-			],
-			[
 				"Evernote",
 				"Evernote Settings: Reconfigure Authorization"
-			],
-			[
-				"install",
-				"Package Control: Install Package"
 			],
 			[
 				"synchro",
@@ -718,9 +807,31 @@
 		"side_bar_visible": false,
 		"status_bar_visible": false
 	},
+	"expanded_folders":
+	[
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src"
+	],
 	"file_history":
 	[
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/preprocessing.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/detrending.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/netNCF.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/createGrid.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/newInterpolation.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/misc.R",
+		"/Users/WenzhaoXu/Desktop/a.mdown",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/main.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/ui.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/ui.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/server.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/plot.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/tmp.R",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/R-Box.sublime-settings",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/config.R",
+		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/R-Box/R-Box.sublime-settings",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/preprocessing",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/findBathy.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/varianceAnalysis.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/ui.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/tmp.R",
@@ -728,7 +839,6 @@
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/server.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/R_sql.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/pythonSQL.py",
-		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/findBathy.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/dynamic_time_warping.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/dbconn.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/createGrid.R",
@@ -831,27 +941,11 @@
 		"/Users/WenzhaoXu/Desktop/badFile.csv",
 		"/Users/WenzhaoXu/Developer/Seabird/seabird_plot.py",
 		"/Users/WenzhaoXu/Developer/DO_visualization/ui.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/R_sql.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/findBathy.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/data_reading.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/spkrig.R",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/newInterpolation.R",
-		"/Users/WenzhaoXu/Developer/adsa/main.R",
-		"/Users/WenzhaoXu/Developer/adsa/main.py",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/SublimeREPL/SublimeREPL.sublime-settings",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/SublimeREPL.sublime-settings",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/Default (OSX).sublime-keymap",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Default/Default (OSX).sublime-keymap",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/R-Box.sublime-settings",
-		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/R-Box/R-Box.sublime-settings",
-		"/Users/WenzhaoXu/Developer/DO_Sensor_data/pythonSQL.py",
-		"/Users/WenzhaoXu/Downloads/hackathon/subset/ADSA_yelp_checkin_subset.csv",
-		"/Users/WenzhaoXu/Downloads/hackathon/subset/ADSA_yelp_business_subset.csv",
-		"/Users/WenzhaoXu/Developer/DO_visualization/static/js/spatial.js"
+		"/Users/WenzhaoXu/Developer/DO_Sensor_data/R_sql.R"
 	],
 	"find":
 	{
-		"height": 28.0
+		"height": 36.0
 	},
 	"find_in_files":
 	{
@@ -866,6 +960,11 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"print",
+			"str",
+			"spatialData",
+			"spatialDataAll",
+			"bathymetry",
 			"./testFile/newFile/",
 			"init",
 			"outlier",
@@ -940,30 +1039,61 @@
 		"reverse": false,
 		"show_context": true,
 		"use_buffer2": true,
-		"whole_word": false,
+		"whole_word": true,
 		"wrap": true
 	},
 	"groups":
 	[
 		{
-			"selected": 0,
+			"selected": 1,
 			"sheets":
 			[
 				{
 					"buffer": 0,
-					"file": "src/findBathy.R",
+					"file": "src/database.R",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 7093,
+						"buffer_size": 6586,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								14,
-								14
+								1879,
+								1879
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 878.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 2,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/timeSeries.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 450,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								326,
+								334
 							]
 						],
 						"settings":
@@ -971,11 +1101,220 @@
 							"r_box_status": false,
 							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
 						},
-						"translation.x": -0.0,
+						"translation.x": 0.0,
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
 					"stack_index": 0,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "server.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8341,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								6559,
+								6559
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 4580.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "config.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 186,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								134,
+								141
+							]
+						],
+						"settings":
+						{
+							"r_box_status": true,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "ui.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3135,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								587,
+								587
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"tab_size": 2,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": -0.0,
+						"translation.y": 98.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/spatioTemporal.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1151,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								1084,
+								977
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/thermocline.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 519,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								519,
+								519
+							]
+						],
+						"settings":
+						{
+							"auto_name": "",
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/plot.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 2511,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								503,
+								503
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 8,
+					"file": "src/spatialHelper.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 673,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								325,
+								325
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
 					"type": "text"
 				}
 			]
@@ -1014,7 +1353,7 @@
 	"menu_visible": true,
 	"output.exec":
 	{
-		"height": 228.0
+		"height": 120.0
 	},
 	"output.find_results":
 	{
@@ -1035,6 +1374,10 @@
 		[
 			[
 				"plot",
+				"src/plot.R"
+			],
+			[
+				"pl",
 				"src/plot.R"
 			],
 			[
@@ -1214,7 +1557,7 @@
 	"show_open_files": false,
 	"show_tabs": true,
 	"side_bar_visible": true,
-	"side_bar_width": 196.0,
+	"side_bar_width": 240.0,
 	"status_bar_visible": true,
 	"template_settings":
 	{

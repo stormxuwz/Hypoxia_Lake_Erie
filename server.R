@@ -8,7 +8,9 @@ library(plotly)
 library(sp)
 library(gstat)
 library(raster)
-source("database.R")
+source("./src/database.R")
+source("./config.R")
+source("./src/plot.R")
 
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 
@@ -21,7 +23,7 @@ shinyServer(function(input,output,session)
 
 	# Plot the map
 	output$mymap <- renderLeaflet({
-       		leaflet("mymap") %>% clearShapes() %>% addTiles() %>% fitBounds(-82.41, 41.59,-80.75, 42.43)
+       	leaflet("mymap") %>% clearShapes() %>% addTiles() %>% fitBounds(-82.41, 41.59,-80.75, 42.43)
     })
 	
 	observe({
@@ -43,9 +45,20 @@ shinyServer(function(input,output,session)
 	  	year <- isolate(input$year)
 	  	dataType <- input$dataType
 		loggerIndex <- input$selectedID
+
+		if(input$withUpperLogger){
+			loggerIndex <- c(loggerIndex,retrivePairLogger(loggerIndex,year)$upper)
+		}
 		var <- input$var
 		groupRange <- input$GroupRange
-		retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange = NULL)
+
+
+		if(input$withDO){
+			retriveLoggerData_DO_Temp(loggerIndex,year,groupRange,dataType,timeRange=NULL)
+		}else{
+			retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange=NULL)
+		}
+		
 	})
 
 	geoData <- reactive({
@@ -54,6 +67,7 @@ shinyServer(function(input,output,session)
  	})
 
 	colorpal <- reactive({
+		# to be extracted into plot.R files
       if(input$mapData == "Bathy"){
         colorNumeric(input$colors, geoData()$bathymetry)
       }
@@ -66,9 +80,7 @@ shinyServer(function(input,output,session)
 	observe({
 	   pal <- colorpal()
 	   if(input$mapData=="Bathy"){
-		   	
 		   	mygeodata <- geoData()
-		   	# print(mygeodata)
 		    leafletProxy("mymap", data = mygeodata) %>% clearShapes() %>% addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8)
 	   }
 		  else{
@@ -118,33 +130,19 @@ shinyServer(function(input,output,session)
 
 
 	output$timeSeriesPlot <- renderDygraph({
-		tmp <- input$selectedID
-
-		lastData <- subset(geoData(),loggerID %in% as.numeric(tmp))
-
-		var <- input$var
-		if(is.null(tmp)){
+		if(is.null(input$selectedID)){
 			leafletProxy("mymap")%>%clearPopups()
 			return(dygraph(emptyData) %>% dyRangeSelector())
 		}
-
-		leafletProxy("mymap")%>%clearPopups()%>%addPopups(data=lastData,lng=~longitude,lat=~latitude,paste(lastData$loggerID),
-			options=popupOptions(maxHeight=20,zoomAnimation=FALSE))
-		
+		selectedGeoData <- subset(geoData(),loggerID %in% as.numeric(input$selectedID))
+		leafletProxy("mymap")%>%clearPopups()%>%addPopups(data=selectedGeoData,lng=~longitude,lat=~latitude,paste(selectedGeoData$loggerID,"(",round(selectedGeoData$bathymetry,1),")"),options=popupOptions(maxHeight=20,zoomAnimation=FALSE))
 		data <- visData()
-		if(input$scale){
-			data <- scale(data)
+		if(input$withDO){
+			plot_DO_temp(data)
+		}else{
+			plot_value(data,isolate(varUnit[[input$var]]),"dygrphs")
 		}
 
-		if(!input$twoy){
-			dygraph(data, main = "Time Series") %>% dyRangeSelector(retainDateWindow=TRUE)
-		}
-		else{
-			if(length(tmp)==2){
-				name2=names(data)[2]
-				dygraph(data, main = "Time Series") %>% dyRangeSelector(retainDateWindow=TRUE) %>%  dySeries(name2, axis = 'y2')
-			}
-		}
 	})
 
 	output$corr <- renderTable({
@@ -169,8 +167,8 @@ shinyServer(function(input,output,session)
 	
 	
 	spatialDataAll <- reactive({
-	
-	  var <- input$var
+
+	  	var <- input$var
 	  
 	  QueryDay <- input$myDate
 	  QueryHour <- input$myHour
@@ -184,8 +182,8 @@ shinyServer(function(input,output,session)
 	    sql <- sprintf("Select date(Time) as Time, AVG(%s) as %s, logger from loggerData_%s where date(Time) = '%s' Group by date(Time),logger",var,var,year,QueryDay)
 	    
 	  }
-	  print(sql)
-	  data <- sqlQuery(sql,input$year)
+	  # print(sql)
+	  data <- sqlQuery(sql)
 	  if(nrow(data)<1){
 	    return()
 	  }
@@ -198,6 +196,21 @@ shinyServer(function(input,output,session)
 	
 	
 	spatialData <- reactive({
+		# this is for variogram
+		# year <- isolate(input$year)
+	 #  	dataType <- input$dataType
+		# loggerIndex <- input$selectedID
+		# var <- input$var
+		# groupRange <- input$GroupRange
+
+		# if(input$GroupRange == "daily"){
+		# 	QueryTime <- striptime(input$myDate)
+		# 	timeRange <- c(QueryTime,QueryDay+3600*24)
+		# }else{
+		# 	QueryDay <- striptime(paste(input$myDate),input$myHour),format="%y-%m-%d %H")
+		# }
+
+		# data <- retriveSnapShot(loggerIndex,year,var,groupRange,dataType,timeRange)
 		tmp <- input$selectedID
 		tmp <- paste("logger =",tmp)
 		tmp <- paste(tmp,collapse=" OR ")
@@ -220,7 +233,7 @@ shinyServer(function(input,output,session)
 			sql <- sprintf("Select date(Time) as Time, AVG(%s) as %s, logger from loggerData_%s where (%s) and date(Time) = '%s' Group by date(Time),logger",var,var,year,tmp,QueryDay)
 		}
 		# print(sql)
-		data <- sqlQuery(sql,input$year)
+		data <- sqlQuery(sql)
 		if(nrow(data)<1){
 		  return()
 		}

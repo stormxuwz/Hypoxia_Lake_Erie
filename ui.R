@@ -89,8 +89,10 @@ shinyUI(
             
             tabPanel("Time Series",
               dygraphOutput('timeSeriesPlot'),
-              checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
-              checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL)
+              # checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
+              # checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL),
+              checkboxInput("withDO", "With Other Variable?", value = FALSE, width = NULL),
+              checkboxInput("withUpperLogger", "With Upper Logger?", value = FALSE, width = NULL)
               ),
             
             tabPanel("Correlation",

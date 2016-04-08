@@ -3,9 +3,8 @@ require(dygraphs)
 require(reshape2)
 require(leaflet)
 
-plot_value<- function(data,type="ggplot"){
+plot_value<- function(data,label="value",type="dygrphs"){
 	# data is a zoo dataframe
-	# change data type
 	if(type == "ggplot"){
 		data <- as.data.frame(data)
 		data$time <- strptime(rownames(data))
@@ -13,16 +12,19 @@ plot_value<- function(data,type="ggplot"){
 		# ggplot(data)+geom_point(aes(time,value,color=))
 	}
 	else if (type=="dygrphs"){
-		dygraph(data)
+		dygraph(data) %>% dyRangeSelector(retainDateWindow=TRUE) %>% dyAxis("y", label = label)
 	}
 	else{
 		stop ("invalid plot type")
 	}
-
 }
 
 
 plot_spatial <- function(data){
+	if(length(unique(data$time))>1){
+		stop("multiple times")
+	}
+
 
 }
 
@@ -38,7 +40,7 @@ plot_DO_temp <- function(data){
 	}
 	plotStr <- paste(plotStr,collapse="%>%")
 	p <- eval(parse(text=plotStr))
-	p <- p %>% dyAxis("y", label = "DO(mg/L)") %>% dyAxis("y2", label = "Temperature (C)", independentTicks = TRUE) %>% dyRangeSelector()
+	p <- p %>% dyAxis("y", label = varUnit[["DO"]]) %>% dyAxis("y2", label = varUnit[["Temp"]], independentTicks = TRUE) %>% dyRangeSelector(retainDateWindow=TRUE)
 	return(p)
 }
 
