@@ -24,6 +24,7 @@ spKriging <- function(loggerIndex,year,var,groupRange,dataType,timeRange=NULL){
 }
 
 
+
 loggerIndex <- c(10523450,10523447,10523437,10523445)
 year <- 2014
 var <- "DO"

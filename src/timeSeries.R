@@ -16,3 +16,4 @@ m <- tseries::arma(dt,c(2,1))
 
 t <- ts(c(t),start=1,freq=24)
 decomposeddata<-stl(t, s.window=24)
+
