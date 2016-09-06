@@ -11,6 +11,7 @@ library(raster)
 source("./src/database.R")
 source("./config.R")
 source("./src/plot.R")
+source("./src/interpolation.R")
 
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 
@@ -30,12 +31,65 @@ shinyServer(function(input,output,session)
     	updateSelectizeInput(session, 'selectedID', choices = unique(geoData()[,"loggerID"]), selected=NULL,server = FALSE)
 	})
 	
+	# Action -- ClearAll
   observe({
     input$ClearAll
     leafletProxy("mymap") %>% clearPopups()
     updateSelectizeInput(session, 'selectedID', choices = unique(geoData()[,"loggerID"]), selected=NULL,server = FALSE)
   })
   
+  # Action -- Interpolation
+  interpolation <- reactive({
+    input$Interpolation
+    spdata <- spatialDataAll()
+    #print("spData")
+    #print(head(spdata))
+
+    myGeoData <- geoData()
+    
+    #print(head(spdata))
+    #print(head(myGeoData))
+
+    if(input$withDO){
+    	# can only interpolate one varialbe at once
+    	return(NULL)
+    }
+
+    if(input$mapData != "Interpolated"){
+    	return(NULL)
+    }
+
+	if(is.null(spdata)){
+		# if no data is returned, plot the original data
+		# leafletProxy("mymap", data = spdata) %>% clearShapes()
+		# return()
+	}else{
+		 if("DO" %in% names(spdata)){
+    		spdata <- rename(spdata,value = DO)
+    	}else{
+    		spdata <- rename(spdata,value = Temp)
+    	}
+
+    	myGeoData <- subset(myGeoData,loggerID %in% spdata$logger)
+
+		# do interpolation
+		grid <- createGrid(myGeoData)
+		#print(head(grid))
+		#print(head(spdata))
+
+		grid$pred <- spatial_interpolation(spdata,grid,method = "IDW")
+		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
+		raster::projection(grid)=CRS("+init=epsg:4326")
+		return(grid)
+
+		# pal <- colorNumeric(input$colors, values(grid), na.color = "transparent")
+		# leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% 
+		# addRasterImage(grid, colors = pal, opacity = 0.8) %>% 
+		# addLegend(pal = pal, values = values(grid), title = "avg")
+	}
+  })
+
+
   #observe({
     #input$selectAll
     #updateSelectizeInput(session, 'selectedID', choices = unique(geoData()[,"loggerID"]), selected=unique(isolate(geoData())[,"loggerID"]),server = FALSE)
@@ -71,27 +125,60 @@ shinyServer(function(input,output,session)
       if(input$mapData == "Bathy"){
         colorNumeric(input$colors, geoData()$bathymetry)
       }
-	    else{
+	    else if(input$mapData == "logData"){
 	      colorNumeric(input$colors, spatialDataAll()[,3])
+	    }
+	    else{
+	    	grid <- interpolation()
+
+	    	if(is.null(grid)){
+	    		return(colorNumeric(input$colors, spatialDataAll()[,3]))
+	    	}else{
+	    		domain <- range(c(range(values(grid),na.rm = TRUE),range(spatialDataAll()[,3],na.rm = TRUE)))
+	    		colorNumeric(input$colors, domain, na.color = "transparent")
+	    	}
 	    }
 	    
   	})
 
 	observe({
 	   pal <- colorpal()
+	   print(pal)
 	   if(input$mapData=="Bathy"){
 		   	mygeodata <- geoData()
-		    leafletProxy("mymap", data = mygeodata) %>% clearShapes() %>% addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8)
+		    leafletProxy("mymap", data = mygeodata) %>% clearImages() %>% clearShapes() %>% addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8)
 	   }
-		  else{
-		    spdata <- spatialDataAll()
-		    if(is.null(spdata)){
-		      leafletProxy("mymap", data = spdata) %>% clearShapes()
-		    }else{
-		      names(spdata)[3]="val"
-		      leafletProxy("mymap", data = spdata) %>% clearShapes() %>% addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
-		    }
-		  }
+	  else if(input$mapData == "logData"){
+	    spdata <- spatialDataAll()
+	    
+	    if(is.null(spdata)){
+	      leafletProxy("mymap", data = spdata) %>% clearImages() %>% clearShapes()
+	    }else{
+	      names(spdata)[3]="val"
+	      leafletProxy("mymap", data = spdata) %>% clearImages() %>% clearShapes() %>% addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
+	    }
+	  }
+
+	  else{
+		spdata <- spatialDataAll()
+		grid <- interpolation()
+
+		if(is.null(grid)){
+
+		}
+		else{
+			# adding raster
+			names(spdata)[3]="val"
+			leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% 
+			addRasterImage(grid, colors = pal, opacity = 0.8) %>% 
+			addLegend(pal = pal, values = values(grid), title = "avg")
+
+			# change color 
+			leafletProxy("mymap", data = spdata) %>% clearShapes() %>%
+			addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
+		}
+	  }
+
   	})
 
 	observe({
@@ -107,25 +194,25 @@ shinyServer(function(input,output,session)
 	})
 
 
-	observe({
-	    if(input$mapData=="Bathy"){
-	      mydata <- geoData()
-	      if(is.null(mydata)){
-	        leafletProxy("mymap",data=mydata) %>% clearControls()
-	      }else{
-	        leafletProxy("mymap",data=mydata) %>% clearControls() %>% addLegend(position = "bottomright", pal = colorpal(), values = ~bathymetry)
-	      }
-	    }
-	    else{
-	      spdata <- spatialDataAll()
-	      if(is.null(spdata)){
-	        leafletProxy("mymap",data=spdata) %>% clearControls()
-	      }else{
-	        names(spdata)[3]="avg"
-	        leafletProxy("mymap",data=spdata) %>% clearControls() %>% addLegend(position = "bottomright", pal = colorpal(), values = ~avg)
-	      }
-	    }
-  	})
+	# observe({
+	#     if(input$mapData=="Bathy"){
+	#       mydata <- geoData()
+	#       if(is.null(mydata)){
+	#         leafletProxy("mymap",data=mydata) %>% clearControls()
+	#       }else{
+	#         leafletProxy("mymap",data=mydata) %>% clearControls() %>% addLegend(position = "bottomright", pal = colorpal(), values = ~bathymetry)
+	#       }
+	#     }
+	#     else if(){
+	#       spdata <- spatialDataAll()
+	#       if(is.null(spdata)){
+	#         leafletProxy("mymap",data=spdata) %>% clearControls()
+	#       }else{
+	#         names(spdata)[3]="avg"
+	#         leafletProxy("mymap",data=spdata) %>% clearControls() %>% addLegend(position = "bottomright", pal = colorpal(), values = ~avg)
+	#       }
+	#     }
+ #  	})
 
 
 
@@ -268,7 +355,7 @@ shinyServer(function(input,output,session)
 
 		v$leftValue <- spdata$var[v$left]
 		v$rightValue <- spdata$var[v$right]
-		saveRDS(v,"test.rds")
+		# saveRDS(v,"test.rds")
     #print(v)
 		p <- plot_ly(v, x = dist, y=gamma, mode="markers",hoverinfo = "text",
           text = paste(v$leftLogger,"(",round(v$leftValue,2),")--",v$rightLogger,"(",round(v$rightValue,2),")",sep=""))

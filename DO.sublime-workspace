@@ -4,6 +4,26 @@
 		"selected_items":
 		[
 			[
+				"fitted",
+				"fitted.values	{stats}"
+			],
+			[
+				"timelag",
+				"timelag_"
+			],
+			[
+				"timel",
+				"timelag"
+			],
+			[
+				"detren",
+				"detrendingResults"
+			],
+			[
+				"coe",
+				"coef	{stats}"
+			],
+			[
 				"grou",
 				"GroupRange"
 			],
@@ -415,7 +435,47 @@
 			"file": "src/spatioTemporal.R",
 			"settings":
 			{
-				"buffer_size": 1181,
+				"buffer_size": 5205,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/tmp.R",
+			"settings":
+			{
+				"buffer_size": 8411,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/waterLevel.R",
+			"settings":
+			{
+				"buffer_size": 1193,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/netNCF.R",
+			"settings":
+			{
+				"buffer_size": 4431,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/spatialHelper.R",
+			"settings":
+			{
+				"buffer_size": 1349,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/database.R",
+			"settings":
+			{
+				"buffer_size": 6586,
 				"line_ending": "Unix"
 			}
 		},
@@ -431,7 +491,31 @@
 			"file": "src/plot.R",
 			"settings":
 			{
-				"buffer_size": 2511,
+				"buffer_size": 3302,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/interpolation.R",
+			"settings":
+			{
+				"buffer_size": 2904,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/fda.r",
+			"settings":
+			{
+				"buffer_size": 42,
+				"line_ending": "Unix"
+			}
+		},
+		{
+			"file": "src/indicatorKriging.R",
+			"settings":
+			{
+				"buffer_size": 2381,
 				"line_ending": "Unix"
 			}
 		}
@@ -766,6 +850,9 @@
 	],
 	"file_history":
 	[
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/misc.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/helper.R",
+		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/lakeProperty.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/spatialHelper.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/plot.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/thermocline.R",
@@ -781,7 +868,6 @@
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/netNCF.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/createGrid.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/newInterpolation.R",
-		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/misc.R",
 		"/Users/WenzhaoXu/Desktop/a.mdown",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/main.R",
 		"/Users/WenzhaoXu/Developer/Hypoxia/DOCode/src/old/ui.R",
@@ -891,13 +977,11 @@
 		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Anaconda/Anaconda.sublime-settings",
 		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/User/Anaconda.sublime-settings",
 		"/Users/WenzhaoXu/Library/Application Support/Sublime Text 3/Packages/Jedi - Python autocompletion/sublime_jedi.sublime-settings",
-		"/Users/WenzhaoXu/Developer/Seabird/peak_detection.py",
-		"/Users/WenzhaoXu/Developer/Seabird/seabird.sublime-project",
-		"/Users/WenzhaoXu/Developer/Seabird/seabird.sublime-workspace"
+		"/Users/WenzhaoXu/Developer/Seabird/peak_detection.py"
 	],
 	"find":
 	{
-		"height": 36.0
+		"height": 37.0
 	},
 	"find_in_files":
 	{
@@ -912,6 +996,9 @@
 		"case_sensitive": true,
 		"find_history":
 		[
+			"conn",
+			"write",
+			"	\n",
 			"print",
 			"str",
 			"spatialData",
@@ -997,7 +1084,7 @@
 	"groups":
 	[
 		{
-			"selected": 2,
+			"selected": 9,
 			"sheets":
 			[
 				{
@@ -1006,15 +1093,226 @@
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 1181,
+						"buffer_size": 5205,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								812,
-								823
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false,
+							"word_wrap": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 9,
+					"type": "text"
+				},
+				{
+					"buffer": 1,
+					"file": "src/tmp.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 8411,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 6,
+					"type": "text"
+				},
+				{
+					"buffer": 2,
+					"file": "src/waterLevel.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1193,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								48,
+								48
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 7,
+					"type": "text"
+				},
+				{
+					"buffer": 3,
+					"file": "src/netNCF.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 4431,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								29,
+								29
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"tab_size": 4,
+							"translate_tabs_to_spaces": true
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 5,
+					"type": "text"
+				},
+				{
+					"buffer": 4,
+					"file": "src/spatialHelper.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 1349,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								123,
+								123
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 4,
+					"type": "text"
+				},
+				{
+					"buffer": 5,
+					"file": "src/database.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 6586,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								32,
+								32
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 3,
+					"type": "text"
+				},
+				{
+					"buffer": 6,
+					"file": "src/timeSeries.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 452,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								62,
+								62
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax"
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 8,
+					"type": "text"
+				},
+				{
+					"buffer": 7,
+					"file": "src/plot.R",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 3302,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								0,
+								0
 							]
 						],
 						"settings":
@@ -1031,20 +1329,50 @@
 					"type": "text"
 				},
 				{
-					"buffer": 1,
-					"file": "src/timeSeries.R",
+					"buffer": 8,
+					"file": "src/interpolation.R",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 452,
+						"buffer_size": 2904,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								451,
-								451
+								2349,
+								2349
+							]
+						],
+						"settings":
+						{
+							"r_box_status": false,
+							"syntax": "Packages/R-Box/syntax/R Extended.sublime-syntax",
+							"translate_tabs_to_spaces": false
+						},
+						"translation.x": 0.0,
+						"translation.y": 0.0,
+						"zoom_level": 1.0
+					},
+					"stack_index": 1,
+					"type": "text"
+				},
+				{
+					"buffer": 9,
+					"file": "src/fda.r",
+					"semi_transient": false,
+					"settings":
+					{
+						"buffer_size": 42,
+						"regions":
+						{
+						},
+						"selection":
+						[
+							[
+								42,
+								42
 							]
 						],
 						"settings":
@@ -1056,24 +1384,24 @@
 						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 1,
+					"stack_index": 0,
 					"type": "text"
 				},
 				{
-					"buffer": 2,
-					"file": "src/plot.R",
+					"buffer": 10,
+					"file": "src/indicatorKriging.R",
 					"semi_transient": false,
 					"settings":
 					{
-						"buffer_size": 2511,
+						"buffer_size": 2381,
 						"regions":
 						{
 						},
 						"selection":
 						[
 							[
-								1102,
-								1102
+								579,
+								579
 							]
 						],
 						"settings":
@@ -1083,10 +1411,10 @@
 							"translate_tabs_to_spaces": false
 						},
 						"translation.x": 0.0,
-						"translation.y": 411.0,
+						"translation.y": 0.0,
 						"zoom_level": 1.0
 					},
-					"stack_index": 0,
+					"stack_index": 10,
 					"type": "text"
 				}
 			]
@@ -1144,6 +1472,10 @@
 		"last_filter": "",
 		"selected_items":
 		[
+			[
+				"misc",
+				"src/misc.R"
+			],
 			[
 				"plot",
 				"src/plot.R"
@@ -1306,16 +1638,28 @@
 	"select_project":
 	{
 		"height": 500.0,
-		"last_filter": "seabird",
+		"last_filter": "seab",
 		"selected_items":
 		[
 			[
-				"seabird",
+				"seab",
 				"~/Developer/Seabird/SeabirdCode/Seabird.sublime-project"
 			],
 			[
+				"seabr",
+				"~/Developer/Seabird/seabird.sublime-workspace"
+			],
+			[
+				"seabird",
+				"~/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/paper_seabird.sublime-project"
+			],
+			[
 				"",
-				"~/Developer/Seabird/SeabirdCode/Seabird.sublime-project"
+				"~/Library/Mobile Documents/com~apple~CloudDocs/Research/Paper/paper_Seabird/paper_Seabird.sublime-project"
+			],
+			[
+				"tria",
+				"~/Developer/Triaxus/TriaxusCode/Triaxus.sublime-project"
 			]
 		],
 		"width": 380.0

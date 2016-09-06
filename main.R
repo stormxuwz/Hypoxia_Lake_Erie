@@ -3,7 +3,6 @@ source("config.R")
 source("./src/plot.R")
 
 
-
 # analysis <- function(year){
 year <- 2014
 bottomLogger <- retriveGeoData(year,"B")

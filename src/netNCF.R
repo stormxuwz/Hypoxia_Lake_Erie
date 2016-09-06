@@ -1,3 +1,5 @@
+# function to read ncdf files
+
 library("ncdf")
 
 findIndex <- function(spData){

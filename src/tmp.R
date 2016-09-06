@@ -1,4 +1,63 @@
-source("../config.R")
+
+
+source("./src/database.R")
+source("config.R")
+source("./src/plot.R")
+source("./src/spatialHelper.R")
+
+
+year <- 2015
+bottomLogger_2015 <- retriveGeoData(year,"B")
+data_2015 <- retriveLoggerData(bottomLogger_2015$loggerID,year,"DO","hourly","AVG")
+
+
+year <- 2014
+bottomLogger_2014 <- retriveGeoData(year,"B")
+data_2014 <- retriveLoggerData(bottomLogger_2014$loggerID,year,"DO","hourly","AVG")
+
+
+waterLevel_2015 <- readWaterLevel(year = 2015)
+waterLevel_2014 <- readWaterLevel(year = 2014)
+
+allData_2015 <- combineWaterLevelWithDOData(data_2015,waterLevel_2015)
+allData_2014 <- combineWaterLevelWithDOData(data_2014,waterLevel_2014)
+
+
+
+dygraph(allData_2014[,c("10384437","9063063_station")]) %>% 
+	dyAxis("y", label = "DO (mg/L)") %>%
+	dyAxis("y2", label = "Water Level (m)", independentTicks = TRUE) %>%
+	dySeries("9063063_station", axis = 'y2') %>% dyRangeSelector()
+
+dygraph(allData_2014[,c("10384443","9063053_station")]) %>% 
+	dyAxis("y", label = "DO (mg/L)") %>%
+	dyAxis("y2", label = "Water Level (m)", independentTicks = TRUE) %>%
+	dySeries("9063053_station", axis = 'y2') %>% dyRangeSelector()
+
+
+dygraph(allData_2014[,c("10384436","9063038_station")]) %>% 
+	dyAxis("y", label = "DO (mg/L)") %>%
+	dyAxis("y2", label = "Water Level (m)", independentTicks = TRUE) %>%
+	dySeries("9063038_station", axis = 'y2') %>% dyRangeSelector()
+
+
+# read wind data
+
+fileNames <- c("/Users/WenzhaoXu/Developer/Hypoxia/input/OtherData/C45132_2014-6.csv",
+							 "/Users/WenzhaoXu/Developer/Hypoxia/input/OtherData/C45132_2014-7.csv",
+							 "/Users/WenzhaoXu/Developer/Hypoxia/input/OtherData/C45132_2014-8.csv",
+							 "/Users/WenzhaoXu/Developer/Hypoxia/input/OtherData/C45132_2014-9.csv",
+							 "/Users/WenzhaoXu/Developer/Hypoxia/input/OtherData/C45132_2014-10.csv")
+
+
+df <- data.frame()
+for(fname in fileNames){
+	df <- rbind(df,read.csv(fname))
+}
+
+
+
+
 
 
 

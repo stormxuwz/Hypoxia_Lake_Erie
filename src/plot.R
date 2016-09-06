@@ -2,6 +2,7 @@ require(ggplot2)
 require(dygraphs)
 require(reshape2)
 require(leaflet)
+require(ggmap)
 
 plot_value<- function(data,label="value",type="dygrphs"){
 	# data is a zoo dataframe
@@ -20,11 +21,24 @@ plot_value<- function(data,label="value",type="dygrphs"){
 }
 
 
-plot_spatial <- function(data){
-	if(length(unique(data$time))>1){
-		stop("multiple times")
-	}
+plot_spatial <- function(dataList,locationInfo,outputFolder){
+	# dataList is a list which contains dataframes that contains latitude, longitude and interpolation values for each time
+	lonRange <- range(unlist(lapply(dataList,function(i) range(i$longitude))))
+	latRange <- range(unlist(lapply(dataList,function(i) range(i$latitude))))
 
+	bbox <- make_bbox(lonRange,latRange,f = 0.1)
+	myMap <- get_map(location=bbox, source="osm",crop=FALSE)
+	p <- ggmap(myMap)
+	for(i in 1:length(dataList)){
+		print(i)
+		df <- dataList[[i]]
+		df_time <- attributes(df)$time
+		q <- p+geom_tile(aes(longitude,latitude,fill = pred),data = df)+scale_fill_gradient(name = "DO (mg/L)",low = "red",high = "cyan",limit = c(0,15))+geom_point(aes(longitude,latitude),data =locationInfo,size = I(3))+ggtitle(df_time)
+		
+		png(paste(outputFolder,i,"_",df_time,".png",sep=""))
+		print(q)
+		dev.off()
+	}
 
 }
 

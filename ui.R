@@ -33,7 +33,7 @@ shinyUI(
           3,
           selectInput("mapData", 
               label = h5("Spatial Variable"), 
-                choices = list("Bathymetry" = "Bathy", "Logger Data (daily mean)" = "logData"), 
+                choices = list("Bathymetry" = "Bathy", "Logger Data (daily mean)" = "logData","Interpolation" = "Interpolated"), 
                 selected = "Bathy")
         )
   		),
@@ -105,7 +105,21 @@ shinyUI(
                     # separator = " to ", format = "mm/dd/yy",
                     # startview = 'year', weekstart =0
                 # ),
-                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry"))
+                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
+            
+            tabPanel("Interpolation",
+              selectInput("interpolationMethod", 
+                  label = h5("Method"),
+                  choices = list("IDW" = "IDW"),  
+                  selected ="IDW"),
+              selectInput("inteprolationPara1", 
+                  label = h5("Para1"),
+                  choices = list("Para" = "Para1"),  
+                  selected ="Para1"),
+              actionButton("Interpolation","Interpolate") # first is the action name, second is the UI name
+
+              )
+
           )
   			)
   		)
