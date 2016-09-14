@@ -20,6 +20,27 @@ plot_value<- function(data,label="value",type="dygrphs"){
 	}
 }
 
+plot_spatial_matrix <- function(resultMatrix,outputFolder,prefix = NULL){
+	# resultMatrix is a matrix, each raw represent a point on the map
+
+	lonRange <- range(resultMatrix$longitude)
+	latRange <- range(resultMatrix$latitude)
+
+	bbox <- make_bbox(lonRange,latRange,f = 0.1)
+	myMap <- get_map(location=bbox, source="osm",crop=FALSE)
+	p <- ggmap(myMap)
+
+	for(i in 1:104){
+		subDf <- resultMatrix[,c(as.character(i),"longitude","latitude")]
+		names(subDf)[1] <- "pred"
+		q <- p+geom_tile(aes(longitude,latitude,fill = pred),data = subDf)+scale_fill_gradient(name = "DO (mg/L)",low = "red",high = "cyan",limit = c(0,15))
+		# +geom_point(aes(longitude,latitude),data =locationInfo,size = I(3))+ggtitle(df_time)
+		png(paste(outputFolder,prefix,"_",i,"_",".png",sep=""))
+		print(q)
+		dev.off()
+	}
+}
+
 
 plot_spatial <- function(dataList,locationInfo,outputFolder){
 	# dataList is a list which contains dataframes that contains latitude, longitude and interpolation values for each time

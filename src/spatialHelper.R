@@ -15,8 +15,9 @@ findBathy <- function(spData,bathyRasterFile){
 createGrid <- function(loggerInfo, by.x = 0.01, by.y = 0.01){
 	longitudeRange <- range(loggerInfo$longitude)
 	latitudeRange <- range(loggerInfo$latitude)
-	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y))
+	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>%lonlat2UTM()
 	convexHullModel<-convHull(loggerInfo[,c("longitude","latitude")])
+
 	grid$convexIndex <- predict(convexHullModel,grid)
 	return(grid)
 }

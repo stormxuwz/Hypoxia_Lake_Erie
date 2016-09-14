@@ -42,7 +42,6 @@ stKriging <- function(loggerIndex,year,var,groupRange,dataType,timeRange,resultN
 	# logger_value <- retriveLoggerData(loggerIndex,2014,var,groupRange,dataType,timeRange,transform = FALSE)
 	# logger_value$Time <- as.POSIXct(logger_value$Time)
 	# logger_value <- arrange(logger_value,Time,logger)
-	
 	# logger_time <- unique(logger_value$Time)
 	
 	timeDF <- STFDF(sp=logger_geo,time=logger_time,data=data.frame(value = logger_res$value))

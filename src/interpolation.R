@@ -4,6 +4,7 @@ require(sp)
 require(dplyr)
 source("src/spatialHelper.R")
 source("src/plot.R")
+library(geoR)
 
 spatial_interpolation <- function(df,grid,method = "IDW"){
 	# df and grid is a dataframe that contains longitude and latitude and value as columns
@@ -12,22 +13,62 @@ spatial_interpolation <- function(df,grid,method = "IDW"){
 	convexIndex <- grid$convexIndex
 	grid <- subset(grid,convexIndex==1)
 
-	coordinates(df) = ~longitude + latitude
-	coordinates(grid) = ~longitude + latitude
+	
 	
 	#print(df)
 	#print(grid)
 
 	if(method == "IDW"){
+		coordinates(df) = ~x + y
+		coordinates(grid) = ~x + y
 		pred[convexIndex == 1] <- krige(value ~  1 , df, grid)$var1.pred
 	}
-	else{
-		# pred = NA
+	else if(method == "loglik"){
+		# Using log likelihood to fit covariance
+		df <- df[,c("x","y","value","bathymetry")] %>% as.geodata()
+		ml <- likfit(df, ini = c(5,40), fix.nugget = T, lik.method = "ML",cov.model = "exponential",trend = "1st")
+		pred[convexIndex == 1] <- krige.conv(df, locations = grid[,c("x","y")], krige = krige.control(obj.m = ml))$predict
+	}else{
+		
 	}
 	
 	return(pred)
 }
 
+
+
+stKriging <- function(df,logger_geo, grid,detrendMethod = NULL,...){
+	# df is a zoo object with columns as each logger's data
+	# logger_geo has columns of loggerID, lon,lat, bathy, x and y
+	args <- list(...)
+	coordinates(logger_geo)=~longitude+latitude
+	raster::projection(logger_geo)=CRS("+init=epsg:4326")
+	
+	logger_geo <- arrange(logger_geo,loggerID)
+	logger_time <- as.POSIXct(index(df))
+
+	n <- ncol(df) # the number of sensors
+	T <- nrow(df) # the number of sampling periods
+
+	if(is.null(detrendMethod)){
+		trend <- matrix(0,T,n)
+
+	}else{
+
+	}
+
+	res <- (df - trend) %>% as.data.frame() 
+	
+	res$samplingTime <- logger_time
+	res <- melt(res, id.vars = c("samplingTime")) %>%
+			arrange(samplingTime,variable)
+			
+
+	timeDF <- STFDF(sp=logger_geo,time=logger_time,data=data.frame(value = res$value))
+
+	vST <- variogramST(value~longitude+latitude+time+bathymetry+I(bathymetry^2),timeDF,tlags=0:4,boundaries=c(0,25,50,75))
+
+}
 
 
 

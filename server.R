@@ -143,7 +143,7 @@ shinyServer(function(input,output,session)
 
 	observe({
 	   pal <- colorpal()
-	   print(pal)
+	   # print(pal)
 	   if(input$mapData=="Bathy"){
 		   	mygeodata <- geoData()
 		    leafletProxy("mymap", data = mygeodata) %>% clearImages() %>% clearShapes() %>% addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8)
