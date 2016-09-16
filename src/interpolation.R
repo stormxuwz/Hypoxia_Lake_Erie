@@ -15,8 +15,8 @@ spatial_interpolation <- function(df,grid,method = "IDW"){
 
 	
 	
-	#print(df)
-	#print(grid)
+	#print(head(df))
+	#print(head(grid))
 
 	if(method == "IDW"){
 		coordinates(df) = ~x + y

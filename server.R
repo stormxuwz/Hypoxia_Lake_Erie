@@ -117,7 +117,7 @@ shinyServer(function(input,output,session)
 
 	geoData <- reactive({
 		year <- input$year
-   		retriveGeoData(year,"B")
+   		retriveGeoData(year,"B") %>% lonlat2UTM()
  	})
 
 	colorpal <- reactive({
