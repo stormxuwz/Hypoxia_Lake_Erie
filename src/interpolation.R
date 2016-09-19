@@ -5,6 +5,7 @@ require(dplyr)
 source("src/spatialHelper.R")
 source("src/plot.R")
 library(geoR)
+source("src/database.R")
 
 spatial_interpolation <- function(df,grid,method = "IDW"){
 	# df and grid is a dataframe that contains longitude and latitude and value as columns
@@ -141,9 +142,9 @@ spatialTemporalKriging <- function(year){
 
 # Test
 testFunc <- function(){
-	year <- 2015
+	year <- 2014
 	loggerInfo <- retriveGeoData(year,"B")
-	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","daily","AVG",transform = FALSE)
+	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","hourly","AVG",transform = TRUE) %>% na.omit()
 	interpolation_controller(data,loggerInfo) %>% 
 	plot_spatial(locationInfo = loggerInfo,outputFolder = "../output/2015spPlots/")
 }

@@ -91,8 +91,9 @@ shinyUI(
               dygraphOutput('timeSeriesPlot'),
               # checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
               # checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL),
-              checkboxInput("withDO", "With Other Variable?", value = FALSE, width = NULL),
-              checkboxInput("withUpperLogger", "With Upper Logger?", value = FALSE, width = NULL)
+              checkboxInput("withOther", "With Other Variable?", value = FALSE, width = NULL),
+              checkboxInput("withUpperLogger", "With Upper Logger?", value = FALSE, width = NULL),
+              checkboxInput("outlier", "Show outlier", value = FALSE, width = NULL)
               ),
             
             tabPanel("Correlation",
@@ -107,7 +108,7 @@ shinyUI(
                 # ),
                 textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
             
-            tabPanel("Interpolation",
+            tabPanel("Settings",
               selectInput("interpolationMethod", 
                   label = h5("Method"),
                   choices = list("IDW" = "IDW"),  

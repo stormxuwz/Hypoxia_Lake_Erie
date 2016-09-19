@@ -22,7 +22,7 @@ retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange
 	data <- data.frame()
 	sqlRes <- getTimeSeriesSQL(loggerIndex,year,var,groupRange,dataType,timeRange = timeRange)
 	sql <- sqlRes$sql
-	# print(sql)
+	print(sql)
 	timeFormat <- sqlRes$timeFormat
 	# print(timeFormat)
 	if(!transform){

@@ -4,8 +4,9 @@ require(reshape2)
 require(leaflet)
 require(ggmap)
 
-plot_value<- function(data,label="value",type="dygrphs"){
+plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 	# data is a zoo dataframe
+	
 	if(type == "ggplot"){
 		data <- as.data.frame(data)
 		data$time <- strptime(rownames(data))
@@ -13,7 +14,32 @@ plot_value<- function(data,label="value",type="dygrphs"){
 		# ggplot(data)+geom_point(aes(time,value,color=))
 	}
 	else if (type=="dygrphs"){
-		dygraph(data) %>% dyRangeSelector(retainDateWindow=TRUE) %>% dyAxis("y", label = label)
+		
+		if(!is.null(outlierSeries)){
+			# adding outlier series
+			print("Plot with outliers")
+			# print(head(data))
+			# print(as.numeric(outlierSeries))
+			# outlierSeries <- zoo(outlierSeries,order.by = index(data))
+			print(head(outlierSeries))
+			t <- index(data)
+			data <- as.data.frame(data)
+			data$outlier <- outlierSeries
+			data <- zoo(data,order.by = t)
+			# print(head(data,20))
+
+			p <- dygraph(data) %>% 
+				dyRangeSelector(retainDateWindow=TRUE) %>% 
+				dyAxis("y", label = label) %>% 
+				dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
+				#dySeries("outlier", color = "red")
+		}else{
+			p <- dygraph(data) %>% 
+				dyRangeSelector(retainDateWindow=TRUE) %>% 
+				dyAxis("y", label = label)
+		}
+
+		
 	}
 	else{
 		stop ("invalid plot type")

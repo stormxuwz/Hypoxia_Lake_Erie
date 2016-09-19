@@ -12,6 +12,7 @@ source("./src/database.R")
 source("./config.R")
 source("./src/plot.R")
 source("./src/interpolation.R")
+source("./src/outlierDetection.R")
 
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 
@@ -50,7 +51,7 @@ shinyServer(function(input,output,session)
     #print(head(spdata))
     #print(head(myGeoData))
 
-    if(input$withDO){
+    if(input$withOther){
     	# can only interpolate one varialbe at once
     	return(NULL)
     }
@@ -107,12 +108,11 @@ shinyServer(function(input,output,session)
 		groupRange <- input$GroupRange
 
 
-		if(input$withDO){
+		if(input$withOther){
 			retriveLoggerData_DO_Temp(loggerIndex,year,groupRange,dataType,timeRange=NULL)
 		}else{
 			retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange=NULL)
 		}
-		
 	})
 
 	geoData <- reactive({
@@ -224,10 +224,20 @@ shinyServer(function(input,output,session)
 		selectedGeoData <- subset(geoData(),loggerID %in% as.numeric(input$selectedID))
 		leafletProxy("mymap")%>%clearPopups()%>%addPopups(data=selectedGeoData,lng=~longitude,lat=~latitude,paste(selectedGeoData$loggerID,"(",round(selectedGeoData$bathymetry,1),")"),options=popupOptions(maxHeight=20,zoomAnimation=FALSE))
 		data <- visData()
-		if(input$withDO){
+		if(input$withOther){
 			plot_DO_temp(data)
 		}else{
-			plot_value(data,isolate(varUnit[[input$var]]),"dygrphs")
+			outliers = NULL
+			if(input$outlier){
+				# show outliers
+				#print(head(data))
+				outliersIndex <- stlOutlierDetection(data[,1],3) == 3
+				#print(outliersIndex)
+				outliers <- data[,1]
+				outliers[!outliersIndex] <- NA
+				print(outliers)
+			}
+			plot_value(data,isolate(varUnit[[input$var]]),"dygrphs", outlierSeries = outliers)
 		}
 
 	})
