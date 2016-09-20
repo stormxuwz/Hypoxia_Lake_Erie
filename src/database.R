@@ -22,7 +22,7 @@ retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange
 	data <- data.frame()
 	sqlRes <- getTimeSeriesSQL(loggerIndex,year,var,groupRange,dataType,timeRange = timeRange)
 	sql <- sqlRes$sql
-	print(sql)
+	# print(sql)
 	timeFormat <- sqlRes$timeFormat
 	# print(timeFormat)
 	if(!transform){
@@ -44,7 +44,7 @@ retriveGeoData <- function(year,position,loggerIndex = NULL){
 		sql <- sprintf("select loggerID,longitude,latitude,bathymetry from loggerInfo where available=1 and year = %s and %s", year,loggerCondition)
 	}
 	# print(sql)
-	return(sqlQuery(sql))
+	return(sqlQuery(sql) %>% lonlat2UTM())
 }
 
 
@@ -55,16 +55,38 @@ retrivePairLogger <- function(loggerIndex,year){
 }
 
 
-retriveSnapShot <- function(loggerIndex,year,var,groupRange,dataType,timeRange){
+retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIndex =NULL){
+	loggerCond = "1=1"
 	geoData <- retriveGeoData(year,"B",loggerIndex=loggerIndex)
-	if(is.null(loggerIndex)){
-		loggerIndex <- geoData$loggerID  # if loggerIndex is null, then retrive all data
+
+	if(!is.null(loggerIndex)){
+		# no specific logger info, using all logger
+		loggerCond <- paste("logger = ", loggerIndex) %>% paste(collapse = " OR ")
 	}
-	loggerData <- retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange=timeRange,transform=FALSE)
-	data <- merge(data.frame(loggerData),geoData,by.x = "logger", by.y = "loggerID",all.y = FALSE)
-	data$Time <- as.POSIXct(data$Time)
-	return(data)
+
+	if(is.null(hour)){
+		# perform daily range
+		sql <- sprintf("Select date(Time) as Time, %s(%s) as %s, logger from loggerData_%s where (%s) and date(Time) = '%s' Group by date(Time),logger",dataType, variable,dataType,year,loggerCond,day)
+		timeFormat = "%Y-%m-%d"
+	}else{
+		sql <- sprintf("Select DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') as Time, %s(%s) as %s, logger from loggerData_%s where (%s) and DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') = '%s %s' Group by DATE_FORMAT(Time,'%%Y-%%m-%%d %%H'),logger", dataType,variable,dataType,year,loggerCond, day, sprintf("%02d", hour)) 
+		timeFormat = "%Y-%m-%d %H"
+	}
+
+	data <- sqlQuery(sql) 
+	if(nrow(data)<1){
+		return()
+	}else{
+		data <- merge(data.frame(data),geoData,by.x = "logger", by.y = "loggerID",all.y = FALSE)
+		# print(data$Time)
+		data$Time <- as.POSIXct(data$Time,format = timeFormat)
+		data$id <- 1:nrow(data)
+		return(data)
+	}
+	
+
 }
+
 
 
 sqlQuery <- function (sql) {

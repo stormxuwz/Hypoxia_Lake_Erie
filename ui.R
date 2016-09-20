@@ -33,7 +33,7 @@ shinyUI(
           3,
           selectInput("mapData", 
               label = h5("Spatial Variable"), 
-                choices = list("Bathymetry" = "Bathy", "Logger Data (daily mean)" = "logData","Interpolation" = "Interpolated"), 
+                choices = list("Bathymetry" = "Bathy", "Logger Data" = "logData","Interpolation" = "Interpolated"), 
                 selected = "Bathy")
         )
   		),
@@ -58,7 +58,7 @@ shinyUI(
   			column(
   				3,
   				sliderInput("myHour", 
-  					label = h5("Hour (not implemented yet)"), 
+  					label = h5("Hour"), 
   					min = 0, max = 23,value=12)
   			),
 			column(
@@ -91,8 +91,8 @@ shinyUI(
               dygraphOutput('timeSeriesPlot'),
               # checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
               # checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL),
-              checkboxInput("withOther", "With Other Variable?", value = FALSE, width = NULL),
-              checkboxInput("withUpperLogger", "With Upper Logger?", value = FALSE, width = NULL),
+              checkboxInput("withOther", "With Both Variables", value = FALSE, width = NULL),
+              checkboxInput("withUpperLogger", "With Upper Logger", value = FALSE, width = NULL),
               checkboxInput("outlier", "Show outlier", value = FALSE, width = NULL)
               ),
             
@@ -106,20 +106,20 @@ shinyUI(
                     # separator = " to ", format = "mm/dd/yy",
                     # startview = 'year', weekstart =0
                 # ),
-                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
+                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry"))
             
-            tabPanel("Settings",
-              selectInput("interpolationMethod", 
-                  label = h5("Method"),
-                  choices = list("IDW" = "IDW"),  
-                  selected ="IDW"),
-              selectInput("inteprolationPara1", 
-                  label = h5("Para1"),
-                  choices = list("Para" = "Para1"),  
-                  selected ="Para1"),
-              actionButton("Interpolation","Interpolate") # first is the action name, second is the UI name
+            # tabPanel("Settings",
+            #   selectInput("interpolationMethod", 
+            #       label = h5("Method"),
+            #       choices = list("IDW" = "IDW"),  
+            #       selected ="IDW"),
+            #   selectInput("inteprolationPara1", 
+            #       label = h5("Para1"),
+            #       choices = list("Para" = "Para1"),  
+            #       selected ="Para1"),
+            #   actionButton("Interpolation","Interpolate") # first is the action name, second is the UI name
 
-              )
+              # )
 
           )
   			)
