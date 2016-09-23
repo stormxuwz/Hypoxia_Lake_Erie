@@ -79,7 +79,9 @@ shinyUI(
             selected = NULL, 
             multiple = TRUE,
             options = NULL),
-          actionButton("ClearAll","clear all")
+          actionButton("ClearAll","clear all"),
+          downloadButton("downloadData", label = "Download", class = NULL)
+
   				#actionButton("selectAllLogal","select all")
 
         ),

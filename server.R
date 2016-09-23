@@ -203,7 +203,7 @@ shinyServer(function(input,output,session)
 				#print(outliersIndex)
 				outliers <- data[,1]
 				outliers[!outliersIndex] <- NA
-				print(outliers)
+				# print(outliers)
 			}
 			plot_value(data,isolate(varUnit[[input$var]]),"dygrphs", outlierSeries = outliers)
 		}
@@ -237,10 +237,26 @@ shinyServer(function(input,output,session)
 	  }
 	  year <- isolate(input$year)
 	  
-	  data <- retriveSnapShot(var,"AVG",year, QueryDay,QueryHour, NULL)
+	  data <- retriveSnapShot(var,"AVG",year, QueryDay,QueryHour, NULL,"America/New_York")
 	  return(data)
 	})
 	
+
+	output$downloadData <- downloadHandler(
+  		filename = function() {
+    		paste('data-', isolate(input$year), '.csv', sep='')
+  		},
+  		content = function(con) {
+  			
+  			if(length(input$selectedID)==0){
+  				write.csv(NULL, con)
+  			}else{
+  				data <- visData() # data in UTC time
+  				# print(index(data))
+  				write.zoo(data, con,sep = ",")
+  			}
+  		}
+	)
 
 	output$Variogram <- renderPlotly({
 		if(is.null(input$selectedID)){
@@ -254,7 +270,7 @@ shinyServer(function(input,output,session)
 		#  logger,Time,Temp,longitude,latitude,bathymetry,id
 		spdata[,3] <- ifelse(spdata[,3]>0.01,spdata[,3],0.01)
 		# spdata[,3] <- boxcox(spdata[,3],0.2)
-		print(head(spdata))
+		#print(head(spdata))
 		# print(spdata$Time)
 		if(is.null(spdata))
 		  return()

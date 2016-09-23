@@ -21,7 +21,7 @@ plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 			# print(head(data))
 			# print(as.numeric(outlierSeries))
 			# outlierSeries <- zoo(outlierSeries,order.by = index(data))
-			print(head(outlierSeries))
+			# print(head(outlierSeries))
 			t <- index(data)
 			data <- as.data.frame(data)
 			data$outlier <- outlierSeries

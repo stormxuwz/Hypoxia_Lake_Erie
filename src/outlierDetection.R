@@ -5,7 +5,7 @@
 tsDecomposition <- function(x,season){
 	#stl functions to do time series decomposition
 	res <- ts(x,frequency = season) %>% stl(s.window = 7, robust = TRUE) # s.window = 7 follows the suggestions
-	# print(plot(res))
+	print(plot(res))
 	return(res$time.series)
 	# time.series has three columns: seasonal, trend and remainder
 }
@@ -47,6 +47,9 @@ stlOutlierDetection <- function(x, threshold,testSeasons = c(8,17,24)){
 
 outlierTest <- function(){
 	library(tsoutliers)
+	year <- 2014
+	loggerInfo <- retriveGeoData(year,"B")
+	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","hourly","AVG",transform = TRUE) %>% na.omit()
 	series <- data[,10]
 	series2 <- series
 	ol <- stlOutlierDetection(series,3)

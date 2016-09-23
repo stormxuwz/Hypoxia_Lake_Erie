@@ -55,7 +55,7 @@ retrivePairLogger <- function(loggerIndex,year){
 }
 
 
-retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIndex =NULL){
+retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIndex =NULL,timezone = "UTC"){
 	loggerCond = "1=1"
 	geoData <- retriveGeoData(year,"B",loggerIndex=loggerIndex)
 
@@ -64,12 +64,15 @@ retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIn
 		loggerCond <- paste("logger = ", loggerIndex) %>% paste(collapse = " OR ")
 	}
 
+
 	if(is.null(hour)){
-		# perform daily range
+		# perform daily range 
 		sql <- sprintf("Select date(Time) as Time, %s(%s) as %s, logger from loggerData_%s where (%s) and date(Time) = '%s' Group by date(Time),logger",dataType, variable,dataType,year,loggerCond,day)
 		timeFormat = "%Y-%m-%d"
 	}else{
-		sql <- sprintf("Select DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') as Time, %s(%s) as %s, logger from loggerData_%s where (%s) and DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') = '%s %s' Group by DATE_FORMAT(Time,'%%Y-%%m-%%d %%H'),logger", dataType,variable,dataType,year,loggerCond, day, sprintf("%02d", hour)) 
+		# first convert time zone
+		time <- as.POSIXct(sprintf("%s %d",day,hour),format = "%Y-%m-%d %H",tz = timezone) %>% strftime(format = "%Y-%m-%d %H",tz = "UTC")
+		sql <- sprintf("Select DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') as Time, %s(%s) as %s, logger from loggerData_%s where (%s) and DATE_FORMAT(Time,'%%Y-%%m-%%d %%H') = '%s' Group by DATE_FORMAT(Time,'%%Y-%%m-%%d %%H'),logger", dataType,variable,dataType,year,loggerCond, time) 
 		timeFormat = "%Y-%m-%d %H"
 	}
 
