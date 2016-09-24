@@ -14,11 +14,6 @@ spatial_interpolation <- function(df,grid,method = "IDW"){
 	convexIndex <- grid$convexIndex
 	grid <- subset(grid,convexIndex==1)
 
-	
-	
-	#print(head(df))
-	#print(head(grid))
-
 	if(method == "IDW"){
 		coordinates(df) = ~x + y
 		coordinates(grid) = ~x + y
@@ -72,28 +67,63 @@ stKriging <- function(df,logger_geo, grid,detrendMethod = NULL,...){
 }
 
 
+calulateHypoxiaExtent <- function(data,locationInfo,method = "IDW"){
+	# assume the spatial interpolation grid doesn't change along time
+	# data is a zoo data frame
+	data <- na.omit(data)  # only remain the time where all data are available
+	times <- index(data)
+	grid <- createGrid(locationInfo)  # will also return an area
+	interpolationRes <- matrix(0,nrow = nrow(grid),ncol = nrow(data))
+	loggerNames  <- as.numeric(colnames(data))
+	print("# of interpolation:")
+	print(nrow(data))
+	for(i in 1:nrow(data)){
+		subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
+		subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+
+		grid$pred <- spatial_interpolation(subData,grid)
+		interpolationRes[,i] <- ifelse(grid$pred<0,0,grid$pred)
+	}
+
+	interpolationRes <- interpolationRes[grid$convexIndex == 1,] # remove the locations that are NA
+
+	totalPx <- nrow(interpolationRes)
+
+	hypoxia_2 <- colSums(interpolationRes<2)/totalPx
+	hypoxia_0 <- colSums(interpolationRes<0.01)/totalPx
+	hypoxia_4 <- colSums(interpolationRes<4)/totalPx
+
+	hypoxiaExtent <- zoo(data.frame(below_0.01 = hypoxia_0, below_2 = hypoxia_2, below_4 = hypoxia_4),order.by = times)
+
+	# attr(hypoxiaExtent,"pixSize") <- attr(grid,"pixSize")
+	attr(hypoxiaExtent,"totalArea") <- attr(grid,"totalArea")
+
+	return(hypoxiaExtent)
+}
+
+
 
 interpolation_controller <- function(data,locationInfo,method = "IDW"){
-		allTimes <- unique(data$Time)
-		interpolationResults <- list()
+	allTimes <- unique(data$Time)
+	interpolationResults <- list()
+	
+	for(i in 1:length(allTimes)){
+	#for(i in 1:3){
+		hourlyTime = allTimes[i]
+		subData <- subset(data,Time == hourlyTime) %>% na.omit()
+		subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
 		
-		for(i in 1:length(allTimes)){
-		#for(i in 1:3){
-			hourlyTime = allTimes[i]
-			subData <- subset(data,Time == hourlyTime) %>% na.omit()
-			subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
-			
-			
-			grid <- createGrid(subData) # form the grid
-			# grid$bathy <- findBathy(grid,"../input/erie_lld/erie_lld.asc")
-			
-			grid$pred <- spatial_interpolation(subData,grid)
-			grid$pred <- ifelse(grid$pred<0,0,grid$pred)
-			attributes(grid)$time <- paste(as.character(hourlyTime),"GMT")
-			interpolationResults[[i]] <- grid
-			print(summary(grid))
-		}
-		return(interpolationResults)
+		
+		grid <- createGrid(subData) # form the grid
+		# grid$bathy <- findBathy(grid,"../input/erie_lld/erie_lld.asc")
+		
+		grid$pred <- spatial_interpolation(subData,grid)
+		grid$pred <- ifelse(grid$pred<0,0,grid$pred)
+		attributes(grid)$time <- paste(as.character(hourlyTime),"GMT")
+		interpolationResults[[i]] <- grid
+		print(summary(grid))
+	}
+	return(interpolationResults)
 }
 
 
@@ -144,7 +174,7 @@ spatialTemporalKriging <- function(year){
 testFunc <- function(){
 	year <- 2014
 	loggerInfo <- retriveGeoData(year,"B")
-	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","hourly","AVG",transform = TRUE) %>% na.omit()
+	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","daily","AVG",transform = TRUE) %>% na.omit()
 	interpolation_controller(data,loggerInfo) %>% 
 	plot_spatial(locationInfo = loggerInfo,outputFolder = "../output/2015spPlots/")
 }

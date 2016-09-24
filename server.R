@@ -43,14 +43,9 @@ shinyServer(function(input,output,session)
   interpolation <- reactive({
     input$Interpolation
     spdata <- spatialDataAll()
-    #print("spData")
-    #print(head(spdata))
-
+  
     myGeoData <- geoData()
-    
-    #print(head(spdata))
-    #print(head(myGeoData))
-
+ 
     if(input$withOther){
     	# can only interpolate one varialbe at once
     	return(NULL)
@@ -81,6 +76,60 @@ shinyServer(function(input,output,session)
 	}
   })
 
+  	calHypoxiaExtent <- reactive({
+  		# input$calHypoxiaButtom
+  		year <- input$year
+  		print("start calculate hypoxia extent")
+  		# daily <- input$dataType
+
+		loggerInfo <- retriveGeoData(year,"B")
+		data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","daily","AVG",transform = TRUE) %>% na.omit()
+		
+		## hard code for progress bar
+		data <- na.omit(data)  # only remain the time where all data are available
+		times <- index(data)
+		grid <- createGrid(loggerInfo)  # will also return an area
+		
+		interpolationRes <- matrix(0,nrow = nrow(grid),ncol = nrow(data))
+		loggerNames  <- as.numeric(colnames(data))
+		print("# of interpolation:")
+		print(nrow(data))
+
+		withProgress(message = 'Calculate Hypoxia Extent', value = 0, {
+		for(i in 1:nrow(data)){
+			subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
+			subData <- merge(subData, loggerInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+
+			grid$pred <- spatial_interpolation(subData,grid)
+			interpolationRes[,i] <- ifelse(grid$pred<0,0,grid$pred)
+			incProgress(1/nrow(data), detail = paste("Calculate for time", times[i]))
+		}
+		})
+
+		interpolationRes <- interpolationRes[grid$convexIndex == 1,] # remove the locations that are NA
+
+		totalPx <- nrow(interpolationRes)
+
+		hypoxia_2 <- colSums(interpolationRes<2)/totalPx
+		hypoxia_0 <- colSums(interpolationRes<0.01)/totalPx
+		hypoxia_4 <- colSums(interpolationRes<4)/totalPx
+
+		hypoxiaExtent <- zoo(data.frame(below_0.01 = hypoxia_0, below_2 = hypoxia_2, below_4 = hypoxia_4),order.by = times)
+
+		# attr(hypoxiaExtent,"pixSize") <- attr(grid,"pixSize")
+		attr(hypoxiaExtent,"totalArea") <- attr(grid,"totalArea")
+
+		# hExtent <- calulateHypoxiaExtent(data,loggerInfo) # calculate hypoxia extent
+		return(hypoxiaExtent)
+  	})
+
+  	output$hypoxiaExtentPlot <- renderDygraph({
+
+		hypoxia  <- calHypoxiaExtent()
+		return(dygraph(hypoxia) %>% dyRangeSelector())
+	})
+
+
 
 	visData <- reactive({
 	  	year <- isolate(input$year)
@@ -103,6 +152,7 @@ shinyServer(function(input,output,session)
 
 	geoData <- reactive({
 		year <- input$year
+		# print(year)
    		retriveGeoData(year,"B")
  	})
 

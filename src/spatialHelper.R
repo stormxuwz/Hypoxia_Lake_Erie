@@ -19,6 +19,8 @@ createGrid <- function(loggerInfo, by.x = 0.01, by.y = 0.01){
 	convexHullModel<-convHull(loggerInfo[,c("longitude","latitude")])
 
 	grid$convexIndex <- predict(convexHullModel,grid)
+	attr(grid,"pixSize") = 100
+	attr(grid,"totalArea") = 9900
 	return(grid)
 }
 

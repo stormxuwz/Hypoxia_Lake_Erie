@@ -108,8 +108,15 @@ shinyUI(
                     # separator = " to ", format = "mm/dd/yy",
                     # startview = 'year', weekstart =0
                 # ),
-                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry"))
+                textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
             
+            tabPanel("Hypoxia Extent",
+                dygraphOutput('hypoxiaExtentPlot'),
+                # actionButton("calHypoxiaButtom","Calculate Hypoxia Extent"),
+                checkboxInput("usingRatio", "Show hypoxia area ratio", value = FALSE, width = NULL)
+              )
+           
+
             # tabPanel("Settings",
             #   selectInput("interpolationMethod", 
             #       label = h5("Method"),
