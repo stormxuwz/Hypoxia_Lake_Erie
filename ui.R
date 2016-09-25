@@ -113,7 +113,7 @@ shinyUI(
             tabPanel("Hypoxia Extent",
                 dygraphOutput('hypoxiaExtentPlot'),
                 # actionButton("calHypoxiaButtom","Calculate Hypoxia Extent"),
-                checkboxInput("usingRatio", "Show hypoxia area ratio", value = FALSE, width = NULL)
+                checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL)
               )
            
 

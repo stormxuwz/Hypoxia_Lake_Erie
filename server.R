@@ -90,6 +90,7 @@ shinyServer(function(input,output,session)
 		times <- index(data)
 		grid <- createGrid(loggerInfo)  # will also return an area
 		
+		
 		interpolationRes <- matrix(0,nrow = nrow(grid),ncol = nrow(data))
 		loggerNames  <- as.numeric(colnames(data))
 		print("# of interpolation:")
@@ -97,6 +98,7 @@ shinyServer(function(input,output,session)
 
 		withProgress(message = 'Calculate Hypoxia Extent', value = 0, {
 		for(i in 1:nrow(data)){
+		# for(i in 1:3){
 			subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
 			subData <- merge(subData, loggerInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
 
@@ -120,13 +122,38 @@ shinyServer(function(input,output,session)
 		attr(hypoxiaExtent,"totalArea") <- attr(grid,"totalArea")
 
 		# hExtent <- calulateHypoxiaExtent(data,loggerInfo) # calculate hypoxia extent
-		return(hypoxiaExtent)
+		
+
+
+		return(list(hypoxiaExtent = hypoxiaExtent, grid = grid))
   	})
 
   	output$hypoxiaExtentPlot <- renderDygraph({
 
-		hypoxia  <- calHypoxiaExtent()
-		return(dygraph(hypoxia) %>% dyRangeSelector())
+		hypoxiaRes  <- calHypoxiaExtent()
+		hypoxia <- hypoxiaRes[[1]]
+		grid <- hypoxiaRes[[2]]
+		
+		grid$pred <- NA
+		grid$pred[grid$convexIndex==1] <- 1
+		
+		pal <- colorNumeric("black", domain = NULL)(grid$pred)
+
+		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
+		raster::projection(grid)=CRS("+init=epsg:4326")
+		
+		leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% clearShapes()
+			addRasterImage(grid, colors = pal, opacity = 0.2)
+
+		if(input$showArea){
+			hypoxia <- hypoxia*attr(hypoxia,"totalArea")
+			label = "Hypoxia extent (km^2)"
+		}else{
+			label = "Hypoxia extent ratio (km^2)"
+		}
+		
+		return(dygraph(hypoxia) %>% dyRangeSelector(retainDateWindow=TRUE)) %>% dyAxis("y", label = label)
+
 	})
 
 
@@ -210,7 +237,7 @@ shinyServer(function(input,output,session)
 			addRasterImage(grid, colors = pal, opacity = 0.8) %>% 
 			addLegend(position = "bottomright",pal = pal, values = values(grid), title = "avg")
 
-			# change color 
+			# adding the logger locations 
 			leafletProxy("mymap", data = spdata) %>% clearShapes() %>%
 			addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
 		}

@@ -15,12 +15,19 @@ findBathy <- function(spData,bathyRasterFile){
 createGrid <- function(loggerInfo, by.x = 0.01, by.y = 0.01){
 	longitudeRange <- range(loggerInfo$longitude)
 	latitudeRange <- range(loggerInfo$latitude)
-	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>%lonlat2UTM()
-	convexHullModel<-convHull(loggerInfo[,c("longitude","latitude")])
+	
+	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% lonlat2UTM()
+	convexHullModel <- convHull(loggerInfo[,c("longitude","latitude")])
+	
+	attr(grid,"pixSize") = 22
+	
+	totalArea = diff(range(grid$x))*diff(range(grid$y))
 
 	grid$convexIndex <- predict(convexHullModel,grid)
-	attr(grid,"pixSize") = 100
-	attr(grid,"totalArea") = 9900
+	
+	attr(grid,"totalArea") <- totalArea*sum(grid$convexIndex)/nrow(grid)  # km^2
+	print(attr(grid,"totalArea"))
+
 	return(grid)
 }
 
