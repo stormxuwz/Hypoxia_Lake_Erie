@@ -4,6 +4,7 @@ require(reshape2)
 require(leaflet)
 require(ggmap)
 
+
 plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 	# data is a zoo dataframe
 	
@@ -18,16 +19,8 @@ plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 		if(!is.null(outlierSeries)){
 			# adding outlier series
 			print("Plot with outliers")
-			# print(head(data))
-			# print(as.numeric(outlierSeries))
-			# outlierSeries <- zoo(outlierSeries,order.by = index(data))
-			# print(head(outlierSeries))
-			t <- index(data)
-			data <- as.data.frame(data)
-			data$outlier <- outlierSeries
-			data <- zoo(data,order.by = t)
-			# print(head(data,20))
-
+			
+			data <- combindWithOutlier(data,outlierSeries)
 			p <- dygraph(data) %>% 
 				dyRangeSelector(retainDateWindow=TRUE) %>% 
 				dyAxis("y", label = label) %>% 

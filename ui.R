@@ -15,57 +15,60 @@ shinyUI(
        					choices = list("2014" = 2014, "2015"=2015),
        					selected=2014)
   			),
-
-  			column(
-  				3,
-  				selectInput("var", 
-  						label = h5("Variable"), 
-        				choices = list("Temperature" = "Temp", "Dissolved Oxygen" = "DO"), 
-        				selected = "Temp")
-  			),
+        column(
+          3,
+          selectInput("dataType", 
+              label = h5("Variable Type"),
+                choices = list("RAW"="Raw","Daily Average"="daily_AVG", "Daily Standard Dev" = "daily_STD", "Hourly Standard Dev" = "hourly_STD", "Hourly Average"="hourly_AVG"),
+                selected="Raw")
+        ),
+  			
   			column(
   				3,
   				dateInput("myDate", 
   					label = h5("Date"), 
   					value = "2014-08-01")
   			),
-        column(
-          3,
-          selectInput("mapData", 
-              label = h5("Spatial Variable"), 
-                choices = list("Bathymetry" = "Bathy", "Logger Data" = "logData","Interpolation" = "Interpolated"), 
-                selected = "Bathy")
+        # column(
+        #   3,
+        #   selectInput("GroupRange", 
+        #       label = h5("Aggregrate Range"),
+        #         choices = list("Daily" = "daily", "Hourly"="hourly"),
+        #         selected="daily")
+        # )
+         column(
+          2,
+          selectInput("colors", h5("Color Scheme"),
+            rownames(subset(brewer.pal.info, category %in% c("seq", "div"))))
         )
+        
   		),
 
   		fluidRow(
   			column(
-  				3,
-  				selectInput("dataType", 
-  						label = h5("Aggregrate Type"),
-       					choices = list("Standard Dev" = "STD", "Average"="AVG","RAW"="Raw"),
-       					selected="AVG")
-  			),
+          3,
+          selectInput("var", 
+              label = h5("Logger Variable"), 
+                choices = list("Temperature" = "Temp", "Dissolved Oxygen" = "DO","Temperature & DO" = "All"), 
+                selected = "Temp")
+        ),
 
-  			column(
-  				3,
-  				selectInput("GroupRange", 
-  						label = h5("Aggregrate Range"),
-       					choices = list("Daily" = "daily", "Hourly"="hourly"),
-       					selected="daily")
-  			),
+        column(
+          3,
+          selectInput("mapData", 
+              label = h5("Data on the Map"), 
+                choices = list("Bathymetry" = "Bathy", "Logger Variable" = "logData","IDW Interpolation" = "Interpolated"), 
+                selected = "Bathy")
+        ),
+  			
 
   			column(
   				3,
   				sliderInput("myHour", 
   					label = h5("Hour"), 
   					min = 0, max = 23,value=12)
-  			),
-			column(
-  				2,
-  				selectInput("colors", h5("Color Scheme"),
-      			rownames(subset(brewer.pal.info, category %in% c("seq", "div"))))
-      		)
+  			)
+			  
   		),
 
   		hr(),
@@ -93,8 +96,8 @@ shinyUI(
               dygraphOutput('timeSeriesPlot'),
               # checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
               # checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL),
-              checkboxInput("withOther", "With Both Variables", value = FALSE, width = NULL),
-              checkboxInput("withUpperLogger", "With Upper Logger", value = FALSE, width = NULL),
+              # checkboxInput("withOther", "With Both Variables", value = FALSE, width = NULL),
+              checkboxInput("withUpperLogger", "With upper logger", value = FALSE, width = NULL),
               checkboxInput("outlier", "Show outlier", value = FALSE, width = NULL)
               ),
             
@@ -110,10 +113,16 @@ shinyUI(
                 # ),
                 textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
             
-            tabPanel("Hypoxia Extent",
+            tabPanel("Daily Hypoxia Extent",
                 dygraphOutput('hypoxiaExtentPlot'),
                 # actionButton("calHypoxiaButtom","Calculate Hypoxia Extent"),
-                checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL)
+                checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL),
+                downloadButton("downloadHypoxia", label = "Download Hypoxia Area", class = NULL)
+
+              ),
+              tabPanel("Instructions",
+               label = paste("variogram date range")
+
               )
            
 

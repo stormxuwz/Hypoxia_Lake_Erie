@@ -18,6 +18,15 @@ emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 
 boxcox <- function(x,lambda){return((x^lambda-1)/lambda)}
 
+parseDataTypeInput <- function(dataType){
+	if(dataType == "Raw"){
+		return(list(groupRange = "", dataType= "Raw"))
+	}else{
+		dataType <- unlist(strsplit(dataType,"_"))
+		return(list(groupRange = dataType[1], dataType= dataType[2]))
+	}
+}
+
 # ID <- input$selectedID
 
 shinyServer(function(input,output,session)
@@ -41,12 +50,12 @@ shinyServer(function(input,output,session)
   
   # Action -- Interpolation
   interpolation <- reactive({
-    input$Interpolation
+    # input$Interpolation
     spdata <- spatialDataAll()
   
     myGeoData <- geoData()
  
-    if(input$withOther){
+    if(input$var == "All"){
     	# can only interpolate one varialbe at once
     	return(NULL)
     }
@@ -77,7 +86,7 @@ shinyServer(function(input,output,session)
   })
 
   	calHypoxiaExtent <- reactive({
-  		# input$calHypoxiaButtom
+
   		year <- input$year
   		print("start calculate hypoxia extent")
   		# daily <- input$dataType
@@ -142,7 +151,7 @@ shinyServer(function(input,output,session)
 		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
 		raster::projection(grid)=CRS("+init=epsg:4326")
 		
-		leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% clearShapes()
+		leafletProxy("mymap") %>% clearControls() %>% clearImages() %>%
 			addRasterImage(grid, colors = pal, opacity = 0.2)
 
 		if(input$showArea){
@@ -160,17 +169,24 @@ shinyServer(function(input,output,session)
 
 	visData <- reactive({
 	  	year <- isolate(input$year)
-	  	dataType <- input$dataType
+	  	
+	  	tmpDataType <- parseDataTypeInput(input$dataType)
+	  	
+	  	print(tmpDataType)
+
+	  	dataType <- tmpDataType$dataType
+	  	groupRange <- tmpDataType$groupRange
+		
 		loggerIndex <- input$selectedID
 
 		if(input$withUpperLogger){
 			loggerIndex <- c(loggerIndex,retrivePairLogger(loggerIndex,year)$upper)
 		}
 		var <- input$var
-		groupRange <- input$GroupRange
+		
 
 
-		if(input$withOther){
+		if(var =="All"){
 			retriveLoggerData_DO_Temp(loggerIndex,year,groupRange,dataType,timeRange=NULL)
 		}else{
 			retriveLoggerData(loggerIndex,year,var,groupRange,dataType,timeRange=NULL)
@@ -193,7 +209,7 @@ shinyServer(function(input,output,session)
 	    }
 	    else{
 	    	grid <- interpolation()
-
+	    	print(grid)
 	    	if(is.null(grid)){
 	    		return(colorNumeric(input$colors, spatialDataAll()[,3]))
 	    	}else{
@@ -257,6 +273,18 @@ shinyServer(function(input,output,session)
     	updateSelectizeInput(session, 'selectedID', choices = unique(isolate(geoData())[,"loggerID"]), selected= c(ID,click$id), server = FALSE)
 	})
 
+	calOutliers <- reactive({
+		data <- visData()
+		outliers <- data
+		for(i in 1:ncol(data)){
+			print(i)
+			outliersIndex <- stlOutlierDetection(data[,i],3) == 3
+			outliers[!outliersIndex,i] <- NA
+		}
+		return(outliers)
+	})
+
+
 	output$timeSeriesPlot <- renderDygraph({
 		if(is.null(input$selectedID)){
 			leafletProxy("mymap")%>%clearPopups()
@@ -269,18 +297,13 @@ shinyServer(function(input,output,session)
 			addPopups(data=selectedGeoData,lng=~longitude,lat=~latitude,paste(selectedGeoData$loggerID,"(",round(selectedGeoData$bathymetry,1),")"),options=popupOptions(maxHeight=20,zoomAnimation=FALSE))
 		
 		data <- visData()
-		if(input$withOther){
+		if(input$var == "All"){
 			plot_DO_temp(data)
 		}else{
 			outliers = NULL
 			if(input$outlier){
 				# show outliers
-				#print(head(data))
-				outliersIndex <- stlOutlierDetection(data[,1],3) == 3
-				#print(outliersIndex)
-				outliers <- data[,1]
-				outliers[!outliersIndex] <- NA
-				# print(outliers)
+				outliers <- calOutliers()
 			}
 			plot_value(data,isolate(varUnit[[input$var]]),"dygrphs", outlierSeries = outliers)
 		}
@@ -306,8 +329,10 @@ shinyServer(function(input,output,session)
 		# get the spatial data at one certain time point with sp locations
 	  var <- input$var
 	  QueryDay <- input$myDate
-	  
-	  if(input$GroupRange == "daily"){
+	  groupRange <- parseDataTypeInput(input$dataType)$groupRange
+
+
+	  if(groupRange == "daily"){
 			QueryHour <- NULL
 		}else{
 			QueryHour <- input$myHour
@@ -328,10 +353,27 @@ shinyServer(function(input,output,session)
   			if(length(input$selectedID)==0){
   				write.csv(NULL, con)
   			}else{
+
   				data <- visData() # data in UTC time
-  				# print(index(data))
+				if(input$outlier){
+  					outliers <- calOutliers()
+  					data <- combindWithOutlier(data,outliers)
+  				}
   				write.zoo(data, con,sep = ",")
   			}
+  		}
+	)
+
+	output$downloadHypoxia <- downloadHandler(
+		filename = function() {
+    		paste('Hypoxia Area', isolate(input$year), '.csv', sep='')
+  		},
+  		content = function(con) {
+			data <- calHypoxiaExtent()[[1]]
+			print(data)
+			data <- data * attr(data,"totalArea")
+
+			write.zoo(data, con,sep = ",")
   		}
 	)
 
