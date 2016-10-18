@@ -328,6 +328,8 @@ shinyServer(function(input,output,session)
 	spatialDataAll <- reactive({
 		# get the spatial data at one certain time point with sp locations
 	  var <- input$var
+	  if(var == "All")
+	  	var <- "DO"
 	  QueryDay <- input$myDate
 	  groupRange <- parseDataTypeInput(input$dataType)$groupRange
 

@@ -19,7 +19,7 @@ shinyUI(
           3,
           selectInput("dataType", 
               label = h5("Variable Type"),
-                choices = list("RAW"="Raw","Daily Average"="daily_AVG", "Daily Standard Dev" = "daily_STD", "Hourly Standard Dev" = "hourly_STD", "Hourly Average"="hourly_AVG"),
+                choices = list("RAW"="Raw","Daily Average"="daily_AVG", "Daily Standard Dev" = "daily_STD","Hourly Average"="hourly_AVG", "Hourly Standard Dev" = "hourly_STD"),
                 selected="Raw")
         ),
   			
