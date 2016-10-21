@@ -55,7 +55,7 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	for(i in 1:nBasis){
 		spData <- coef_df[,c("x","y",paste("V",i,sep = ""),"bathymetry","longitude","latitude")]
 		names(spData)[3] <- "value"
-		plot_variogram(spData)
+		# plot_variogram(spData)
 		pred <- spatial_interpolation(spData,grid,"loglik") # res is a vector of interpolated coefficient of basis i
 		prediction <- prediction + basis[,i] %*% t(pred) # project the coefficients to values
 	}
@@ -63,12 +63,12 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	# do interpolation on the residuals
 	DO_res <- DOdata - decompRes$fit  # a matrix of shape T*nLocation
 	
-
 	return(list(trend = prediction,res = DO_res))
 }
 
 
 SVD_basis <- function(DOdata, r){
+	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
 	svdRes <- svd(DOdata)
 
@@ -100,6 +100,35 @@ B_spline <- function(DOdata,knots,norder = 4){
 
 
 
+crossValidation <- function(DOdata,locations){
+	time <- index(DOdata)
+	for(i in 1:length(locations$loggerID)){
+		remainingloc <- locations$loggerID[-i] %>% as.character()
+		subData <- DOdata[,remainingloc]
+		grid <- locations[i,c("longitude","latitude","x","y")]
+		grid$convexIndex <- 1
+		
+		Y <- as.numeric(DOdata[,as.character(locations$loggerID[i])])
+
+		trendPrediction <- basis_interpolation(subData,locations[-i,],grid,basis = "svd", r = length(remainingloc))
+		finalPrediction <- cbind(t(trendPrediction$trend),grid)[,1:length(time)] %>% as.numeric()
+		print(plot(time,Y,type = "l",main = locations$loggerID[i]))
+		print(lines(time,finalPrediction,col="red"))
+	}
+}
+
+
+
+timeRange <- c("2014-06-23","2014-10-05")
+
+year <- 2014
+bottomLogger_2014 <- retriveGeoData(year,"B") %>% arrange(loggerID)
+data_2014 <- retriveLoggerData(bottomLogger_2014$loggerID,year,"DO","daily","AVG",timeRange = timeRange)
+time_2014 <- index(data_2014)
+crossValidation(data_2014,bottomLogger_2014)
+#grid <- createGrid(bottomLogger_2014)
+#trendPrediction <- basis_interpolation(data_2014,bottomLogger_2014,grid,basis = "svd", r = 5)
+#finalPrediction <- cbind(t(trendPrediction$trend),grid)
 
 
 
@@ -140,17 +169,6 @@ B_spline <- function(DOdata,knots,norder = 4){
 
 # test
 # debug(fda)
-timeRange <- c("2014-06-23","2014-10-05")
-
-
-year <- 2014
-bottomLogger_2014 <- retriveGeoData(year,"B") %>% arrange(loggerID) %>% lonlat2UTM()
-data_2014 <- retriveLoggerData(bottomLogger_2014$loggerID,year,"DO","daily","AVG",timeRange = timeRange)
-time_2014 <- index(data_2014)
-grid <- createGrid(bottomLogger_2014)
-trendPrediction <- basis_interpolation(data_2014,bottomLogger_2014,grid,basis = "svd", r = 5)
-finalPrediction <- cbind(t(trendPrediction$trend),grid)
-
 
 
 
