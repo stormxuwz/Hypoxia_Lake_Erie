@@ -232,6 +232,7 @@ shinyServer(function(input,output,session)
 	    spdata <- spatialDataAll()
 	    # names(spdata[,3]) = "avg"
 	    if(is.null(spdata)){
+	    	print("no spdata")
 	      leafletProxy("mymap", data = spdata) %>% clearImages() %>% clearShapes() %>% clearControls()
 	    }else{
 	      names(spdata)[3]="val"
@@ -240,23 +241,25 @@ shinyServer(function(input,output,session)
 	  }
 
 	  else{
-		spdata <- spatialDataAll()
-		grid <- interpolation()
+	  	# do the interpolation
+			spdata <- spatialDataAll()
+			#print(spdata)
+			grid <- interpolation()
 
-		if(is.null(grid)){
-
-		}
-		else{
-			# adding raster
-			names(spdata)[3]="val"
-			leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% 
-			addRasterImage(grid, colors = pal, opacity = 0.8) %>% 
-			addLegend(position = "bottomright",pal = pal, values = values(grid), title = "avg")
-
-			# adding the logger locations 
-			leafletProxy("mymap", data = spdata) %>% clearShapes() %>%
-			addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
-		}
+			if(is.null(grid)){
+	
+			}
+			else{
+				# adding raster
+				names(spdata)[3]="val"
+				leafletProxy("mymap") %>% clearControls() %>% clearImages() %>% 
+				addRasterImage(grid, colors = pal, opacity = 0.8) %>% 
+				addLegend(position = "bottomright",pal = pal, values = values(grid), title = "avg")
+	
+				# adding the logger locations 
+				leafletProxy("mymap", data = spdata) %>% clearShapes() %>%
+				addCircles(layerId=~logger,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(val), fillOpacity = 0.8)
+			}
 	  }
 
   	})
@@ -316,8 +319,9 @@ shinyServer(function(input,output,session)
 		if(input$dataType=="Raw")
 			return(NULL)
 		# if(input$var==""){}
+		# print(cor(visData(),use="pairwise.complete.obs"))
 		return(cor(visData(),use="pairwise.complete.obs"))
-	})
+	},rownames = TRUE)
 
 	observe({
 	  input$year
@@ -331,15 +335,19 @@ shinyServer(function(input,output,session)
 	  if(var == "All")
 	  	var <- "DO"
 	  QueryDay <- input$myDate
+	  print(input$dataType)
+	  if(input$dataType == "Raw"){
+	  	return(NULL) # Raw data can't visualize spatially on the map since the time is different
+	  }
 	  groupRange <- parseDataTypeInput(input$dataType)$groupRange
-
+	
 
 	  if(groupRange == "daily"){
 			QueryHour <- NULL
 		}else{
 			QueryHour <- input$myHour
 	  }
-	  year <- isolate(input$year)
+	  year <- input$year # change to non-isolate
 	  
 	  data <- retriveSnapShot(var,"AVG",year, QueryDay,QueryHour, NULL,"America/New_York")
 	  return(data)
@@ -387,7 +395,7 @@ shinyServer(function(input,output,session)
 			return()
 		}
 		spdata <- spatialDataAll() %>% subset(logger %in% input$selectedID)
-
+		
 		#  logger,Time,Temp,longitude,latitude,bathymetry,id
 		spdata[,3] <- ifelse(spdata[,3]>0.01,spdata[,3],0.01)
 		# spdata[,3] <- boxcox(spdata[,3],0.2)
@@ -402,17 +410,19 @@ shinyServer(function(input,output,session)
 		eq <- paste("var",input$equation)
 		#print(eq)
 		v <- data.frame(variogram(as.formula(eq),data=spdata,cloud=T,cutoff=10000))
-		# print(v)
+		
 		v$leftLogger <- spdata$logger[v$left]
 		v$rightLogger <- spdata$logger[v$right]
 
 		v$leftValue <- spdata$var[v$left]
 		v$rightValue <- spdata$var[v$right]
 		# saveRDS(v,"test.rds")
-
-		p <- plot_ly(v, x = dist, y=gamma, mode="markers",hoverinfo = "text",
-          text = paste(v$leftLogger,"(",round(v$leftValue,2),")--",v$rightLogger,"(",round(v$rightValue,2),")",sep=""))
-		p
+		print(v)
+		p <- plot_ly(v, x = ~dist, y=~gamma, mode="markers",hoverinfo = "text",
+          text = ~paste(leftLogger,"(",round(leftValue,2),")--",rightLogger,"(",round(rightValue,2),")",sep=""))
+		#p
+	  #p <- plot_ly(v,x=dist,y=leftValue)
+	  p
 
 	})
 

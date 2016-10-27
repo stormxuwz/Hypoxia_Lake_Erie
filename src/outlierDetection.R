@@ -19,7 +19,7 @@ combindWithOutlier <- function(data, outliers){
 
 tsDecomposition <- function(x,season){
 	#stl functions to do time series decomposition
-	res <- ts(x,frequency = season) %>% stl(s.window = 7, robust = TRUE) # s.window = 7 follows the suggestions
+	res <- ts(x,frequency = season) %>% stl(s.window = 7, s.degree = 0, robust = TRUE) # s.window = 7 follows the suggestions
 	#print(plot(res))
 	return(res$time.series)
 	# time.series has three columns: seasonal, trend and remainder

@@ -67,8 +67,13 @@ shinyUI(
   				sliderInput("myHour", 
   					label = h5("Hour"), 
   					min = 0, max = 23,value=12)
+  			),
+  			column(
+  				3,
+  				actionButton("Instruction","Instructions"),
+  				tags$style(type='text/css', "#Instruction { width: 60%; margin-top: 25px;}")
   			)
-			  
+  			
   		),
 
   		hr(),
@@ -119,11 +124,11 @@ shinyUI(
                 checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL),
                 downloadButton("downloadHypoxia", label = "Download Hypoxia Area", class = NULL)
 
-              ),
-              tabPanel("Instructions",
-               label = paste("variogram date range")
-
               )
+              #tabPanel("Instructions",
+              # label = paste("variogram date range")
+
+              #)
            
 
             # tabPanel("Settings",
