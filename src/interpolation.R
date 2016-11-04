@@ -1,3 +1,4 @@
+
 require(fields)
 require(gstat)
 require(sp)
@@ -7,27 +8,59 @@ source("src/plot.R")
 library(geoR)
 source("src/database.R")
 
-spatial_interpolation <- function(df,grid,method = "IDW"){
+spatial_interpolation <- function(df,grid,method = "IDW", condSim = 1){
 	# df and grid is a dataframe that contains longitude and latitude and value as columns
 	pred <- rep(NA,nrow(grid))
 
 	convexIndex <- grid$convexIndex
-	grid <- subset(grid,convexIndex==1)
+	
 
 	if(method == "IDW"){
+		grid <- subset(grid,convexIndex==1)
 		coordinates(df) = ~x + y
 		coordinates(grid) = ~x + y
 		pred[convexIndex == 1] <- krige(value ~  1 , df, grid)$var1.pred
 	}
 	else if(method == "loglik"){
+		grid <- subset(grid,convexIndex==1)
 		# Using log likelihood to fit covariance
 		df <- df[,c("x","y","value","bathymetry")] %>% as.geodata()
 		ml <- likfit(df, ini = c(5,40), fix.nugget = T, lik.method = "ML",cov.model = "exponential",trend = "1st")
 		pred[convexIndex == 1] <- krige.conv(df, locations = grid[,c("x","y")], krige = krige.control(obj.m = ml))$predict
-	}else{
+	}
+	else if(method == "baye"){
+		# conduct the bayesian kriging
+		pred <- array(NA,dim=c(nrow(grid),1000))
+		grid <- subset(grid,convexIndex==1)
+		
+		MC <- model.control(cov.model = "exponential") 
+		
+		# specify the priors
+		PC <- prior.control(phi.discrete=seq(30,100,10),  # range is discreted
+												beta.prior = "flat",  # beta is flat 
+												sigmasq.prior = "reciprocal",
+												tausq.rel.prior = "fixed",
+												tausq.rel = 0)  # sigma^2 is 
+		
+		# specify the output control
+		OC <- output.control(n.pos = 1000, # the number of samples taking from posterior distribution
+												 n.pred = 1000,   # sample to taken from the predictive distribution
+												 signal = FALSE)
+		
+		df <- df[,c("x","y","value","bathymetry")] %>% as.geodata()
+		
+		predRes <- krige.bayes(geodata = df, 
+													 locations = grid[,c("x","y")], 
+													 model = MC,
+													 prior = PC,
+													 output = OC)
+		pred[convexIndex == 1,] <- predRes$predictive$simulations
+	}
+	else{
+		# specify the covariance matrix
+	
 		
 	}
-	
 	return(pred)
 }
 
@@ -58,10 +91,8 @@ stKriging <- function(df,logger_geo, grid,detrendMethod = NULL,...){
 	res$samplingTime <- logger_time
 	res <- melt(res, id.vars = c("samplingTime")) %>%
 			arrange(samplingTime,variable)
-			
 
 	timeDF <- STFDF(sp=logger_geo,time=logger_time,data=data.frame(value = res$value))
-
 	vST <- variogramST(value~longitude+latitude+time+bathymetry+I(bathymetry^2),timeDF,tlags=0:4,boundaries=c(0,25,50,75))
 
 }

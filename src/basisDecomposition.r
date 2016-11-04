@@ -16,8 +16,6 @@ require(geoR)
 
 
 coeff2Value <- function(coef, basis){
-	# coef is a vector
-	# basis a a vector
 	return(basis %*% t(coef)) # return a matrix
 }
 
@@ -32,8 +30,12 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	# basis can take "fda" or "svd"
 	# time index is a vector that specify how long data is used
 	args <- list(...)
+	
+	simNum <- args$simNum
+	method <- args$method
+	
 	ID <- as.numeric(colnames(DOdata))
-	T <- nrow(DOdata)  # Totally how many timestamps
+	TimeN <- nrow(DOdata)  # Totally how many timestamps
 
 	if(basis == "fda"){
 		decompRes <- B_spline(DOdata.args$knots)
@@ -50,14 +52,23 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	coef_df <- merge(coef,logger_geo,by.x = "ID",by.y = "loggerID")
 	
 	# do interpolation on each basis coefficients
-	prediction <- matrix(0,T,nrow(grid)) # a matrix T * nBasis, row is time, columns is locations
-
+	
+	# prediction <- matrix(0,T,nrow(grid)) # a matrix T * nBasis, row is time, columns is locations
+	prediction <- array(0, dim = c(1000, TimeN, nrow(grid)))
+	
 	for(i in 1:nBasis){
+		print(sprintf("doing basis %d",i))
 		spData <- coef_df[,c("x","y",paste("V",i,sep = ""),"bathymetry","longitude","latitude")]
 		names(spData)[3] <- "value"
 		# plot_variogram(spData)
-		pred <- spatial_interpolation(spData,grid,"loglik") # res is a vector of interpolated coefficient of basis i
-		prediction <- prediction + basis[,i] %*% t(pred) # project the coefficients to values
+		print(dim(grid))
+		pred <- spatial_interpolation(spData,grid,"baye") # res is a vector of interpolated coefficient of basis i
+		# prediction <- prediction + basis[,i] %*% t(pred) # project the coefficients to values
+		
+		for(sim in 1:dim(pred)[2]){
+			prediction[sim,,] <- prediction[sim,,]+basis[,i] %*% t(pred[,sim])
+		}
+		#prediction
 	}
 
 	# do interpolation on the residuals
@@ -125,9 +136,31 @@ year <- 2014
 bottomLogger_2014 <- retriveGeoData(year,"B") %>% arrange(loggerID)
 data_2014 <- retriveLoggerData(bottomLogger_2014$loggerID,year,"DO","daily","AVG",timeRange = timeRange)
 time_2014 <- index(data_2014)
-crossValidation(data_2014,bottomLogger_2014)
-#grid <- createGrid(bottomLogger_2014)
-#trendPrediction <- basis_interpolation(data_2014,bottomLogger_2014,grid,basis = "svd", r = 5)
+#crossValidation(data_2014,bottomLogger_2014)
+grid <- createGrid(bottomLogger_2014,by.x = 0.05,by.y = 0.05)
+trendPrediction <- basis_interpolation(data_2014,bottomLogger_2014,grid,basis = "svd", r = 5)
+
+trendSim <- trendPrediction$trend
+
+trendSimHypoxia <- trendSim<2
+
+TimeN <- dim(data_2014)[1]
+hypoxiaExtent <- matrix(0,1000,TimeN)
+
+for(i in 1:1000){
+	hypoxiaExtent[i,] <- rowSums(trendSimHypoxia[i,,],na.rm = TRUE)
+}
+
+variance <- sqrt(apply(hypoxiaExtent, 2, var))
+
+hypoxiaSummary <- data.frame(m = colMeans(hypoxiaExtent))
+hypoxiaSummary$upper <- hypoxiaSummary$m+2*variance
+hypoxiaSummary$lower <- hypoxiaSummary$m-2*variance
+
+plot(hypoxiaSummary$m)
+lines(hypoxiaSummary$upper)
+lines(hypoxiaSummary$lower)
+
 #finalPrediction <- cbind(t(trendPrediction$trend),grid)
 
 
