@@ -1,0 +1,6 @@
+{
+  "name": "Hypoxia in Lake Erie",
+  "tagline": "",
+  "body": "### Introduction.\r\nThis is a Web application based on R shiny framework for visualize sensor data of dissolved oxygen (DO) at Lake Erie to estimate hypoxia extent (DO <2mg/L).\r\n\r\n### Functions\r\nThe Web application will able to visualize interactively sensor data from multiple locations in time or spatial dimensions, calculate the sensor correlations, variogram, detect time series outliers, and calculate hypoxia extent using IDW interpolation. \r\n\r\n\r\n### App Snapshots\r\nDue to data policy at current stage, only snapshots are available as:\r\n\r\n\r\nThe application is currently hosted in AWS, which connects to AWS RDS. Previously I also used D3 and threeJS to create the visualization ",
+  "note": "Don't delete this file! It's used internally to help with page regeneration."
+}
