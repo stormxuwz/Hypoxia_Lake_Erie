@@ -1,11 +1,11 @@
 # This is the script to represent data with basis functions
 # Available basis: B-Spline and temporal basis function through SVD
-rm(list = ls())
+
 source("./src/database.R")
 source("config.R")
 source("./src/plot.R")
 source("./src/spatialHelper.R")
-source("./src/interpolation.R")
+#source("./src/interpolation.R")
 
 require(fda)
 require(sp)
@@ -25,59 +25,6 @@ plot_variogram <- function(df, formu = "value~1"){
 	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
 }
 
-basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basis = "fda",...){
-	# DOdata is the dataframe
-	# basis can take "fda" or "svd"
-	# time index is a vector that specify how long data is used
-	args <- list(...)
-	
-	simNum <- args$simNum
-	method <- args$method
-	
-	ID <- as.numeric(colnames(DOdata))
-	TimeN <- nrow(DOdata)  # Totally how many timestamps
-
-	if(basis == "fda"){
-		decompRes <- B_spline(DOdata.args$knots)
-	}else{
-		decompRes <- SVD_basis(DOdata,args$r)
-		nBasis <- dim(decompRes$coef)[1] # columns of the coefficent matrix
-	}
-
-	basis <- decompRes$basis
-
-	# construct complete coefficient matrix
-	coef <- decompRes$coef %>% t() %>% as.data.frame()
-	coef$ID <- ID
-	coef_df <- merge(coef,logger_geo,by.x = "ID",by.y = "loggerID")
-	
-	# do interpolation on each basis coefficients
-	
-	# prediction <- matrix(0,T,nrow(grid)) # a matrix T * nBasis, row is time, columns is locations
-	prediction <- array(0, dim = c(1000, TimeN, nrow(grid)))
-	
-	for(i in 1:nBasis){
-		print(sprintf("doing basis %d",i))
-		spData <- coef_df[,c("x","y",paste("V",i,sep = ""),"bathymetry","longitude","latitude")]
-		names(spData)[3] <- "value"
-		# plot_variogram(spData)
-		print(dim(grid))
-		pred <- spatial_interpolation(spData,grid,"baye") # res is a vector of interpolated coefficient of basis i
-		# prediction <- prediction + basis[,i] %*% t(pred) # project the coefficients to values
-		
-		for(sim in 1:dim(pred)[2]){
-			prediction[sim,,] <- prediction[sim,,]+basis[,i] %*% t(pred[,sim])
-		}
-		#prediction
-	}
-
-	# do interpolation on the residuals
-	DO_res <- DOdata - decompRes$fit  # a matrix of shape T*nLocation
-	
-	return(list(trend = prediction,res = DO_res))
-}
-
-
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
@@ -87,8 +34,8 @@ SVD_basis <- function(DOdata, r){
 	basis <- svdRes$u[,1:r]
 
 	DO_fit <- basis %*% coef # coef, each column is the coefficents for different basis
-
-	return(list(fit = DO_fit, coef = coef, basis = basis))
+	
+	return(list(fit = DO_fit, coef = coef, basis = basis,varExpl = sum(svdRes$d[1:r])/sum(svdRes$d)))
 
 }
 
@@ -128,38 +75,6 @@ crossValidation <- function(DOdata,locations){
 	}
 }
 
-
-
-timeRange <- c("2014-06-23","2014-10-05")
-
-year <- 2014
-bottomLogger_2014 <- retriveGeoData(year,"B") %>% arrange(loggerID)
-data_2014 <- retriveLoggerData(bottomLogger_2014$loggerID,year,"DO","daily","AVG",timeRange = timeRange)
-time_2014 <- index(data_2014)
-#crossValidation(data_2014,bottomLogger_2014)
-grid <- createGrid(bottomLogger_2014,by.x = 0.05,by.y = 0.05)
-trendPrediction <- basis_interpolation(data_2014,bottomLogger_2014,grid,basis = "svd", r = 5)
-
-trendSim <- trendPrediction$trend
-
-trendSimHypoxia <- trendSim<2
-
-TimeN <- dim(data_2014)[1]
-hypoxiaExtent <- matrix(0,1000,TimeN)
-
-for(i in 1:1000){
-	hypoxiaExtent[i,] <- rowSums(trendSimHypoxia[i,,],na.rm = TRUE)
-}
-
-variance <- sqrt(apply(hypoxiaExtent, 2, var))
-
-hypoxiaSummary <- data.frame(m = colMeans(hypoxiaExtent))
-hypoxiaSummary$upper <- hypoxiaSummary$m+2*variance
-hypoxiaSummary$lower <- hypoxiaSummary$m-2*variance
-
-plot(hypoxiaSummary$m)
-lines(hypoxiaSummary$upper)
-lines(hypoxiaSummary$lower)
 
 #finalPrediction <- cbind(t(trendPrediction$trend),grid)
 
