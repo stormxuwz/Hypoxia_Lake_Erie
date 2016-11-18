@@ -180,7 +180,7 @@ spatial_interpolation <- function(df,grid,method = "IDW", simNum = 1,tmpName = "
 							sigmasq.prior = "reciprocal",
 							tausq.rel.prior = "fixed",
 							tausq.rel = 0)  # sigma^2 is 
-		
+		 
 		# specify the output control
 		OC <- output.control(n.pos = simNum, # the number of samples taking from posterior distribution
 							n.pred = simNum,   # sample to taken from the predictive distribution
@@ -353,7 +353,7 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	}
 	
 	basis <- decompRes$basis
-	
+	saveRDS(basis, file = "../meta/basis.rds")
 	# construct complete coefficient matrix
 	coef <- decompRes$coef %>% t() %>% as.data.frame()
 	coef$ID <- ID
@@ -363,9 +363,9 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 	# prediction <- matrix(0,T,nrow(grid)) # a matrix T * nBasis, row is time, columns is locations
 	prediction <- array(0, dim = c(simNum, TimeN, nrow(grid)))
 	
-	for(i in 1:nBasis){
+	for(i in 1:(nBasis+1)){
 		print(sprintf("doing basis %d",i))
-		spData <- coef_df[,c("x","y",paste("V",i,sep = ""),"bathymetry","longitude","latitude")]
+		spData <- coef_df[,c("x","y",paste("X",i,sep = ""),"bathymetry","longitude","latitude")]
 		names(spData)[3] <- "value"
 		
 		pred <- spatial_interpolation(df=spData,grid=grid,method=intMethod, simNum =simNum,tmpName = paste("basis_",i,sep=""))
@@ -406,11 +406,12 @@ interpolation_main <- function(data,locationInfo,method = "IDW",...){
 
 # Test
 # testFunc <- function(){
-year <- 2014
+year <- 2015
 loggerInfo <- retriveGeoData(year,"B")
 data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","hourly","AVG",transform = TRUE) %>% na.omit()  # remove the data
 	# IDW_hypoxiaExtent <- interpolation_main(data,loggerInfo,"IDW")
-basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", simNum = 100, intMethod = "baye", r = 5)
+basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", 
+																					simNum = 100, intMethod = "baye", r = 10)
 # method : loglik, baye, IDW
 plot(basis_hypoxiaExtent)
 	# interpolation_controller(data,loggerInfo) %>% 

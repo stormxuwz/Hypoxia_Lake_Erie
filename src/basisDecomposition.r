@@ -28,11 +28,24 @@ plot_variogram <- function(df, formu = "value~1"){
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
+
 	svdRes <- svd(DOdata)
 
-	coef <- (diag(svdRes$d) %*% t(svdRes$v))[1:r,]
+	# coef <- (diag(svdRes$d) %*% t(svdRes$v))[1:r,]
 	basis <- svdRes$u[,1:r]
+	t = nrow(basis)
 
+	for(i in 1:r){
+		splineRes <- smooth.spline(x = 1:t,y = basis[,i], df = t*0.5)
+		basis[,i] <- predict(splineRes, 1:t)$y
+	}
+	# basis <- (svdRes$u %*% (diag(svdRes$d)))[,1:r]
+	# coef <- t(svdRes$v)[1:r,]
+	print(dim(basis))
+	basis <- cbind(basis,1)
+	coef <- lsfit(x = basis, y= DOdata, intercept = FALSE)$coefficients
+	# print(dim(svdRes))
+	
 	DO_fit <- basis %*% coef # coef, each column is the coefficents for different basis
 	
 	return(list(fit = DO_fit, coef = coef, basis = basis,varExpl = sum(svdRes$d[1:r])/sum(svdRes$d)))
