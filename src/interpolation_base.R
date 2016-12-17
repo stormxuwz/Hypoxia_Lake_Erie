@@ -137,8 +137,8 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 		saveRDS(DO_res, file = paste(metaFolder,"DO_res.rds", sep = ""))
 	# do interpolation on each basis coefficients
 	# prediction <- matrix(0,T,nrow(grid)) # a matrix T * nBasis, row is time, columns is locations
-	prediction <- array(0, dim = c(simNum, TimeN, nrow(grid)))
-	
+
+	coeffPredList <- list()
 	for(i in 1:nBasis){
 		print(sprintf("doing basis %d",i))
 
@@ -146,19 +146,30 @@ basis_interpolation <- function(DOdata, logger_geo, grid, timeIndex = NULL, basi
 		names(spData)[3] <- "value"
 		
 		pred <- spatial_interpolation(df=spData,grid=grid,method=intMethod, simNum =simNum,tmpName = paste("basis_",i,sep=""))
-		# pred is matrix with [# of grid, numSim]
-		
-		if(saveMeta)
-			saveRDS(pred, file = sprintf("%spred_coef_%d.rds",metaFolder,i))
 
-		for(sim in 1:dim(pred)[2]){
-			prediction[sim,,] <- prediction[sim,,]+basis[,i] %*% t(pred[,sim])
-		}
-		rm(pred)
+		coeffPredList[[i]] <- pred
 	}
 	
+	return(list(trendCoeff = coeffPredList,basis = basis, res = DO_res,varExpl = varExpl))
+}
 
-	return(list(trend = prediction,res = DO_res,varExpl = varExpl))
+
+constructFromCoeff <- function(coeffPred,basis,gridNum,simNum = 100){
+	nBasis <- ncol(basis)
+	# generate randomNum
+	TimeN <- nrow(basis)
+	prediction <- array(0.0, dim = c(simNum, TimeN, gridNum))
+
+	for(i in 1:nBasis){
+		pred <- coeffPred[[i]]
+		coeff_simNum <- dim(pred)[2]
+		sampleIndex <- sample(1:coeff_simNum,size =simNum,replace = TRUE)
+		for(sim in 1:simNum){
+			prediction[sim,,] <- prediction[sim,,] + basis[,i] %*% t(pred[,sampleIndex[sim]])
+		}
+	}
+
+	return(prediction)
 }
 
 

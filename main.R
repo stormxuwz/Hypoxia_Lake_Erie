@@ -30,12 +30,12 @@ analysis <- function(year,timeAggType, r){
 	# crossValidation(data,loggerInfo, "svd",rList=c(r))
 	# saveRDS(cvResults, file = paste(metaFolder,"/cvResults.rds",sep = ""))
 
-	basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", simNum = 200, intMethod = "baye", r = r)
+	basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", simNum = 100, intMethod = "baye", r = r)
 
 	saveRDS(basis_hypoxiaExtent,paste(metaFolder,"basis_hypoxiaExtent.rds",sep = ""))
-	IDW_hypoxiaExtent <- interpolation_main(data,loggerInfo,"IDW")
+	# IDW_hypoxiaExtent <- interpolation_main(data,loggerInfo,"IDW")
 
-	saveRDS(IDW_hypoxiaExtent,paste(metaFolder,"idw_hypoxiaExtent.rds",sep = ""))
+	# saveRDS(IDW_hypoxiaExtent,paste(metaFolder,"idw_hypoxiaExtent.rds",sep = ""))
 }
 
 summary_plot <- function(year,timeAggType,r){
@@ -118,10 +118,10 @@ summary_plot <- function(year,timeAggType,r){
 
 main <- function(){
 	for(timeAggType in c("daily","hourly")){
-		for(r in c(5:12)){
-		# analysis(2014,timeAggType,r)
+		for(r in c(5:5)){
+		 print(system.time(analysis(2015,timeAggType,r)))
 		# analysis(2015,timeAggType,r)
-			analysis(2016, timeAggType, r)
+		#	analysis(2016, timeAggType, r)
 		}
 	}
 	# summary_plot(2014, "daily",10)
@@ -131,15 +131,16 @@ metaFolder <- NULL
 outputFolder <- NULL
 main()
 
-library(htmlwidgets)
-for(r in c(5:12)){
-  print(r)
-  summary_plot(2014,"daily",r)
-  summary_plot(2014,"hourly",r)
-  
-  summary_plot(2015,"daily",r)
-  summary_plot(2015,"hourly",r)
-}
+# 
+# library(htmlwidgets)
+# for(r in c(5:12)){
+#   print(r)
+#   summary_plot(2014,"daily",r)
+#   summary_plot(2014,"hourly",r)
+#   
+#   summary_plot(2015,"daily",r)
+#   summary_plot(2015,"hourly",r)
+# }
 # debug(summary_plot)
 
 # # read prediction
