@@ -1,3 +1,27 @@
+interpolation_controller <- function(data,locationInfo,method = "IDW"){
+	allTimes <- unique(data$Time)
+	interpolationResults <- list()
+	
+	
+	for(i in 1:length(allTimes)){
+		#for(i in 1:3){
+		hourlyTime = allTimes[i]
+		subData <- subset(data,Time == hourlyTime) %>% na.omit()
+		subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+		
+		
+		grid <- createGrid(subData) # form the grid
+		# grid$bathy <- findBathy(grid,"../input/erie_lld/erie_lld.asc")
+		
+		grid$pred <- spatial_interpolation(subData,grid)
+		grid$pred <- ifelse(grid$pred<0,0,grid$pred)
+		attributes(grid)$time <- paste(as.character(hourlyTime),"GMT")
+		interpolationResults[[i]] <- grid
+		print(summary(grid))
+	}
+	return(interpolationResults)
+}
+
 # Indicator kriging to determine the probability of whether DO is above thermocline or below thermocline
 require(gstat)
 require(sp)
@@ -22,14 +46,14 @@ calculateEmpericalVariogram <- function(data,sp){
 	loggerNames <- names(data)
 	
 	geoData <- merge(data.frame(loggerNames = loggerNames),sp, by.x = "loggerNames",by.y = "loggerID",all.x = TRUE)
-
+	
 	coordinates(geoData) = ~longitude+latitude
 	projection(geoData)=CRS("+init=epsg:4326")
-
+	
 	combinations <- combn(length(loggerNames),2)
 	
 	allDist <- spDists(geoData)
-
+	
 	pairDiffList <- list()
 	for(i in 1:ncol(combinations)){
 		pair <- combinations[,i]
@@ -37,7 +61,7 @@ calculateEmpericalVariogram <- function(data,sp){
 		pairDiff <- data[,pair[1]]-data[,pair[2]]
 		pairDiffList[[i]] <- list(name = pairNames, idx = pair, diff = pairDiff,dist = allDist[pair[1],pair[2]])
 	}
-
+	
 	# combine all
 	vgmAll = data.frame()
 	for(content in pairDiffList){
@@ -70,7 +94,7 @@ thermoclineProbability <- function(){
 	data <- retriveLoggerData(allGeoData$loggerID,year,var,groupRange,dataType,timeRange=timeRange,transform = FALSE)
 	sp  <- retriveGeoData(2014,"B")
 	data$Temp <- checkAboveThreshold(data$Temp,14)
-
+	
 	vgmAll <- calculateEmpericalVariogram(data,sp)
 	
 	data2 <- dcast(data,Time~logger,value.var="Temp")

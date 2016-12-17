@@ -19,7 +19,6 @@ coeff2Value <- function(coef, basis){
 	return(basis %*% t(coef)) # return a matrix
 }
 
-
 plot_variogram <- function(df, formu = "value~1"){
 	coordinates(df) = ~x+y
 	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
@@ -36,7 +35,7 @@ SVD_basis <- function(DOdata, r){
 	t = nrow(basis)
 
 	for(i in 1:r){
-		splineRes <- smooth.spline(x = 1:t,y = basis[,i], df = t*0.5)
+		splineRes <- smooth.spline(x = 1:t,y = basis[,i], df = t*0.2)
 		basis[,i] <- predict(splineRes, 1:t)$y
 	}
 	# basis <- (svdRes$u %*% (diag(svdRes$d)))[,1:r]

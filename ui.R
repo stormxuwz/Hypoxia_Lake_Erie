@@ -12,7 +12,7 @@ shinyUI(
   				# h4("This is a test to control time and variable"),
   				selectInput("year", 
   						label = h5("Year"),
-       					choices = list("2014" = 2014, "2015"=2015),
+       					choices = list("2014" = 2014, "2015"=2015,"2016"=2016),
        					selected=2014)
   			),
         column(

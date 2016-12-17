@@ -147,6 +147,12 @@ getTimeSeriesSQL <- function(loggerIndex,year,var,groupRange,dataType,timeRange=
 
 
 # Following is to send data to database
+sendtoSQL_loggerInfo <- function(locationInfo, dbTableName){
+	require(lubridate)
+	conn <- dbConnect(MySQL(), dbname = dbConfig$dbname, username=dbConfig$username, password=dbConfig$password, host=dbConfig$host, port=3306)
+	dbWriteTable(conn, dbTableName, locationInfo, append=TRUE,row.names=F)
+	dbDisconnect(conn)
+}
 
 
 sendtoSQL_loggerData <- function(folder,skip=0,dbTableName="loggerData_2014"){
@@ -160,6 +166,7 @@ sendtoSQL_loggerData <- function(folder,skip=0,dbTableName="loggerData_2014"){
 		n <- nrow(loggerData)
 		loggerData <- loggerData[10:(n-10),c(2,3,4)]
 		names(loggerData) <- c("Time","DO","Temp")
+		loggerData <- subset(loggerData,DO>-100)
 		if(max(loggerData$Temp,na.rm=T)>80){
 			loggerData$Temp <- (loggerData$Temp-32)*5/9
 		}
