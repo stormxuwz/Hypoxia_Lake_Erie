@@ -17,25 +17,28 @@ source("./src/interpolation.R")
 
 analysis <- function(year,timeAggType, r){
 	# function to do interpolation
-	loggerInfo <- retriveGeoData(year,"B")
+	# =============================
+
+	# the logger info
+	loggerInfo <- retriveGeoData(year,"B") 
+
+	# the data used to interpolation
 	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",transform = TRUE) %>% na.omit()  # remove the data
 
-
+	# assign the output folder
 	metaFolder <<- sprintf("../meta_%d_%s_%d/", year,timeAggType,r)
 	outputFolder <<- sprintf("../output_%d_%s_%d/", year,timeAggType,r)
 
+	# create the output folder
 	dir.create(file.path("..", sprintf("meta_%d_%s_%d", year,timeAggType,r)), showWarnings = FALSE)
 	dir.create(file.path("..", sprintf("output_%d_%s_%d", year,timeAggType,r)), showWarnings = FALSE)
 	
-	# crossValidation(data,loggerInfo, "svd",rList=c(r))
-	# saveRDS(cvResults, file = paste(metaFolder,"/cvResults.rds",sep = ""))
+	crossValidation(data,loggerInfo, "svd",rList=c(r))
 
-	basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", simNum = 100, intMethod = "baye", r = r)
+	basis_hypoxiaExtent <- interpolation_main(data,loggerInfo,"basis",basis_method = "svd", simNum = 20, intMethod = "baye", r = r)
 
 	saveRDS(basis_hypoxiaExtent,paste(metaFolder,"basis_hypoxiaExtent.rds",sep = ""))
-	# IDW_hypoxiaExtent <- interpolation_main(data,loggerInfo,"IDW")
-
-	# saveRDS(IDW_hypoxiaExtent,paste(metaFolder,"idw_hypoxiaExtent.rds",sep = ""))
+	
 }
 
 summary_plot <- function(year,timeAggType,r){
@@ -117,9 +120,9 @@ summary_plot <- function(year,timeAggType,r){
 }
 
 main <- function(){
-	for(timeAggType in c("daily","hourly")){
-		for(r in c(5:5)){
-		 print(system.time(analysis(2015,timeAggType,r)))
+	for(timeAggType in c("daily")){
+		for(r in c(10:10)){
+		 print(system.time(analysis(2014,timeAggType,r)))
 		# analysis(2015,timeAggType,r)
 		#	analysis(2016, timeAggType, r)
 		}
