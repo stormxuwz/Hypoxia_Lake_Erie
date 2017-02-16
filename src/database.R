@@ -112,7 +112,6 @@ getTimeSeriesSQL <- function(loggerIndex,year,var,groupRange,dataType,timeRange=
 	}
 
 	if(dataType == "STD"){
-
 		if(groupRange == "daily"){
 			sql <- sprintf("Select date(Time) as Time, STD(%s) as %s, logger from loggerData_%s where %s Group by date(Time),logger",var,var,year,sqlCondition)
 			timeFormat="%Y-%m-%d"

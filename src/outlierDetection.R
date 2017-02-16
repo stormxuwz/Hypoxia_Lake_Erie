@@ -93,18 +93,6 @@ outlierTest <- function(){
 	}
 	
 	return(ol)
-	# dat.ts <- ts(series, frequency = 8)
-	# a <- stl(x = dat.ts, s.window = 7,robust = TRUE)
-	# plot(a)
-	# plot(dat.ts)
-	# lines(a$time.series[,1]+a$time.series[,2],col = "red")
-	
-	
-	# data.ts.outliers <- tso(dat.ts)
-	
-	# stl(x = data.ts.outliers)
-	
-	# plot(data.ts.outliers)
 }
 
 #ol <- outlierTest()

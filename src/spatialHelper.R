@@ -29,14 +29,16 @@ createGrid <- function(loggerInfo, by.x = 0.01, by.y = 0.01){
 	longitudeRange <- range(loggerInfo$longitude)
 	latitudeRange <- range(loggerInfo$latitude)
 	
-	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% 
+	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),
+		latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% 
 	lonlat2UTM()
+
+	grid$bathymetry <- findBathy(grid,"/Users/wenzhaoxu/Developer/Hypoxia/input/erie_lld/erie_lld.asc")
 
 	convexHullModel <- convHull(loggerInfo[,c("longitude","latitude")])
 	
-
 	totalArea = diff(range(grid$x))*diff(range(grid$y)) # may need to modify slightly
-
+	
 	grid$convexIndex <- predict(convexHullModel,grid)
 	
 	attr(grid,"totalArea") <- totalArea*sum(grid$convexIndex)/nrow(grid)  # km^2
@@ -69,6 +71,16 @@ ft2meter <- function(ft){
 	return(ft/3.2808399)
 }
 
+unPivtData <- function(data,logger_geo){
+	res <- as.data.frame(data)
+	logger_time <- as.POSIXct(index(data),origin = "1970-1-1")
+	res$samplingTime <- logger_time
+	res$timeInd <- 1:nrow(res)
+	res <- melt(res, id.vars = c("samplingTime","timeInd")) %>%
+		arrange(samplingTime,variable) %>% merge(logger_geo, by.x = "variable", by.y = "loggerID")
+	return(res)
+}
+
 
 st_variogram <- function(zooDF,logger_geo, detrendExpr = "~1",...){
 	# zooDF is a zoo object with columns as each logger's data
@@ -96,6 +108,10 @@ st_variogram <- function(zooDF,logger_geo, detrendExpr = "~1",...){
 	# vST <- variogramST(value~longitude+latitude+bathymetry+I(bathymetry^2),timeDF,tlags=0:4,boundaries=c(0,25,50,75))
 	vST <- variogramST(as.formula(paste("value", detrendExpr)), timeDF, tlags = 0:10, boundaries = seq(0,100,10))
 	prodSumModel <- vgmST("productSum",space = vgm(1, "Exp", 150, 0.5),time = vgm(1, "Exp", 5, 0.5),k = 50) 
+	metricModel <- vgmST("metric",joint = vgm(50,"Mat", 500, 0), stAni=200)
+	
+	plot(vST, fit.StVariogram(vST, metricModel, fit.method = 6),map = F)
+	
 	vST_fit <- fit.StVariogram(vST, prodSumModel, fit.method=6)
 	
 	return(list(vgmModel = vST, fit_vgmModel = vST_fit, timeDF = timeDF))
