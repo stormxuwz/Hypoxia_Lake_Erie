@@ -18,8 +18,6 @@ plot_hypoxia <- function(){
 	
 
 	hypoxiaExtent <- cbind(data.frame(basis_hypoxiaExtent), data.frame(IDW_hypoxiaExtent)) %>% zoo(order.by = timeIndex)
-	
-
 
 	for(hypoxiaType in c("less0","less2","less4")){
 		p <- dygraph(hypoxiaExtent[,c(krigNames,IDWNames)]/n*area, main = sprintf("Total Area %.2f km^2",area)) %>%

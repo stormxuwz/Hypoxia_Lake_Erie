@@ -108,7 +108,8 @@ basis_interpolation_step1 <- function(data,locationInfo, basisDecomp, simNum, fi
 		residual_interp <- st_interpolation_main(trendBasisCoeff$res, locationInfo, grid = grid)
 	}
 	else{ # ignore the residuals
-		residual_interp <- array(0, dim = c(1, length(index(data)), nrow(grid)))
+		residual_interp <- list()
+		residual_interp[[1]] <- matrix(0, nrow = length(index(data)), ncol = nrow(grid))
 	}
 
 	if(saveMeta) # save the residuals 
@@ -119,14 +120,16 @@ basis_interpolation_step1 <- function(data,locationInfo, basisDecomp, simNum, fi
 
 basis_interpolation_step2 <- function(trendBasisCoeff,residual_interp,nSim,parallel,returnHypoxia){
 	# reconstruct from the coefficient interpolation
-	#trend_basis <- readRDS(paste0(metaFolder,"trend_basis.rds"))
-	#residual_interp <- readRDS(paste0(metaFolder,"residual_prediction_basis.rds"))
+	# trend_basis <- readRDS(paste0(metaFolder,"trend_basis.rds"))
+	# residual_interp <- readRDS(paste0(metaFolder,"residual_prediction_basis.rds"))
 
 	coeffPredList <- trendBasisCoeff$trendCoeff  # list of [#grid, nSim]
 	basis <- trendBasisCoeff$basis
 	
 	inds <- sample(1:dim(coeffPredList[[1]])[2],nSim*ncol(basis),replace= TRUE)
 	inds <- matrix(inds,nrow = nSim, ncol = ncol(basis))
+
+	saveRDS(inds,paste0(metaFolder,"inds.rds"))
 
 	if(parallel){
 		print(sprintf("Parallel calculating %d simulations",nSim))
@@ -142,23 +145,23 @@ basis_interpolation_step2 <- function(trendBasisCoeff,residual_interp,nSim,paral
 					basis[,i] %*% t(coeffPredList[[i]][,inds[sim,i]]) 
 			}
 			# add residual interpolation part
-			# for deterministic interpolation on the residuals, choose [1,,]
-			prediction <- prediction + residual_interp[1,,]  
+			# for deterministic interpolation on the residuals, choose [1]
+			prediction <- prediction + residual_interp[[1]]  
+			prediction <- prediction*(prediction>0)
 			
 			if(returnHypoxia){
 				hypoxiaExtent_0 <- rowSums(prediction<0.01,na.rm =TRUE)
 				hypoxiaExtent_2 <- rowSums(prediction<2,na.rm =TRUE)
 				hypoxiaExtent_4 <- rowSums(prediction<4,na.rm =TRUE)
-				c(hypoxiaExtent_0,hypoxiaExtent_2,hypoxiaExtent_4)	
+				data.frame(less0 = hypoxiaExtent_0,
+					less2 = hypoxiaExtent_2,
+					less4 = hypoxiaExtent_4)	
 			}
 			else{
 				prediction
 			}
 		}
 		stopCluster(cl)
-		if(returnHypoxia){
-			res <- data.frame(res)
-		}
 	}
 	return(res)
 }
@@ -173,7 +176,7 @@ basis_interpolation_main <- function(data, locationInfo, basisDecomp, simNum, fi
 	return(basis_interpolation_step2(res[[1]],res[[2]],
 		nSim = 1000, 
 		parallel = TRUE,
-		returnHypoxia = FALSE))
+		returnHypoxia = TRUE))
 }
 
 
@@ -200,7 +203,6 @@ interpolation_main <- function(data,locationInfo,method, grid, ...){
 	
 	return(hypoxiaExtent)
 }
-
 
 
 # spatialTemporalKriging <- function(year){

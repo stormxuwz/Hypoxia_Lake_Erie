@@ -13,5 +13,5 @@ varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
 trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
 #trend <- ~coords[,"y"]+bathymetry
 	
-mapDx <- 0.05
-mapDy <- 0.05
+mapDx <- 0.025
+mapDy <- 0.025

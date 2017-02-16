@@ -70,12 +70,11 @@ analysis <- function(year,timeAggType, method, withCV = FALSE, ...){
 
 	# read results and plot
 	summary_plot(year,timeAggType, method,...)
-
 }
 
 main <- function(year){
 	for(timeAggType in c("daily","hourly")){
-		print(system.time(analysis(year,timeAggType,"IDW")))
+		# print(system.time(analysis(year,timeAggType,"IDW")))
 		for(r in c(5,10,15)){
 		 print(system.time(analysis(year,timeAggType,"basis",
 		 	basisDecomp = "svd",
@@ -97,4 +96,4 @@ main <- function(year){
 metaFolder <- NULL
 outputFolder <- NULL
 main(2014)
-
+main(2015)

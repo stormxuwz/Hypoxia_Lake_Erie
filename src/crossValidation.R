@@ -1,5 +1,5 @@
 
-crossValidation <- function(data, locationInfo, basis, rList = c(5,10,15),method = "IDW"){
+crossValidation <- function(data, locationInfo, basisDecomp, rList = c(5,10,15),method = "IDW"){
 	
 	crossPred <- function(r,j){
 		# r is the number of basis, j is the left out logger index
@@ -14,15 +14,15 @@ crossValidation <- function(data, locationInfo, basis, rList = c(5,10,15),method
 			res <- basis_interpolation_step1(
 				data = trainData, 
 				locationInfo = trainLocation,
-				basis = basis,
+				basisDecomp = basisDecomp,
 				simNum = 100, 
-				intMethod = "loglik", 
+				fitMethod = "loglik", 
 				r = r, 
 				residualMethod = "IDW",
-				saveMeta = FALSE, 
-				grid = targetLocation)
+				grid = targetLocation,
+				saveMeta = FALSE)
 
-			pred <- basis_interpolation_step2(res[[1]],res[[2]],nSim = 1000,TRUE,FALSE)
+			pred <- basis_interpolation_step2(res[[1]],res[[2]],nSim = 1000,parallel = TRUE,returnHypoxia = FALSE)
 			nsim <- length(pred) # total simulations
 
 			# extract the first column which should only have the one column
