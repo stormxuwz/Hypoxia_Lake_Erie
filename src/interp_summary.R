@@ -71,6 +71,75 @@ summarySimulation <- function(hypoxiaSimulations,timeIndex){
 	return(hypoxiaSummary)
 }
 
+
+getOneSimulation <- function(year,timeAggType,method,simInd,timeInd,...){
+	require(reshape2)
+	require(dplyr)
+
+	loggerInfo <- retriveGeoData(year,"B") %>% arrange(loggerID)
+	# the data used to interpolation
+	#timeRange = c("2014-07-01","2014-09-01")
+	timeRange = NULL # no specific time range
+	data <- retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE) %>% na.omit()  # remove the data
+	time <- index(data)
+	loggerNames  <- as.numeric(colnames(data))
+	subData <- data.frame(logger = loggerNames,DO = as.numeric(data[timeInd,]))
+	subData <- merge(subData, loggerInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+
+	if(method == "basis"){
+		metaFolder <<- sprintf("../meta_%d_%s_%s_%s_%d/", 
+			year,timeAggType,method,list(...)$fitMethod,list(...)$r)
+		outputFolder <<- sprintf("../output_%d_%s_%s_%s_%d/", 
+			year,timeAggType,method,list(...)$fitMethod, list(...)$r)
+	}else{
+		metaFolder <<- sprintf("../meta_%d_%s_%s/", year,timeAggType,method)
+		outputFolder <<- sprintf("../output_%d_%s/", year,timeAggType,method)
+	}
+
+	tmp <- readRDS(paste0(metaFolder,"trend.rds"))
+	residual_interp <- readRDS(paste0(metaFolder,"residual_prediction.rds"))
+
+	trendBasisCoeff <- tmp$basisIntRes
+	grid <- tmp$grid
+
+	coeffPredList <- trendBasisCoeff$trendCoeff  # list of [#grid, nSim]
+	basis <- trendBasisCoeff$basis
+
+	inds <- readRDS(paste0(metaFolder,"inds.rds"))
+
+	print("read results complete, calculting DO")
+
+	prediction = 0 
+	for(i in 1:ncol(basis)){
+		# get the time series of each grid
+		prediction <- prediction + 
+			basis[,i] %*% t(coeffPredList[[i]][,inds[simInd,i]]) 
+	}
+
+	# add residual interpolation part
+	# for deterministic interpolation on the residuals, choose [1]
+	prediction <- prediction + residual_interp[[1]]  
+	prediction <- prediction*(prediction>0)
+	area <- attr(grid,"totalArea")
+	grid$value <- prediction[timeInd,]
+
+	# bbox <- make_bbox(range(grid$longitude),range(grid$latitude),f = 0.1)
+	# myMap <- get_map(location=bbox, source="google",crop=FALSE)
+	# p <- ggmap(myMap)
+	p <- readRDS("map.rds")
+	p <- p+geom_tile(aes(longitude,latitude,fill = value),data = subset(grid,convexIndex == 1 & bathymetry<(-12)))
+	p <- p+scale_fill_gradientn(colours = terrain.colors(10),limit = c(0,15))
+	p <- p+geom_point(aes(longitude,latitude,fill = value),data = subData,shape = I(21), colour = I("black"),size = I(3),stroke = I(1))
+	p <- p+ggtitle(paste("Interpolation Area:",round(area,2),"km^2"))
+	print(p)
+	print(sum(subset(grid,convexIndex == 1 & bathymetry<(-12))$value<2))
+	print(sum(subData$value<2))
+	return(list(grid = grid, logger = subData, time = time[timeInd]))
+}	
+
+
+
+
 summary_plot <- function(year,timeAggType,method,...){
 	loggerInfo <- retriveGeoData(year,"B") %>% arrange(loggerID)
 

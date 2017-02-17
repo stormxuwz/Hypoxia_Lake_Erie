@@ -94,7 +94,7 @@ basis_interpolation_step1 <- function(data,locationInfo, basisDecomp, simNum, fi
 	
 	# save the intermediate results, the coefficients of the basis of the trend
 	if(saveMeta)
-		saveRDS(list(basisIntRes = trendBasisCoeff, grid = grid),paste(metaFolder,"trend.rds",sep=""))
+		saveRDS(list(basisIntRes = trendBasisCoeff, grid = grid),paste0(metaFolder,"trend.rds"))
 	
 	# Interpolation on residuals
 	if(residualMethod == "IDW"){
@@ -113,7 +113,7 @@ basis_interpolation_step1 <- function(data,locationInfo, basisDecomp, simNum, fi
 	}
 
 	if(saveMeta) # save the residuals 
-		saveRDS(residual_interp,paste(metaFolder,"residual_prediction.rds",sep =""))
+		saveRDS(residual_interp,paste0(metaFolder,"residual_prediction.rds"))
 
 	return(list(trendBasisCoeff=trendBasisCoeff,residual_interp=residual_interp))
 }	
@@ -148,7 +148,7 @@ basis_interpolation_step2 <- function(trendBasisCoeff,residual_interp,nSim,paral
 			# for deterministic interpolation on the residuals, choose [1]
 			prediction <- prediction + residual_interp[[1]]  
 			prediction <- prediction*(prediction>0)
-			
+
 			if(returnHypoxia){
 				hypoxiaExtent_0 <- rowSums(prediction<0.01,na.rm =TRUE)
 				hypoxiaExtent_2 <- rowSums(prediction<2,na.rm =TRUE)
