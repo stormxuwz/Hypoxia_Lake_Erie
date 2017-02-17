@@ -12,29 +12,45 @@ source("src/interpolation_base.R")
 source("src/interp_summary.R")
 
 
-idw_interpolation_main <- function(data, locationInfo){
+idw_interpolation_main <- function(data, locationInfo, grid = NULL){
 	data <- na.omit(data)  # only remain the time where all data are available
 	times <- index(data)
-	grid <- createGrid(locationInfo,by.x = mapDx, by.y = mapDy)  # will also return an area
-	
-	prediction <- array(0, dim = c(1, length(times), nrow(grid)))
-	
-	loggerNames  <- as.numeric(colnames(data))
-	print("# of interpolation:")
-	print(nrow(data))
-	
-	for(i in 1:nrow(data)){
-		subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
-		subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
-		
-		pred <- spatial_interpolation(subData,grid)[,1]
-		prediction[1,i,] <- ifelse(pred<0,0,pred)
+
+	if(is.null(grid)){
+		grid <- createGrid(locationInfo,by.x = mapDx, by.y = mapDy)  
 	}
 	
+	prediction <- list()
+	loggerNames  <- as.numeric(colnames(data))
+	# print("sampling data number:")
+	# print(nrow(data))
+	
+	require(doParallel)
+	
+	cl <- makeCluster(6)
+	registerDoParallel(cl)
+	
+	print("Parallel doing IDW interpolation")
+
+	res <- foreach(i=1:nrow(data)) %dopar% { 
+		library(dplyr)		
+		source("src/spatialHelper.R")
+		source("src/basisDecomposition.R")
+		source("src/interpolation_base.R")
+		subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
+		subData <- merge(subData, locationInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+		pred <- spatial_interpolation(subData,grid, method="IDW")[,1]
+		pred <- ifelse(pred<0,0,pred)
+		pred
+	}
+	stopCluster(cl)
+	prediction[[1]] <- t(matrix(unlist(res),nrow = nrow(grid)))
+	gc()
+
 	return(prediction)
 }
 
-st_interpolation_main <- function(data, locationInfo,grid = NULL){
+st_interpolation_main <- function(data, locationInfo,grid = NULL,...){
 	stv <- st_variogram(data,locationInfo)
 	saveRDS(stv,file = paste(metaFolder,"st_variogram.rds",sep = ""))
 	
@@ -55,96 +71,138 @@ st_interpolation_main <- function(data, locationInfo,grid = NULL){
 }
 
 
-crossValidation <- function(data, locationInfo, basis, rList = c(5:12)){
-	
-	crossPred <- function(i,j){
-		trainData <- data[,-j]
-			testData <- data[,j]
-			trainLocation <- locationInfo[-j,]
-			targetLocation <- locationInfo[j,c("longitude","latitude","x","y")]
-			targetLocation$convexIndex <- 1
-			trendPrediction <- basis_interpolation(trainData,trainLocation, targetLocation, basis = basis, simNum = 1,intMethod = "loglik", r =rList[[i]], saveMeta = FALSE)
-			pred <- trendPrediction$trend[1,,]
-			residual_interp <- idw_interpolation_main(trendPrediction$res, locationInfo)
-			# residual_interp  <- 0
-			return(data.frame(pred = pred+residual_interp, pred_trend =trendPrediction, label = as.numeric(testData)))
-	}
+basis_interpolation_step1 <- function(data,locationInfo, basisDecomp, simNum, fitMethod, r, residualMethod, grid = NULL, saveMeta = TRUE)
+{
+	# function to predict the coefficients at every grid point
+	# Save the coefficient predictions
 
-	for(i in 1:length(rList)){
-		for(j in 1:nrow(locationInfo)){
-			cp <- crossPred(i,j)
-			saveRDS(cp,sprintf("%s_cv_r%d_%s.rds",metaFolder,i,locationInfo[j,"loggerID"]))
-		}
-	}
-}
-
-
-
-
-basis_interpolation_main <- function(data, locationInfo, basis, simNum, intMethod, r, residualMethod = "IDW"){
-	
-	if(r>nrow(locationInfo)){
+	if(r > nrow(locationInfo)){
 		throw("Too large r, please select r<= # of location")
 	}
 	
-	grid <- createGrid(locationInfo,by.x = mapDx, by.y = mapDy)
-	trendPrediction <- basis_interpolation(data,locationInfo,grid,basis = basis,simNum = simNum, intMethod = intMethod, r = r)
+	if(is.null(grid))
+		grid <- createGrid(locationInfo,by.x = mapDx, by.y = mapDy)
+
+	trendBasisCoeff <- basis_interpolation(
+		DOdata = data,
+		logger_geo = locationInfo,
+		grid = grid, 
+		basisDecomp = basisDecomp, 
+		simNum = simNum, 
+		fitMethod = fitMethod, 
+		r = r)
 	
-	# save the intermediate results
-	saveRDS(list(basisIntRes = trendPrediction, grid = grid),paste(metaFolder,"trend_prediction_basis.rds",sep=""))
+	# save the intermediate results, the coefficients of the basis of the trend
+	if(saveMeta)
+		saveRDS(list(basisIntRes = trendBasisCoeff, grid = grid),paste0(metaFolder,"trend.rds"))
 	
-	trendSim <- trendPrediction$trend 	# trend simulations, shape of (simNum, TimeN, nrow(grid)
-	varExpl <- trendPrediction$varExpl  # variance explained
-	
-	print("doing spatial temporal kriging on residuals")
-	
+	# Interpolation on residuals
 	if(residualMethod == "IDW"){
 		# do IDW on the residuals
-		residual_interp <- idw_interpolation_main(trendPrediction$res, locationInfo)
+		print("doing IDW on residuals")
+		residual_interp <- idw_interpolation_main(trendBasisCoeff$res, locationInfo, grid = grid)
 	}
 	else if(residualMethod == "stKrig"){
 		# do stkriging on the residuals
-		residual_interp <- st_interpolation_main(trendPrediction$res, locationInfo)
+		print("doing spatial temporal kriging on residuals")
+		residual_interp <- st_interpolation_main(trendBasisCoeff$res, locationInfo, grid = grid)
 	}
 	else{ # ignore the residuals
-		residuals_interp <- 0
+		residual_interp <- list()
+		residual_interp[[1]] <- matrix(0, nrow = length(index(data)), ncol = nrow(grid))
 	}
-	
-	saveRDS(residual_interp,paste(metaFolder,"residual_prediction_basis.rds",sep =""))
-	
-	for(i in 1:simNum){
-		trendSim[i,,] <- trendSim[i,,] + residual_interp[1,,]
-	}
-	# trendSim[i,,] <- ifelse(trendSim[i,,]>0, trendSim[i,,], 0)
 
-	saveRDS(trendSim,paste(outputFolder,"final_prediction_basis.rds",sep =""))
-	return(trendSim)
+	if(saveMeta) # save the residuals 
+		saveRDS(residual_interp,paste0(metaFolder,"residual_prediction.rds"))
+
+	return(list(trendBasisCoeff=trendBasisCoeff,residual_interp=residual_interp))
 }	
 
+basis_interpolation_step2 <- function(trendBasisCoeff,residual_interp,nSim,parallel,returnHypoxia){
+	# reconstruct from the coefficient interpolation
+	# trend_basis <- readRDS(paste0(metaFolder,"trend_basis.rds"))
+	# residual_interp <- readRDS(paste0(metaFolder,"residual_prediction_basis.rds"))
 
-interpolation_main <- function(data,locationInfo,method = "IDW",...){
+	coeffPredList <- trendBasisCoeff$trendCoeff  # list of [#grid, nSim]
+	basis <- trendBasisCoeff$basis
+	
+	inds <- sample(1:dim(coeffPredList[[1]])[2],nSim*ncol(basis),replace= TRUE)
+	inds <- matrix(inds,nrow = nSim, ncol = ncol(basis))
+
+	saveRDS(inds,paste0(metaFolder,"inds.rds"))
+
+	if(parallel){
+		print(sprintf("Parallel calculating %d simulations",nSim))
+		require(doParallel)
+		cl <- makeCluster(6)
+		registerDoParallel(cl)
+		
+		res <- foreach(sim = 1:nSim) %dopar% {  # res is a list of the results of each iteration
+			prediction = 0 
+			for(i in 1:ncol(basis)){
+				# get the time series of each grid
+				prediction <- prediction + 
+					basis[,i] %*% t(coeffPredList[[i]][,inds[sim,i]]) 
+			}
+			# add residual interpolation part
+			# for deterministic interpolation on the residuals, choose [1]
+			prediction <- prediction + residual_interp[[1]]  
+			prediction <- prediction*(prediction>0)
+
+			if(returnHypoxia){
+				hypoxiaExtent_0 <- rowSums(prediction<0.01,na.rm =TRUE)
+				hypoxiaExtent_2 <- rowSums(prediction<2,na.rm =TRUE)
+				hypoxiaExtent_4 <- rowSums(prediction<4,na.rm =TRUE)
+				data.frame(less0 = hypoxiaExtent_0,
+					less2 = hypoxiaExtent_2,
+					less4 = hypoxiaExtent_4)	
+			}
+			else{
+				prediction
+			}
+		}
+		stopCluster(cl)
+	}
+	return(res)
+}
+
+basis_interpolation_main <- function(data, locationInfo, basisDecomp, simNum, fitMethod, r, residualMethod, grid = NULL){
+	# simNum: the number of simulations for spatial basis coefficients 
+	# basis: how to decompose the data
+	# fitMethod: interpolation method
+	# r: 
+
+	res <- basis_interpolation_step1(data, locationInfo, basisDecomp, simNum, fitMethod, r, residualMethod = residualMethod, grid = grid)
+	return(basis_interpolation_step2(res[[1]],res[[2]],
+		nSim = 1000, 
+		parallel = TRUE,
+		returnHypoxia = TRUE))
+}
+
+
+interpolation_main <- function(data,locationInfo,method, grid, ...){
 	timeIndex <- index(data)
 	args <- list(...)
-
+	
 	if(method == "IDW"){
-		prediction <- idw_interpolation_main(data,locationInfo)
-		saveRDS(prediction,paste(outputFolder,"final_prediction_IDW.rds",sep =""))
+		hypoxiaExtent <- idw_interpolation_main(data,locationInfo,grid = grid)
 	}
 	else if(method == "basis"){
-		prediction <- basis_interpolation_main(data,locationInfo, 
-			basis = args$basis_method, 
+		hypoxiaExtent <- basis_interpolation_main(
+			data = data,
+			locationInfo = locationInfo, 
+			basisDecomp = args$basisDecomp, 
 			simNum = args$simNum, 
-			intMethod = args$intMethod, 
-			r = args$r)
+			fitMethod = args$fitMethod, 
+			r = args$r,
+			residualMethod = args$residualMethod,
+			grid = grid)
 	}else{
 		throw("not implemented")
 	}
 	
-
-	hypoxiaExtent <- summaryHypoxia(prediction, timeIndex)
 	return(hypoxiaExtent)
 }
-
 
 
 # spatialTemporalKriging <- function(year){
