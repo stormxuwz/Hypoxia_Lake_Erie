@@ -1,8 +1,8 @@
 
-crossValidation <- function(data, locationInfo, basisDecomp, rList = c(5,10,15),method = "IDW"){
+crossValidation <- function(data, locationInfo, method, ...){
 	
-	crossPred <- function(r,j){
-		# r is the number of basis, j is the left out logger index
+	crossPred <- function(j,...){
+		# j is the left out logger index
 		trainData <- data[,-j]
 		testData <- data[,j]
 		
@@ -14,27 +14,29 @@ crossValidation <- function(data, locationInfo, basisDecomp, rList = c(5,10,15),
 			res <- basis_interpolation_step1(
 				data = trainData, 
 				locationInfo = trainLocation,
-				basisDecomp = basisDecomp,
-				simNum = 100, 
-				fitMethod = "loglik", 
-				r = r, 
-				residualMethod = "IDW",
+				basisDecomp = list(...)$basisDecomp,
+				simNum = list(...)$simNum, 
+				fitMethod = list(...)$fitMethod,
+				r = list(...)$r, 
+				residualMethod = list(...)$residualMethod,
 				grid = targetLocation,
 				saveMeta = FALSE)
 
-			pred <- basis_interpolation_step2(res[[1]],res[[2]],nSim = 1000,parallel = TRUE,returnHypoxia = FALSE)
+			pred <- basis_interpolation_step2(res[[1]],res[[2]],nSim = 1000,parallel = TRUE,returnHypoxia = FALSE, saveMeta = FALSE)
 			nsim <- length(pred) # total simulations
 
 			# extract the first column which should only have the one column
+			stopifnot(ncol(pred[[1]])==1)
+
 			pred  <- data.frame(lapply(pred,function(x) return(x[,1]))) 
 			colnames(pred) <- paste0("sim_",as.character(1:nsim))
-			pred_res = res[[2]][,,1]
+			pred_res = res[[2]][[1]]
 		}
 		else if(method == "IDW"){
 			pred <- idw_interpolation_main(
 				data = trainData, 
 				locationInfo = trainLocation, 
-				grid = targetLocation)[1,,]
+				grid = targetLocation)[[1]]
 			pred <- data.frame(sim_0 = pred)
 			pred_res = rep(0,nrow(trainData))
 		}
@@ -42,13 +44,11 @@ crossValidation <- function(data, locationInfo, basisDecomp, rList = c(5,10,15),
 		return(list(trend = pred, pred_res = pred_res,label = as.numeric(testData)))
 	}
 
-	for(r in rList){
-		for(j in 1:nrow(locationInfo)){
-			cp <- crossPred(r,j)
-			fileName <- sprintf("%scv_r%d_%s_%s.rds",metaFolder,r,locationInfo[j,"loggerID"],method)
-			saveRDS(cp,fileName)
-			crossValidation_summary(fileName,withResidual = TRUE)
-		}
+	for(j in 1:nrow(locationInfo)){
+		cp <- crossPred(j,...)
+		fileName <- sprintf("%scv_%s_%s.rds",outputFolder,locationInfo[j,"loggerID"],method)
+		saveRDS(cp,fileName)
+		crossValidation_summary(fileName,withResidual = TRUE)
 	}
 }
 
@@ -73,14 +73,14 @@ crossValidation_summary <- function(savedFile,withResidual= TRUE){
 	
 	yRange <- range(m,upper,lower,d$label)
 
-	p = ggplot(data = plotDF) + 
+	p <- ggplot(data = plotDF) + 
 		geom_ribbon(aes(time,ymin = lower, ymax = upper), fill = "grey70") +
 		geom_line(aes(time,m),color = "black") + 
 		geom_line(aes(time,true),color = "red",alpha = 0.8) + 
 		ylim(c(-1,15))+ylab("DO")+
 		ggtitle(paste0("RMSE: ",RMSE(plotDF$m,plotDF$true)))
 	
-	pdf(sprintf("%splot_%s.pdf",metaFolder,paste(info,collapse = "_")),width = 6, height = 4)
+	pdf(sprintf("%splot_%s.pdf",outputFolder,paste(info,collapse = "_")),width = 6, height = 4)
 	print(p)
 	dev.off()
 }
@@ -92,6 +92,55 @@ RMSE <- function(x,y){
 nash_coef <- function(pred,obs){
 	return(round(1-sum((obs-pred)^2)/sum( (obs-mean(obs))^2 ),2))
 }
+
+
+library(dplyr)
+for(year in 2014:2015){
+	loggerInfo <- retriveGeoData(year,"B") %>% arrange(loggerID)
+	for(ID in loggerInfo$loggerID){
+		for(fitMethod in c("loglik","baye"))
+		{
+			compareCV_IDW(year, ID, "hourly", 15, fitMethod)
+		}
+	}
+}
+
+
+
+compareCV_IDW <- function(year, ID, timeAggType,r,fitMethod){
+
+	# timeRange = NULL # no specific time range
+	# data <- retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE) %>% na.omit()  # remove the data
+	# time <- index(data)
+	basis_file <- sprintf("../output_CV_%d_%s_basis_%s_%d/cv_%d_basis.rds",year,timeAggType,fitMethod,r,ID)
+	IDW_file <- sprintf("../output_CV_%d_%s_IDW/cv_%d_IDW.rds",year,timeAggType,ID)
+
+	d <- readRDS(basis_file)
+	nsim  <- length(d$trend)
+	for(i in 1:nsim){
+		d$trend[,i] <- d$trend[,i]+d$pred_res
+		d$trend[,i] <- d$trend[,i]*(d$trend[,i]>0)
+	}
+	m <- apply(d$trend,1,quantile,probs = c(0.5))
+	upper = apply(d$trend, 1, quantile,probs = c(0.95))
+	lower = apply(d$trend, 1, quantile,probs = c(0.05))
+	idw <- readRDS(IDW_file)$trend[,1]
+	
+	plotDF <- data.frame(m = m, upper = upper, lower = lower,true = d$label,idw = idw, time = 1:length(m))
+
+	p <- ggplot(data = plotDF) + 
+		geom_ribbon(aes(time,ymin = lower, ymax = upper), fill = "grey70") +
+		geom_line(aes(time,m),color = "black") + 
+		geom_line(aes(time,true),color = "red",alpha = 0.8) + 
+		geom_line(aes(time,idw),color = "yellow",alpha = 0.8,linetype = 2) + 
+		ylim(c(-1,17))+ylab("DO")+
+		ggtitle(paste0("RMSE basis/IDW: ",RMSE(plotDF$m,plotDF$true),"/",RMSE(plotDF$idw,plotDF$true)))
+	
+	png(paste("../finalResults/",year,ID,timeAggType,r,fitMethod,".png",sep = "_"),width = 1500)	
+	print(p)
+	dev.off()
+}
+
 
 
 comparisonCV_basis <- function(year,ID,timeInterval){

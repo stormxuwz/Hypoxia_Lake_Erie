@@ -103,4 +103,46 @@ thermoclineProbability <- function(){
 }
 
 
+# spatialTemporalKriging <- function(year){
+# 	require(SpatioTemporal)
+# 	loggerInfo <- retriveGeoData(year,"B")
+# 	loggerInfo <- lonlat2UTM(loggerInfo)
+# 	DOdata <- retriveLoggerData(loggerInfo$loggerID,year,"DO","daily","AVG",transform = TRUE)
+	
+# 	DOdata <- na.omit(data)
+# 	time <- index(DOdata)
+	
+# 	DOdata <- as.matrix(DOdata)
+# 	rownames(DOdata) <- as.character(time)
+	
+# 	names(loggerInfo)[1] <- "ID"
+# 	DO_class <- createSTdata(obs = DOdata, covars = loggerInfo)
+	
+# 	# D <- createDataMatrix(DO_class)
+# 	# SVD.cv <- SVDsmooth(D,1:4)
+	
+# 	DO_class <- updateTrend(DO_class,n.basis = 4)
+# 	# plot(DO_class,"obs",ID ="10523447")
+	
+# 	beta.lm <- estimateBetaFields(DO_class)
+	
+# 	# set up covariance function
+# 	cov.beta <- list(covf = "exp", nugget = FALSE)
+# 	cov.nu <- list(covf = "exp", random.effect = FALSE)
+	
+# 	# LUR <- list(~bathymetry,~bathymetry,~bathymetry,~bathymetry)
+# 	LUR <- NULL
+# 	locations <- list(coordis = c("x","y"),long.lat = c("longitude","latitude"))
+# 	DO.model <- createSTmodel(DO_class,LUR = LUR,cov.beta = cov.beta, cov.nu = cov.nu,locations = locations)
+	
+# 	# parameter estimation
+# 	dim <- loglikeSTdim(DO.model)  # dim$nparam.cov = 13, 
+# 	x.init <- cbind(c(rep(2,dim$nparam.cov-1),0),
+# 									c(rep(c(1,-3),dim$m+1),-3,0))
+	
+# 	rownames(x.init) <- loglikeSTnames(DO.model,all = FALSE)
+# 	est.DO.model <- estimate(DO.model, x.init, type = "p",hessian.all = TRUE)
+		
+# }
+
 
