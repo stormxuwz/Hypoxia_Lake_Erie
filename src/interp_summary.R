@@ -156,7 +156,7 @@ summary_plot <- function(year,timeAggType,method,...){
 	predictionRes <- readRDS(paste0(outputFolder,"hypoxiaExtent.rds"))
 	
 	predictionSimulations <- predictionRes$res
-	timeIndex <- predictionRes$timeIndex	
+	timeIndex <- predictionRes$timeIndex
 	grid <- predictionRes$grid
 
 	hypoxiaExtent <- summaryHypoxia_2(predictionSimulations,timeIndex)

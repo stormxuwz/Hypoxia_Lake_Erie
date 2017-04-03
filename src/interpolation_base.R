@@ -1,6 +1,5 @@
 # backend of interpolation 
 
-
 spatial_interpolation <- function(df,grid,method = "IDW", simNum = 1,tmpName = "tmp",...){
 	# function to do spatial interpolation given df and grid
 	# df and grid are dataframes that contains longitude and latitude and value as columns
@@ -33,7 +32,6 @@ spatial_interpolation <- function(df,grid,method = "IDW", simNum = 1,tmpName = "
 		require(gstat)
 		coordinates(df) = ~x+y
 		coordinates(grid) = ~x+y
-
 		model_gstat <- gstat(NULL,id = "value", formula = value~x+y+bathymetry+I(bathymetry^2), data = df, nmax = 5, nmin = 1)
 		v <- variogram(model_gstat, cressie=T)
 	}
@@ -104,12 +102,7 @@ spatial_interpolation <- function(df,grid,method = "IDW", simNum = 1,tmpName = "
 		
 		MC <- model.control(cov.model = "exponential", trend.l = trend.l, trend.d = trend.d) 
 		
-		# specify the priors
-		PC <- prior.control(phi.discrete=seq(20,60,5),  # range is discreted
-							beta.prior = "flat",  # beta is flat 
-							sigmasq.prior = "reciprocal",
-							tausq.rel.prior = "fixed",
-							tausq.rel = 0)  # sigma^2 is 
+		
 		 
 		# specify the output control
 		OC <- output.control(n.pos = simNum, # the number of samples taking from posterior distribution

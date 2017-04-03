@@ -27,7 +27,7 @@ plot_variogram <- function(df, formu = "value~1"){
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
-	svdRes <- svd(DOdata)
+	svdRes <- svd(DOdata) # is centered necessary? No (3/23)
 
 	basis <- svdRes$u[,1:r]
 	t = nrow(basis)
@@ -41,7 +41,6 @@ SVD_basis <- function(DOdata, r){
 	DO_fit <- basis %*% coef # coef, each column is the coefficents for different basis
 	
 	return(list(fit = DO_fit, coef = coef, basis = basis,varExpl = sum(svdRes$d[1:r])/sum(svdRes$d)))
-
 }
 
 

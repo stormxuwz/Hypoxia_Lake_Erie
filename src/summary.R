@@ -15,8 +15,6 @@ plot_hypoxia <- function(){
 	# stvgm <- st_variogram(DO_res,loggerInfo)
 	# print(plot(stvgm$vgmModel, map=FALSE))
 
-	
-
 	hypoxiaExtent <- cbind(data.frame(basis_hypoxiaExtent), data.frame(IDW_hypoxiaExtent)) %>% zoo(order.by = timeIndex)
 
 	for(hypoxiaType in c("less0","less2","less4")){

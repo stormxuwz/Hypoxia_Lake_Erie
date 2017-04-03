@@ -2,6 +2,7 @@ require(RMySQL)
 # require(dplyr)
 require(reshape2)
 require(zoo)
+source("src/helper.R")
 
 retriveLoggerData_DO_Temp <- function(loggerIndex,year,groupRange,dataType,timeRange = NULL){
 	DOData <- retriveLoggerData(loggerIndex,year,"DO",groupRange,dataType,timeRange = timeRange)
@@ -32,6 +33,7 @@ retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange
 		data <- sqlQuery(sql) %>% dcast(Time~logger,value.var=var)
 		data <- zoo(subset(data,select=-Time),order.by=strptime(data$Time,format=timeFormat,tz="GMT"))
 	}
+
 	return(data)
 }
 
@@ -44,7 +46,9 @@ retriveGeoData <- function(year,position,loggerIndex = NULL){
 		sql <- sprintf("select loggerID,longitude,latitude,bathymetry from loggerInfo where available=1 and year = %s and %s", year,loggerCondition)
 	}
 	# print(sql)
-	return(sqlQuery(sql) %>% lonlat2UTM())
+	res <- sqlQuery(sql) %>% lonlat2UTM()
+	res$loggerID <- as.character(res$loggerID)
+	return(res)
 }
 
 
