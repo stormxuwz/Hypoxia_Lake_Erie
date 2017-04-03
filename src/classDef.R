@@ -9,9 +9,10 @@ getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", ...){
 
 	timeRange <- list(...)$timeRange
 	data <- 
-		retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE) %>% 
-		na.omit()  # remove the missing data
+		retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE)  # %>% 
+		# na.omit()  # remove the missing data
 	data <- data[,loggerInfo$loggerID]
+	data <- data * (data > 0) # put it to zero
 	lakeDO <- as.lakeDO(data, loggerInfo)
 
 	return(lakeDO)
@@ -47,7 +48,7 @@ idwModel <- function(x, metaFolder, nmax){
 	loggerInfo <- x$loggerInfo
 	for(i in 1:nrow(x$samplingData)){
 		loggerInfo$value <- as.numeric(x$samplingData[i,])
-		model[[i]] <- loggerInfo
+		model[[i]] <- na.omit(loggerInfo)
 	}
 
 	config <- list(simNum = 1, trend = "value ~ 1", nmax = nmax)
@@ -61,6 +62,8 @@ idwModel <- function(x, metaFolder, nmax){
 basisModel <- function(x, trend, fitMethod, r, metaFolder){
 	# x is a object of "lakeDO" class
 	# separate X into different prediction parts
+	# x$samplingData <- na.omit(x$samplingData)
+	
 	createFolder(metaFolder)
 	if(!fitMethod %in% c("Reml", "Baye")){
 		stop("fitMethod is not implemented")
