@@ -12,7 +12,7 @@ getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", ...){
 		retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE)  # %>% 
 		# na.omit()  # remove the missing data
 	data <- data[,loggerInfo$loggerID]
-	data <- data * (data > 0) # put it to zero
+	data <- data * (as.matrix(data) > 0) # put it to zero
 	lakeDO <- as.lakeDO(data, loggerInfo)
 
 	return(lakeDO)
@@ -63,7 +63,8 @@ basisModel <- function(x, trend, fitMethod, r, metaFolder){
 	# x is a object of "lakeDO" class
 	# separate X into different prediction parts
 	# x$samplingData <- na.omit(x$samplingData)
-	
+	x$samplingData <- na.omit(x$samplingData)
+
 	createFolder(metaFolder)
 	if(!fitMethod %in% c("Reml", "Baye")){
 		stop("fitMethod is not implemented")
@@ -77,9 +78,8 @@ basisModel <- function(x, trend, fitMethod, r, metaFolder){
 	loggerInfo <- x$loggerInfo
 
 	# create residuals
-	residuals <- x$samplingData - SVDmodel$fit
-	residuals <- list(samplingData = residuals, loggerInfo = loggerInfo)
-	class(residuals) <- "lakeDO"
+	residuals <- x$samplingData - SVDmodel$fit	
+	residuals <- as.lakeDO(residuals, loggerInfo)
 
 	# create models
 	model <- list()

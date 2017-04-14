@@ -72,3 +72,24 @@ hypoxiaCount <- function(prediction){
 			less4 = hypoxiaExtent_4)
 	return(res)
 }
+
+
+cvUncertainty <- function(prediction, trueValue){
+	nsim <- length(prediction$predValue)
+	nTime <- length(prediction$predValue[[1]])
+
+	allPrediction <- matrix(NA, nrow = nTime, ncol = nsim)
+
+	for(i in 1:nsim){
+		allPrediction[,i] <- prediction$predValue[[i]] * (prediction$predValue[[i]] > 0)
+	}
+
+	
+	tmp <- summaryStatistics(allPrediction)
+	tmp$true <- as.numeric(trueValue)
+	tmp$withinBound <- (tmp$true < tmp$upper) & (tmp$true > tmp$lower)
+	attr(tmp, "boundRatio") <- sum(tmp$withinBound)/nrow(tmp)
+	return(tmp)
+}
+
+
