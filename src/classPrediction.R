@@ -128,6 +128,9 @@ predict.krigModelReml <- function(model, grid){
 }
 
 
+
+
+
 predict.krigModelBaye <- function(model, grid){
 	config <- attr(model, "config")
 	simNum <- config$simNum
@@ -170,12 +173,14 @@ predict.krigModelBaye <- function(model, grid){
 			trend.l = trend.l, 
 			trend.d = trend.d) 
 
-		modelPred <- krige.bayes(geodata = df, 
+		modelRes <- krige.bayes(geodata = df, 
 								 locations = grid[,c("x","y")], 
 								 model = MC,
 								 prior = PC,
-								 output = OC)$predictive
-
+								 output = OC)
+    
+		modelPred <- modelRes$predictive
+		
 		if(!is.null(metaFolder)){
 			print("saving prediction meta to metaFolder")
 			png(paste0(metaFolder,"basis_",i,"_data.png"))
@@ -185,7 +190,7 @@ predict.krigModelBaye <- function(model, grid){
 
 			png(paste0(metaFolder,"basis_",i, "_bayes_vgm",".png"))
 			print(plot(variog(df,option = "cloud",trend = "1st")))
-			print(lines(predRes, summ = variogramSummary, ty="l", lty=c(2,1,2), col=1))
+			print(lines(modelRes, summ = variogramSummary, ty="l", lty=c(2,1,2), col=1))
 			dev.off()
 		}
 		
