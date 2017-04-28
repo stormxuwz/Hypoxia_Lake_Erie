@@ -24,6 +24,17 @@ plot_variogram <- function(df, formu = "value~1"){
 	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
 }
 
+NMF_basis <- function(DOdata, r){
+	require(NMF)
+	DOdata <- as.matrix(DOdata)
+	nmfRes <- nmf(DOdata, r)
+
+	W <- nmfRes@fit@W
+	H <- nmfRes@fit@H
+	return(list(basis = W, coef = H))
+}
+
+
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)

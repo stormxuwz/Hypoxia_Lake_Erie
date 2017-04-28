@@ -158,33 +158,40 @@ sendtoSQL_loggerInfo <- function(locationInfo, dbTableName){
 }
 
 
-sendtoSQL_loggerData <- function(folder,skip=0,dbTableName="loggerData_2014"){
+parsingCSV <- function(fileName){
+	fname <- basename(fileName)
 	require(lubridate)
+	loggerData <- read.csv(fileName,skip=1)
+	timeZ <- names(loggerData)[2]
+	n <- nrow(loggerData)
+	loggerData <- loggerData[10:(n-10),c(2,3,4)]
+	names(loggerData) <- c("Time","DO","Temp")
+	loggerData <- subset(loggerData,DO>-100)
+	if(max(loggerData$Temp,na.rm=T)>80){
+		loggerData$Temp <- (loggerData$Temp-32)*5/9
+	}
+
+	if(substr(timeZ,12,20)=="GMT.04.00"){
+		tzStr <- "etc/GMT+4"
+	}else if(substr(timeZ,12,20)=="GMT.00.00"){
+		tzStr <- "GMT"
+	}else{
+		print(fname)
+		stop("Wrong")
+	}
+	loggerData$Time <- strptime(loggerData$Time,format = "%m/%d/%y %I:%M:%S %p",tz=tzStr)
+	loggerData$Time <- with_tz(loggerData$Time,"GMT")
+	loggerData$logger <- as.numeric(substr(fname,1,8))
+	return(loggerData)
+}
+
+sendtoSQL_loggerData <- function(folder,skip=0,dbTableName="loggerData_2014"){
+	
 	conn <- dbConnect(MySQL(), dbname = dbConfig$dbname, username=dbConfig$username, password=dbConfig$password, host=dbConfig$host, port=3306)
 	fileList <- list.files(folder)
 	for(fname in fileList){
 		filePath <- file.path(folder,fname)
-		loggerData <- read.csv(filePath,skip=skip)
-		timeZ <- names(loggerData)[2]
-		n <- nrow(loggerData)
-		loggerData <- loggerData[10:(n-10),c(2,3,4)]
-		names(loggerData) <- c("Time","DO","Temp")
-		loggerData <- subset(loggerData,DO>-100)
-		if(max(loggerData$Temp,na.rm=T)>80){
-			loggerData$Temp <- (loggerData$Temp-32)*5/9
-		}
-
-		if(substr(timeZ,12,20)=="GMT.04.00"){
-			tzStr <- "etc/GMT+4"
-		}else if(substr(timeZ,12,20)=="GMT.00.00"){
-			tzStr <- "GMT"
-		}else{
-			print(fname)
-			stop("Wrong")
-		}
-		loggerData$Time <- strptime(loggerData$Time,format = "%m/%d/%y %I:%M:%S %p",tz=tzStr)
-		loggerData$Time <- with_tz(loggerData$Time,"GMT")
-		loggerData$logger <- as.numeric(substr(fname,1,8))
+		loggerData <- parsingCSV(filePath)
 		dbWriteTable(conn, dbTableName, loggerData, append=TRUE,row.names=F)
 	}
 	dbDisconnect(conn)

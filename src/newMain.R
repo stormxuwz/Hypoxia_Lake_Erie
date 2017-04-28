@@ -179,11 +179,11 @@ tmp <- function(year_, aggType_, method_, r_){
 	subset(year == year_ & aggType == aggType_ & method == method_ & r == r_) %>% 
 	merge(erieDO$loggerInfo, by.x = "cv_loggerID", by.y = "loggerID", all.x = TRUE)
 
-	lonRange <- range(res$longitude)
-	latRange <- range(res$latitude)
-	bbox <- make_bbox(lonRange,latRange,f = 0.2)
-	myMap <- get_map(location=bbox, source="google",crop=FALSE) %>% ggmap()
-	saveRDS(myMap,"erieGoogleMap.rds")
+	# lonRange <- range(res$longitude)
+	# latRange <- range(res$latitude)
+	# bbox <- make_bbox(lonRange,latRange,f = 0.2)
+	# myMap <- get_map(location=bbox, source="google",crop=FALSE) %>% ggmap()
+	# saveRDS(myMap,"erieGoogleMap.rds")
 
 	myMap <- readRDS("erieGoogleMap.rds")
 	if(method_ == "idw"){

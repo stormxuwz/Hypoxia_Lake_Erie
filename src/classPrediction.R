@@ -128,6 +128,9 @@ predict.krigModelReml <- function(model, grid){
 }
 
 
+
+
+
 predict.krigModelBaye <- function(model, grid){
 	config <- attr(model, "config")
 	simNum <- config$simNum
