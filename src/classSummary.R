@@ -62,6 +62,9 @@ summaryStatistics <- function(x){
 
 
 hypoxiaCount <- function(prediction){
+  # count the gird number that has hypoxia
+  # input:
+  #   prediction: matrix of [time, ngrid]
 	prediction <- prediction * (prediction>0)
 
 	hypoxiaExtent_0 <- rowSums(prediction<0.01,na.rm =TRUE)
@@ -75,6 +78,11 @@ hypoxiaCount <- function(prediction){
 
 
 cvUncertainty <- function(prediction, trueValue){
+  # calculate how much the uncertainty bar can capture the real value
+  # input:
+  #   prediction: list of each simulation
+  #   treuValue: time series of the true value
+  
 	nsim <- length(prediction$predValue)
 	nTime <- length(prediction$predValue[[1]])
 
@@ -84,7 +92,6 @@ cvUncertainty <- function(prediction, trueValue){
 		allPrediction[,i] <- prediction$predValue[[i]] * (prediction$predValue[[i]] > 0)
 	}
 
-	
 	tmp <- summaryStatistics(allPrediction)
 	tmp$true <- as.numeric(trueValue)
 	tmp$withinBound <- (tmp$true < tmp$upper) & (tmp$true > tmp$lower)

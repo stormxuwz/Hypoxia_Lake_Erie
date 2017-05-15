@@ -1,0 +1,211 @@
+[1] 6985.453
+[1] "interpolationg using IDW"
+[1] "r: 5"
+[1] "interpolating using Reml"
+[1] "variance explained"
+[1] 0.9821199
+[1] "interpolating residuals"
+[1] "interpolating trend"
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+
+WARNING: estimated range is less than 1 tenth of the minimum distance between two points. Consider re-examine the model excluding spatial dependence
+likfit: estimated model parameters:
+      beta0       beta1       beta2       beta3       beta4     sigmasq 
+"5976.6420" "  -0.1887" "  -1.3626" " -10.1620" "  -0.2241" "2479.8117" 
+        phi 
+"   0.1312" 
+Practical Range with cor=0.05 for asymptotic range: 0.3930259
+
+likfit: maximised log-likelihood = -95.88
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+likfit: estimated model parameters:
+       beta0        beta1        beta2        beta3        beta4      sigmasq 
+"-5460.2428" "   -0.3744" "    1.3048" "   58.7315" "    1.8098" "  486.3351" 
+         phi 
+"   11.4635" 
+Practical Range with cor=0.05 for asymptotic range: 34.34154
+
+likfit: maximised log-likelihood = -80.8
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+
+WARNING: estimated range is less than 1 tenth of the minimum distance between two points. Consider re-examine the model excluding spatial dependence
+likfit: estimated model parameters:
+       beta0        beta1        beta2        beta3        beta4      sigmasq 
+"-3597.8869" "    0.3540" "    0.7325" "   -8.8339" "   -0.3734" "  937.8646" 
+         phi 
+"    0.1360" 
+Practical Range with cor=0.05 for asymptotic range: 0.4075091
+
+likfit: maximised log-likelihood = -87.13
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+likfit: estimated model parameters:
+      beta0       beta1       beta2       beta3       beta4     sigmasq 
+"-734.0986" "   0.1699" "   0.0968" " -25.6337" "  -0.7490" " 547.7035" 
+        phi 
+"   5.3124" 
+Practical Range with cor=0.05 for asymptotic range: 15.91458
+
+likfit: maximised log-likelihood = -82.25
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+
+WARNING: estimated range is less than 1 tenth of the minimum distance between two points. Consider re-examine the model excluding spatial dependence
+likfit: estimated model parameters:
+       beta0        beta1        beta2        beta3        beta4      sigmasq 
+"-1564.4128" "   -0.3856" "    0.3078" "  -35.2460" "   -0.9756" "  239.7498" 
+         phi 
+"    0.1419" 
+Practical Range with cor=0.05 for asymptotic range: 0.4249794
+
+likfit: maximised log-likelihood = -74.86
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
+[1] "i=6"
+variog: computing omnidirectional variogram
+kappa not used for the exponential correlation function
+---------------------------------------------------------------
+likfit: likelihood maximisation using the function optimize.
+likfit: Use control() to pass additional
+         arguments for the maximisation function.
+        For further details see documentation for optimize.
+likfit: It is highly advisable to run this function several
+        times with different initial values for the parameters.
+likfit: WARNING: This step can be time demanding!
+---------------------------------------------------------------
+likfit: end of numerical maximisation.
+likfit: estimated model parameters:
+     beta0      beta1      beta2      beta3      beta4    sigmasq        phi 
+"-30.1374" "  0.0046" "  0.0053" " -0.3238" " -0.0077" "  0.6849" " 12.3773" 
+Practical Range with cor=0.05 for asymptotic range: 37.07904
+
+likfit: maximised log-likelihood = -21.62
+[1] "saving prediction meta to metaFolder"
+NULL
+variog: computing variogram for direction = 45 degrees (0.785 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+variog: computing variogram for direction = 135 degrees (2.356 radians)
+        tolerance angle = 22.5 degrees (0.393 radians)
+NULL
+NULL
+krige.conv: model with covariates matrix provided by the user
+krige.conv: sampling from the predictive distribution (conditional simulations)
+krige.conv: Kriging performed using global neighbourhood 
