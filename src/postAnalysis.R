@@ -281,38 +281,60 @@ resultSummary <- function(year, aggType){
 
 	saveRDS(fullRes,sprintf("%s/results/fullRes.rds",outputBaseName))
 	
-	
-	dplyr::filter(fullRes, aggType == "daily", year == 2015) %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8)) + 
-		xlab("Basis Number (with out bias basis)")
-	
-	dplyr::filter(fullRes, aggType == "hourly", year == 2015) %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8))
+	# plot the CV boxplot 
 	
 	
-	dplyr::filter(fullRes, aggType == "daily", year == 2014) %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8))
-	
-	dplyr::filter(fullRes, aggType == "hourly", year == 2014) %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8)) +
-		xlab("Basis Number (with out bias basis)")
-	
-	
-	
-	dplyr::filter(fullRes, aggType == "daily", year == 2015, method != "idw") %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
-	
-	dplyr::filter(fullRes, aggType == "hourly", year == 2015, method != "idw") %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
-	
-	
-	dplyr::filter(fullRes, aggType == "daily", year == 2014, method != "idw") %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
-	
-	dplyr::filter(fullRes, aggType == "hourly", year == 2014, method != "idw") %>% 
-		ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8)) +
-		xlab("Basis Number (with out bias basis)")
+	for(year_ in c(2014,2015)){
+		for(aggType_ in c("daily","hourly"){
+
+			p_rmse <- dplyr::filter(fullRes, aggType == aggType_, year == year_) %>% 
+				ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8)) + 
+				xlab("Basis Number (with out bias basis)")
+				
+			png("%s/results/%d_%s_CV_rmse.png",outputBaseName, year_, aggType_)
+			print(p)
+			dev.off()
+			
+			p_withBound <- dplyr::filter(fullRes, aggType == aggType_, year == year_, method != "idw") %>% 
+				ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8)) + xlab("Basis Number (with out bias basis)")
+			
+			png("%s/results/%d_%s_CV_withinBound.png", outputBaseName, year_, aggType_)
+			print(p)
+			dev.off()	
+			
+		}
+	}
+		#dplyr::filter(fullRes, aggType == "daily", year == 2015) %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8)) + 
+		#	xlab("Basis Number (with out bias basis)")
 		
+		#dplyr::filter(fullRes, aggType == "hourly", year == 2015) %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8))
+		
+		
+		#dplyr::filter(fullRes, aggType == "daily", year == 2014) %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8))
+		
+		#dplyr::filter(fullRes, aggType == "hourly", year == 2014) %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method), position = position_dodge(width = 0.8)) +
+		#	xlab("Basis Number (with out bias basis)")
+		
+		
+		
+		#dplyr::filter(fullRes, aggType == "daily", year == 2015, method != "idw") %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
+		
+		#dplyr::filter(fullRes, aggType == "hourly", year == 2015, method != "idw") %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
+		
+		
+		#dplyr::filter(fullRes, aggType == "daily", year == 2014, method != "idw") %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8))
+		
+		#dplyr::filter(fullRes, aggType == "hourly", year == 2014, method != "idw") %>% 
+		#	ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), position = position_dodge(width = 0.8)) +
+		#	xlab("Basis Number (with out bias basis)")
+			
 
 	return(fullRes)
 }
