@@ -1,5 +1,4 @@
-# calculate the hypoxia days
-# this is a test
+
 
 getHypoxiaExtent <- function(year, aggType, method, r){
 	IDWFolderName <- sprintf("../output/%d_%s_idw/",year, aggType)
