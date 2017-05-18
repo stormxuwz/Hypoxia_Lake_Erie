@@ -5,9 +5,10 @@ require(leaflet)
 require(ggmap)
 
 
+
 plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 	# data is a zoo dataframe
-	
+	# this is a test on the program
 	if(type == "ggplot"){
 		data <- as.data.frame(data)
 		data$time <- strptime(rownames(data))
