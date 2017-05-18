@@ -15,6 +15,7 @@ outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
 mapDx <- 0.025
 mapDy <- 0.025
 
+rList <- c(5,10,15)
 
 main <- function(year = 2014, aggType = "daily"){
 	#year <- 2014
@@ -37,7 +38,7 @@ main <- function(year = 2014, aggType = "daily"){
 
 	saveRDS(hypoxia_idw, sprintf("%s%d_%s_idw/extent.rds",outputBaseName, year, aggType))
 
-	for(r in c(5,10,15)){
+	for(r in rList){
 		print(paste("r:",r))
 		print("interpolating using Reml")
 		hypoxia_reml <- predict(obj = erieDO,
@@ -70,7 +71,8 @@ main_CV <- function(year = 2014, aggType = "daily"){
 	trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
 
-	for(i in 1:nrow(erieDO$loggerInfo)) {
+	 for(i in 1:nrow(erieDO$loggerInfo)) {
+	#for(i in 1:2) {
 		cv_loggerID <- erieDO$loggerInfo$loggerID[i]
 		subErieDO <- subset(erieDO, cv_loggerID)
 		grid <- erieDO$loggerInfo[i,]
@@ -94,7 +96,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 
 		saveRDS(statsSummary, sprintf("%s/simulations_stat.rds",metaFolder))
 
-		for(r in c(5,10,15)){
+		for(r in rList){
 			metaFolder <- sprintf("%s%d_%s_Reml_%d/cv/%s/",outputBaseName, year, aggType, r, cv_loggerID)
 			hypoxia_reml_cv <- predict(obj =subErieDO, 
 						grid = grid, 
@@ -175,7 +177,7 @@ main_analysis <- function(year,aggType){
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 	
 	clusterRes <- list()
-	for(r in c(5,10,15)){
+	for(r in rList){
 		res <- clusterByNMF(erieDO, basis_r = r)
 
 		clusterRes[[paste0("basis_",r)]] <- res
@@ -205,10 +207,30 @@ main_analysis <- function(year,aggType){
 		}
 	}
 
-
+	
+	# plot hypoxia curve
+	for(method in c("Reml","Baye")){
+		for(r in rList){
+			getHypoxiaExtent(year, aggType, method, r)
+		}
+	}
+	
+	# analyze the decomposition results
+	for(r in rList){
+		getDecompositionResults(year, aggType, r)
+	}
+	
+	# get sensors linear regression
+	for(method in c("Reml","Baye","idw")){
+		for(r in rList){
+			getSensorWithHypoxiaExtent(year, aggType, method, r)
+		}
+	}
+	
+	
 	# analyze the hypoxia time
 	for(method in c("Reml","Baye")){
-		for(r in c(5,10,15)){
+		for(r in rList){
 			fileFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
 
 			residualPrediction <- readRDS(paste0(fileFolder, "residualPredictions.rds"))
@@ -226,10 +248,9 @@ main_analysis <- function(year,aggType){
 
 
 	# Summarize CV results
-	resultSummary()
 	
 	for(method in c("Reml","Baye")){
-		for(r in c(5,10,15)){
+		for(r in rList){
 			filePrefix <- sprintf("%d_%s_%s_%d",year, aggType, method, r)
 
 			p <- plotCVOnMap(year, aggType, method, r)
@@ -254,9 +275,46 @@ for(year in c(2014, 2015)){
 	for(aggType in c("hourly","daily")){
 		print(system.time(main(year = year, aggType = aggType)))
 		print(system.time(main_CV(year = year, aggType = aggType)))
+	}
+}
+
+resultSummary()
+
+for(year in c(2014, 2015)){
+	for(aggType in c("hourly","daily")){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }
+
+
+for(year in c(2014, 2015)){
+	for(aggType in c("hourly","daily")){
+		
+		# get hypoxia extent
+		for(method in c("Reml","Baye")){
+			for(r in rList){
+				getHypoxiaExtent(year, aggType, method, r)
+			}
+		}
+		
+		# analyze the decomposition results
+		for(r in rList){
+			getDecompositionResults(year, aggType, r)
+		}
+		
+		# get sensors linear regression
+		for(method in c("Reml","Baye","idw")){
+			for(r in rList){
+				getSensorWithHypoxiaExtent(year, aggType, method, r)
+			}
+		}
+	}
+}
+
+
+
+
+
 
 
 #system.time(main_CV(year = 2014, aggType = "daily"))
