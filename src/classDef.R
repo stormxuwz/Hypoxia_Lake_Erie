@@ -20,11 +20,16 @@ getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", ...){
 
 as.lakeDO <- function(samplingData, loggerInfo){
 	X <- list(samplingData = samplingData, loggerInfo = loggerInfo)
-	stopifnot(all(names(X$samplingData) == X$loggerInfo$loggerID))
+	stopifnot(all(names(X$samplingData) == X$loggerInfo$loggerID)) # make sure the order is correct
 	class(X) <- "lakeDO"
 	return(X)
 }
 
+na.omit.lakeDO <- function(lakeDOObj){
+	lakeDOObj$samplingData <- na.omit(lakeDOObj$samplingData)
+	stopifnot(length(unique(diff(index(lakeDOObj$samplingData))))==1)
+	return(lakeDOObj)
+}
 
 subset.lakeDO <- function(X, loggerID_not){
 	# remove certain id

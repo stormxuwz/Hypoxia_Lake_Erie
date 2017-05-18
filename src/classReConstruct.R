@@ -47,6 +47,7 @@ reConstruct.basisModel <- function(
 	stopifnot(totalSim <= ncol(indMatrix)) # check totalSim is feasible
 
 	if(simulationNum == 0){
+		# reconstruct the BLUE estimates
 		for(i in 1:basisNum){
 			coeff <- trendModel$predictions[[i]]$pred[,1]
 			prediction <- prediction + basis[,i] %*% t(coeff)

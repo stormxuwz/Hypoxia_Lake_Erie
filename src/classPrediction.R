@@ -73,27 +73,34 @@ predict.krigModelReml <- function(model, grid){
 	grid <- subset(grid,convexIndex==1)
 	
 	trend.l <- dplyr::select(grid, x,y,bathymetry) %>%  
-			as.geodata(covar.col = 3) %>%
+			as.geodata(covar.col = 3) %>% 
 			trend.spatial(trend,.)
 
 	for(i in 1:length(model)){
-
+		if(i == 6){
+			print("i=6")
+		}
+			
+	
 		df <- model[[i]] %>% 
-			dplyr::select(x, y, value, bathymetry) %>%
-			as.geodata(covar.col = 4)
+			dplyr::select(x, y, value,bathymetry) %>%
+			as.geodata(covar.col = c("bathymetry"))
 
 		trend.d <- trend.spatial(trend,df)
 		
+		semiVariance <- variog(df,trend = trend.d)
+
 		ml <- likfit(df, 
-			ini = c(1000,70),
+			ini = c(max(semiVariance$v),70),
 			fix.nugget = T,  # the nugget is defaulted as zero
-			lik.method = "REML",
+			lik.method = "ML",
 			cov.model = config$cov.model, # "exponential",
 			trend = trend.d,
-			fix.psiA = TRUE, 
-			fix.psiR = FALSE,
-			psiA = pi/4)
-
+			fix.psiA = TRUE,
+			fix.psiR = TRUE)
+			# psiA = pi/4)
+			# limits = pars.limits(psiR = c(lower = 1, upper = 10)))
+		print(ml)
 		if(!is.null(metaFolder)){
 			print("saving prediction meta to metaFolder")
 			png(paste0(metaFolder,"basis_",i,"_data.png"))
@@ -232,6 +239,8 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 		res <- obj %>% 
 			idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
 			predict(grid, parallel = TRUE)
+
+		saveRDS(res, paste0(metaFolder,"trendPredictions.rds"))
 
 		if(predictType == "extent"){
 		 	res <- summary(res)

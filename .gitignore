@@ -2,3 +2,15 @@
 .Rhistory
 .RData
 .Ruserdata
+
+*.rds
+
+*.rds
+
+*.csv
+
+*.rds
+
+test.rds
+
+*.csv

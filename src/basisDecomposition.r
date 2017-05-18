@@ -2,9 +2,8 @@
 # Available basis: B-Spline and temporal basis function through SVD
 
 source("./src/database.R")
-source("config.R")
 source("./src/plot.R")
-source("./src/spatialHelper.R")
+source("./src/helper.R")
 #source("./src/interpolation.R")
 
 
@@ -44,14 +43,18 @@ SVD_basis <- function(DOdata, r){
 	t = nrow(basis)
 
 	for(i in 1:r){
-		splineRes <- smooth.spline(x = 1:t,y = basis[,i], df = t*0.5)
+		splineRes <- smooth.spline(x = 1:t, y = basis[,i], df = t*0.5)
 		basis[,i] <- predict(splineRes, 1:t)$y
 	}
-	basis <- cbind(basis,1)
+
+	basis <- cbind(basis,1) # add the bias term
+
 	coef <- lsfit(x = basis, y= DOdata, intercept = FALSE)$coefficients
 	DO_fit <- basis %*% coef # coef, each column is the coefficents for different basis
 	
-	return(list(fit = DO_fit, coef = coef, basis = basis,varExpl = sum(svdRes$d[1:r])/sum(svdRes$d)))
+	print("variance explained")
+	print(sum(svdRes$d[1:r]**2)/sum(svdRes$d**2))
+	return(list(fit = DO_fit, coef = coef, basis = basis,varExpl = sum(svdRes$d[1:r]**2)/sum(svdRes$d**2)))
 }
 
 

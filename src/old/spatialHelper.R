@@ -41,6 +41,7 @@ createGrid <- function(loggerInfo, by.x = 0.01, by.y = 0.01){
 	
 	grid$convexIndex <- predict(convexHullModel,grid)
 	
+	
 	attr(grid,"totalArea") <- totalArea*sum(grid$convexIndex)/nrow(grid)  # km^2
 	print(attr(grid,"totalArea"))
 
@@ -81,41 +82,6 @@ unPivtData <- function(data,logger_geo){
 	return(res)
 }
 
-
-st_variogram <- function(zooDF,logger_geo, detrendExpr = "~1",...){
-	# zooDF is a zoo object with columns as each logger's data
-	# logger_geo has columns of loggerID, lon,lat, bathy, x and y
-	
-	require(spacetime)
-	require(gstat)
-	
-	args <- list(...)
-	logger_geo <- transformGeo(logger_geo)
-	logger_time <- as.POSIXct(index(zooDF),origin = "1970-1-1")
-	
-	n <- ncol(zooDF) # the number of sensors
-	T <- nrow(zooDF) # the number of sampling periods
-	
-	trend <- 0
-	
-	res <- (zooDF - trend) %>% as.data.frame() 
-	
-	res$samplingTime <- logger_time
-	res <- melt(res, id.vars = c("samplingTime")) %>%
-		arrange(samplingTime,variable)
-	
-	timeDF <- STFDF(sp=logger_geo,time=logger_time,data=data.frame(value = res$value))
-	# vST <- variogramST(value~longitude+latitude+bathymetry+I(bathymetry^2),timeDF,tlags=0:4,boundaries=c(0,25,50,75))
-	vST <- variogramST(as.formula(paste("value", detrendExpr)), timeDF, tlags = 0:10, boundaries = seq(0,100,10))
-	prodSumModel <- vgmST("productSum",space = vgm(1, "Exp", 150, 0.5),time = vgm(1, "Exp", 5, 0.5),k = 50) 
-	metricModel <- vgmST("metric",joint = vgm(50,"Mat", 500, 0), stAni=200)
-	
-	plot(vST, fit.StVariogram(vST, metricModel, fit.method = 6),map = F)
-	
-	vST_fit <- fit.StVariogram(vST, prodSumModel, fit.method=6)
-	
-	return(list(vgmModel = vST, fit_vgmModel = vST_fit, timeDF = timeDF))
-}
 
 
 
