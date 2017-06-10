@@ -13,6 +13,13 @@ getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", ...){
 		# na.omit()  # remove the missing data
 	data <- data[,loggerInfo$loggerID]
 	data <- data * (as.matrix(data) > 0) # put it to zero
+
+	# add a filter to remove the wrong data
+	if(year == 2015){
+		mask <- index(data) > as.POSIXct("2015-07-23",tz = "GMT")
+		data <- data[mask,]
+	}
+
 	lakeDO <- as.lakeDO(data, loggerInfo)
 
 	return(lakeDO)

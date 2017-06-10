@@ -11,7 +11,7 @@ library(raster)
 source("./src/database.R")
 source("./config.R")
 source("./src/plot.R")
-source("./src/interpolation.R")
+# source("./src/interpolation.R")
 source("./src/outlierDetection.R")
 
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))

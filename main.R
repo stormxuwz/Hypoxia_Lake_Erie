@@ -71,7 +71,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 	trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
 
-	 for(i in 1:nrow(erieDO$loggerInfo)) {
+	for(i in 1:nrow(erieDO$loggerInfo)) {
 	#for(i in 1:2) {
 		cv_loggerID <- erieDO$loggerInfo$loggerID[i]
 		subErieDO <- subset(erieDO, cv_loggerID)
@@ -98,6 +98,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 
 		for(r in rList){
 			metaFolder <- sprintf("%s%d_%s_Reml_%d/cv/%s/",outputBaseName, year, aggType, r, cv_loggerID)
+			
 			hypoxia_reml_cv <- predict(obj =subErieDO, 
 						grid = grid, 
 						method = "Reml", 
@@ -108,6 +109,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 						metaFolder = metaFolder,
 						nmax = 5)
 
+			# hypoxia_reml_cv <- readRDS(sprintf("%s/simulations.rds",metaFolder))
 			statsSummary <- cvUncertainty(hypoxia_reml_cv,trueDO) %>% zoo(order.by = timeIdx)
 			saveRDS(statsSummary, sprintf("%s/simulations_stat.rds",metaFolder))
 			saveRDS(hypoxia_reml_cv, sprintf("%s/simulations.rds",metaFolder))
@@ -123,6 +125,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 						nmax = 5,
 						metaFolder = metaFolder)
 
+			# hypoxia_baye_cv <- readRDS(sprintf("%s/simulations.rds",metaFolder))
 			statsSummary <- cvUncertainty(hypoxia_baye_cv,trueDO) %>% zoo(order.by = timeIdx)
 			saveRDS(statsSummary, sprintf("%s/simulations_stat.rds",metaFolder))
 			saveRDS(hypoxia_baye_cv, sprintf("%s/simulations.rds",metaFolder))
@@ -155,16 +158,21 @@ main_analysis <- function(year,aggType){
 		tmp <- hypoxiaAnalysis(predictions,2)
 		grid$totolHypoxiaTime <- tmp$hypoxiaTime
 		grid$longestHypoxiaTime <- tmp$longestTime
-		png(sprintf("%s/results/%s_totalHypoxiaCount.png",outputBaseName, filePrefix))
+		
 		p <- baseMap + 
 			geom_tile(aes(longitude,latitude,fill = totolHypoxiaTime),data = subset(grid, convexIndex == 1))+
-			scale_fill_gradient(name = "Total \n Hypoxia Time",low = "cyan",high = "red")
+			scale_fill_gradient(name = "Total\nhypoxic\ntime\n(hour)",low = "cyan",high = "red")
+
+		pdf(sprintf("%s/results/%s_totalHypoxiaCount.pdf",outputBaseName, filePrefix), width = 4, height =3)
+		par(oma = c(0, 0, 0, 0))
 		print(p)
 		dev.off()
-		png(sprintf("%s/results/%s_longestHypoxiaCount.png",outputBaseName, filePrefix))
+
+		pdf(sprintf("%s/results/%s_longestHypoxiaCount.pdf",outputBaseName, filePrefix),width = 4, height =3)
+		par(oma = c(0, 0, 0, 0))
 		p <- baseMap + 
 			geom_tile(aes(longitude,latitude,fill = longestHypoxiaTime),data = subset(grid, convexIndex == 1))+
-			scale_fill_gradient(name = "longest \n Hypoxia Time",low = "cyan",high = "red")
+			scale_fill_gradient(name = "Longest\nhypoxic\ntime\n(hour)",low = "cyan",high = "red")
 		print(p)
 		dev.off()
 	}
@@ -172,40 +180,55 @@ main_analysis <- function(year,aggType){
 
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
 	timeIdx <- index(erieDO$samplingData)
-	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year))
+	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
 	
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 	
-	clusterRes <- list()
-	for(r in rList){
-		res <- clusterByNMF(erieDO, basis_r = r)
+	d <- erieDO$samplingData %>% na.omit() 
 
-		clusterRes[[paste0("basis_",r)]] <- res
-		# plot res
-		for(clusterName in names(res$cluster)){
-			erieDO$loggerInfo$cluster <- as.factor(res$cluster[[clusterName]])
-			
-			# plot cluster summary
-			for(cluster_ in unique(erieDO$loggerInfo$cluster)){
-				loggers_belong_to_cluster <- subset(erieDO$loggerInfo, cluster == cluster_)
-				subData <- erieDO$samplingData[,loggers_belong_to_cluster$loggerID] %>% 
-						as.data.frame() %>% mutate(time = as.POSIXct(timeIdx)) %>% 
-						melt(id.vars = c("time")) %>% rename(logger = variable)
-				
-				p <- qplot(time, value, data = subData, color = logger, alpha = I(0.5), geom = "line") 
-				
-				png(sprintf("%s/results/cluster/cluster_%d_r_%d_%s_%s.png",outputBaseName,year, r, clusterName, cluster_))
-				print(p)
-				dev.off()
-			}
-				
-			# plot the cluster results
-			p <- baseMap + geom_point(aes(longitude, latitude, color = cluster), data = erieDO$loggerInfo, size = I(5))
-			png(sprintf("%s/results/cluster/cluster_%d_r_%d_%s.png",outputBaseName,year, r, clusterName))
-			print(p)
-			dev.off()
-		}
+	# perform NMF clustering analysis
+	if(year == 2015){
+		basis_r = 4
+		goodIdx = index(d) > "2015-07-22"
+		d <- d[goodIdx,]
+		timeIdx <- timeIdx[goodIdx]
+	}else{
+		basis_r = 3
 	}
+
+	exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
+	saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
+	
+	# plot(exploreRank)
+
+	nmfDecomp <- NMF_basis(d,basis_r)
+	
+	tmp <- data.frame(nmfDecomp$coef)
+	names(tmp) <- colnames(nmfDecomp$coef)
+	tmp$basis  <- 1:nrow(tmp)
+	tmp <- melt(tmp,id.vars = "basis") 
+	
+	mergedDF <- merge(tmp,erieDO$loggerInfo,by.x = "variable", by.y = "loggerID")
+
+	plot.list1 <- lapply(1:basis_r, function(r){
+		subData <- subset(mergedDF,basis == r)
+		baseMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
+			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = c(0,1))+ 
+			ggtitle(paste0("Basis_", r)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
+	})
+
+	plot.list2 <- lapply(1:basis_r, function(r){
+		newDf <- data.frame(DO = nmfDecomp$basis[,r],time = timeIdx)
+		ggplot(data = newDf) + geom_line(aes(time, DO)) + theme_bw()
+	})
+
+	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
+	
+	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d2.pdf",outputBaseName,year,aggType, basis_r),
+		width = 4*basis_r, height = 6)
+	print(do.call(grid.arrange, args.list))
+	dev.off()
+	
 
 	
 	# plot hypoxia curve
@@ -248,13 +271,12 @@ main_analysis <- function(year,aggType){
 
 
 	# Summarize CV results
-	
 	for(method in c("Reml","Baye")){
 		for(r in rList){
 			filePrefix <- sprintf("%d_%s_%s_%d",year, aggType, method, r)
 
 			p <- plotCVOnMap(year, aggType, method, r)
-			png(sprintf("%s/results/%s_CV_summary.png",outputBaseName, filePrefix))
+			pdf(sprintf("%s/results/%s_CV_summary.pdf",outputBaseName, filePrefix), width = 6, height = 4)
 			print(p)
 			dev.off()
 		}
@@ -262,7 +284,7 @@ main_analysis <- function(year,aggType){
 	
 	filePrefix <- sprintf("%d_%s_%s",year, aggType, "idw")
 	p <- plotCVOnMap(year, aggType, "idw", r)
-	png(sprintf("%s/results/%s_CV_summary.png",outputBaseName, filePrefix))
+	pdf(sprintf("%s/results/%s_CV_summary.pdf",outputBaseName, filePrefix), width = 6, height = 4)
 	print(p)
 	dev.off()
 }
@@ -271,45 +293,45 @@ main_analysis <- function(year,aggType){
 # function to calculate the CV resutls
 
 
-for(year in c(2014, 2015)){
-	for(aggType in c("hourly","daily")){
+for(year in c(2015)){
+	for(aggType in c("daily","hourly")){
 		print(system.time(main(year = year, aggType = aggType)))
 		print(system.time(main_CV(year = year, aggType = aggType)))
 	}
 }
 
-resultSummary()
+# resultSummary()
 
-for(year in c(2014, 2015)){
-	for(aggType in c("hourly","daily")){
-		print(system.time(main_analysis(year = year, aggType = aggType)))
-	}
-}
+# for(year in c(2014, 2015)){
+# 	for(aggType in c("hourly","daily")){
+# 		print(system.time(main_analysis(year = year, aggType = aggType)))
+# 	}
+# }
 
 
-for(year in c(2014, 2015)){
-	for(aggType in c("hourly","daily")){
+# for(year in c(2014, 2015)){
+# 	for(aggType in c("hourly","daily")){
 		
-		# get hypoxia extent
-		for(method in c("Reml","Baye")){
-			for(r in rList){
-				getHypoxiaExtent(year, aggType, method, r)
-			}
-		}
+# 		# get hypoxia extent
+# 		# for(method in c("Reml","Baye")){
+# 		# 	for(r in rList){
+# 		# 		getHypoxiaExtent(year, aggType, method, r)
+# 		# 	}
+# 		# }
 		
-		# analyze the decomposition results
-		for(r in rList){
-			getDecompositionResults(year, aggType, r)
-		}
+# 		# analyze the decomposition results
+# 		for(r in rList){
+# 			getDecompositionResults(year, aggType, r)
+# 		}
 		
-		# get sensors linear regression
-		for(method in c("Reml","Baye","idw")){
-			for(r in rList){
-				getSensorWithHypoxiaExtent(year, aggType, method, r)
-			}
-		}
-	}
-}
+# 		# get sensors linear regression
+# 		# for(method in c("Reml","Baye","idw")){
+# 		# 	for(r in rList){
+# 		# 		getSensorWithHypoxiaExtent(year, aggType, method, r)
+# 		# 	}
+# 		# }
+# 	}
+# }
 
 
 
@@ -317,10 +339,10 @@ for(year in c(2014, 2015)){
 
 
 
-#system.time(main_CV(year = 2014, aggType = "daily"))
-#system.time(main_CV(year = 2014, aggType = "hourly"))
-#system.time(main_CV(year = 2015, aggType = "daily"))
-#system.time(main_CV(year = 2015, aggType = "hourly"))
+# system.time(main_CV(year = 2014, aggType = "daily"))
+# system.time(main_CV(year = 2014, aggType = "hourly"))
+# system.time(main_CV(year = 2015, aggType = "daily"))
+# system.time(main_CV(year = 2015, aggType = "hourly"))
 # resultSummary()
 
 
