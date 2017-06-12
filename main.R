@@ -186,21 +186,17 @@ main_analysis <- function(year,aggType){
 	
 	d <- erieDO$samplingData %>% na.omit() 
 
+	####################
 	# perform NMF clustering analysis
+	#####################
 	if(year == 2015){
-		basis_r = 4
-		goodIdx = index(d) > "2015-07-22"
-		d <- d[goodIdx,]
-		timeIdx <- timeIdx[goodIdx]
+		basis_r = 5
 	}else{
 		basis_r = 3
 	}
-
+	require(NMF)
 	exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
 	saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
-	
-	# plot(exploreRank)
-
 	nmfDecomp <- NMF_basis(d,basis_r)
 	
 	tmp <- data.frame(nmfDecomp$coef)
@@ -224,34 +220,40 @@ main_analysis <- function(year,aggType){
 
 	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
 	
+	require(gridExtra)
 	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d2.pdf",outputBaseName,year,aggType, basis_r),
 		width = 4*basis_r, height = 6)
 	print(do.call(grid.arrange, args.list))
 	dev.off()
 	
 
-	
+	#######################
 	# plot hypoxia curve
+	#######################
 	for(method in c("Reml","Baye")){
 		for(r in rList){
 			getHypoxiaExtent(year, aggType, method, r)
 		}
 	}
 	
+	###################
 	# analyze the decomposition results
+	#################
 	for(r in rList){
 		getDecompositionResults(year, aggType, r)
 	}
 	
-	# get sensors linear regression
-	for(method in c("Reml","Baye","idw")){
-		for(r in rList){
-			getSensorWithHypoxiaExtent(year, aggType, method, r)
-		}
-	}
+
+	# # get sensors linear regression
+	# for(method in c("Reml","Baye","idw")){
+	# 	for(r in rList){
+	# 		getSensorWithHypoxiaExtent(year, aggType, method, r)
+	# 	}
+	# }
 	
-	
+	##########################
 	# analyze the hypoxia time
+	##########################
 	for(method in c("Reml","Baye")){
 		for(r in rList){
 			fileFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
@@ -269,8 +271,9 @@ main_analysis <- function(year,aggType){
 				reConstruct()
 	hypoxiaTimeSummary(predictions, filePrefix = sprintf("%d_%s_%s",year, aggType, "idw") )
 
-
+	#######################
 	# Summarize CV results
+	#####################
 	for(method in c("Reml","Baye")){
 		for(r in rList){
 			filePrefix <- sprintf("%d_%s_%s_%d",year, aggType, method, r)
@@ -293,20 +296,24 @@ main_analysis <- function(year,aggType){
 # function to calculate the CV resutls
 
 
-for(year in c(2015)){
-	for(aggType in c("daily","hourly")){
-		print(system.time(main(year = year, aggType = aggType)))
-		print(system.time(main_CV(year = year, aggType = aggType)))
-	}
-}
+# for(year in c(2015)){
+# 	for(aggType in c("daily","hourly")){
+# 		print(system.time(main(year = year, aggType = aggType)))
+# 		print(system.time(main_CV(year = year, aggType = aggType)))
+# 	}
+# }
 
 # resultSummary()
 
-# for(year in c(2014, 2015)){
-# 	for(aggType in c("hourly","daily")){
-# 		print(system.time(main_analysis(year = year, aggType = aggType)))
-# 	}
-# }
+
+for(year in c(2015)){
+	for(aggType in c("hourly","daily")){
+		print(system.time(main_analysis(year = year, aggType = aggType)))
+	}
+}
+
+
+
 
 
 # for(year in c(2014, 2015)){
