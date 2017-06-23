@@ -303,7 +303,7 @@ main_analysis <- function(year,aggType){
 # 	}
 # }
 
-# resultSummary()
+resultSummary()
 
 
 for(year in c(2015)){

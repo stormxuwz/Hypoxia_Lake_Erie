@@ -5,6 +5,61 @@ require(leaflet)
 require(ggmap)
 
 
+plot_gif <- function(year, aggType, method,r){
+	# data is a matrix with rows as different time and columns as different locations
+	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	timeIdx <- index(erieDO$samplingData)
+	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
+	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
+
+	loggerInfo <- erieDO$loggerInfo
+
+	if(method=="idw"){
+		predictions <- readRDS(sprintf("%s/%d_%s_idw/trendPredictions.rds", outputBaseName, year, aggType)) %>%
+				reConstruct()
+
+		prefix <- sprintf("/movie_%d_%s_%s_%d/",year, aggType, method, r)
+
+	}else{
+		fileFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
+		residualPrediction <- readRDS(paste0(fileFolder, "residualPredictions.rds"))
+		predictions <- readRDS(paste0(fileFolder,"trendModel.rds")) %>% 
+				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
+		predictions <- predictions$predValue
+		prefix <- sprintf("/movie_%d_%s_%s_%d/",year, aggType, method, r)
+	}
+
+	folder <- paste0(outputBaseName,"/results/",prefix)
+	createFolder(folder)
+	
+	maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData[i,],na.rm=T)))
+
+
+	require(doParallel)
+	cl <- makeCluster(4)
+	registerDoParallel(cl)
+
+
+	tmp <- foreach(i =1:100) %dopar% {
+		require(ggplot2)
+		grid$value <- predictions[i,]
+		loggerInfo$value <- as.numeric(erieDO$samplingData[i,])
+		p <- baseMap+geom_tile(aes(longitude,latitude,fill = value),data = grid)
+		p <- p+geom_point(aes(longitude,latitude,fill = value), size = I(2), color = "black",shape = 21, data  = loggerInfo)
+		p <- p+scale_fill_gradient2(name = "DO (mg/L)",low = "firebrick1",mid = "yellow", midpoint = 6, high = "cyan",limit = c(0,maxCol),na.value = "transparent")
+		p <- p+ggtitle(strftime(as.POSIXct(timeIdx[i]),tz = "America/New_York",usetz = TRUE))
+
+		png(sprintf("%s/hypoxiaSpatial_%d.png",folder,i),width = 800, height =600, res =200)
+		print(p)
+		dev.off()
+	}
+
+	stopCluster(cl)
+	gc()
+}
+
+
+
 
 plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 	# data is a zoo dataframe

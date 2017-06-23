@@ -14,7 +14,6 @@ getHypoxiaExtent <- function(year, aggType, method, r){
 	
 	idwHE <- readRDS(paste0(IDWFolderName,"extent.rds"))
 	
-
 	units <- list(less0 = "0.01 mg/L", less2 = "2 mg/L", less4 = "4 mg/L")
 	
 	n <- sum(grid$convexIndex)
