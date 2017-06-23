@@ -94,7 +94,7 @@ cvUncertainty <- function(prediction, trueValue){
 
 	tmp <- summaryStatistics(allPrediction)
 	tmp$true <- as.numeric(trueValue)
-	tmp$withinBound <- (tmp$true < tmp$upper) & (tmp$true > tmp$lower)
+	tmp$withinBound <- (tmp$true < tmp$upper+0.01) & (tmp$true > tmp$lower-0.01)
 	attr(tmp, "boundRatio") <- sum(tmp$withinBound)/nrow(tmp)
 	return(tmp)
 }
