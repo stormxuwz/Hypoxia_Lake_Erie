@@ -37,13 +37,16 @@ NMF_basis <- function(DOdata, r){
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
-	svdRes <- svd(DOdata %>% scale()) # is centered necessary? No (3/23)
+
+	print("Doing Scaling!!")
+	svdRes <- svd(DOdata %>% scale()) # is centered necessary? No (3/23) // Yes (the original paper did so)
+
 
 	basis <- svdRes$u[,1:r]
 	t = nrow(basis)
 
 	for(i in 1:r){
-		splineRes <- smooth.spline(x = 1:t, y = basis[,i], df = t*0.5)
+		splineRes <- smooth.spline(x = 1:t, y = basis[,i], df = t*0.2)
 		basis[,i] <- predict(splineRes, 1:t)$y
 	}
 

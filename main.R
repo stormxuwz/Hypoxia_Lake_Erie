@@ -15,7 +15,8 @@ outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
 mapDx <- 0.025
 mapDy <- 0.025
 
-rList <- c(5,10,15)
+rList <- c(2,5,10,15)
+#rList <- c(5)
 
 main <- function(year = 2014, aggType = "daily"){
 	#year <- 2014
@@ -184,7 +185,7 @@ main_analysis <- function(year,aggType){
 	
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 	
-	d <- erieDO$samplingData %>% na.omit() 
+	d <- erieDO$samplingData %>% na.omit()
 
 	####################
 	# perform NMF clustering analysis
@@ -298,10 +299,8 @@ main_analysis <- function(year,aggType){
 
 
 # function to calculate the CV resutls
-
-
-# for(year in c(2015)){
-# 	for(aggType in c("daily","hourly")){
+# for(year in c(2014, 2015)){
+# 	for(aggType in c("hourly")){
 # 		print(system.time(main(year = year, aggType = aggType)))
 # 		print(system.time(main_CV(year = year, aggType = aggType)))
 # 	}
@@ -315,8 +314,6 @@ for(year in c(2014, 2015)){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }
-
-
 
 
 
