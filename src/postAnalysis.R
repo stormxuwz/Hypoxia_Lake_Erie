@@ -55,31 +55,31 @@ getDecompositionResults <- function(year, aggType, r){
 	basis <- zoo(basis, order.by = timeIndex)
 	
 	# plot the basis functions
-	pdf(sprintf("../output/results/%d_%s_r_%d_basis.pdf",year,aggType, r),	width = 14, height = 6)
-	print(plot(basis, xlab = "Time",nc = 5 , yax.flip = TRUE,cex.axis = 1.5, cex.lab = 2, main = "",oma = c(5, 0, 2, 0),
+	pdf(sprintf("../output/results/%d_%s_r_%d_basis.pdf",year,aggType, r),	width = 8, height = 3)
+	print(plot(basis[,1:3], xlab = "Time",nc = 3 , yax.flip = FALSE,cex.axis = 1.5, cex.lab = 2, main = "",oma = c(5, 0, 2, 0),
 		mar = c(0, 5.1, 0, 2.1)))
 	dev.off()
 		
 	# plot coefficients on the map
 	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude") 
 	
-	plot.list1 <- lapply(seq(1,r,2), function(x){
+	plot.list1 <- lapply(seq(1,3,1), function(x){
 		subData <- model$model[[x]]
 		myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
 			scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
 			ggtitle(paste0("Basis_", x)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
 	})
 
-	plot.list2 <- lapply(seq(2,r,2), function(x){
-		subData <- model$model[[x]]
-		myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
-			ggtitle(paste0("Basis_", x))
-	})
-	
-	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
+	# plot.list2 <- lapply(seq(2,r,2), function(x){
+	# 	subData <- model$model[[x]]
+	# 	myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
+	# 		scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
+	# 		ggtitle(paste0("Basis_", x))
+	# })
+	args.list <- c(c(plot.list1),list(nrow=1))
+	# args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
 	pdf(sprintf("../output/results/%d_%s_r_%d_basisCoeff.pdf",year,aggType, r),	
-			width = 4 * (r+1)%/%2, height = 6)
+			width = 3*4, height = 3)
 	print(do.call(grid.arrange, args.list))
 	dev.off()
 	
@@ -386,7 +386,7 @@ plotCVOnMap <- function(year_, aggType_, method_, r_){
 
 
 RMSE <- function(x,y){
-	return(round(mean((x-y)^2),digits = 3))
+	return(round(sqrt(mean((x-y)^2)),digits = 3))
 }
 
 plot_cv <- function(year, method, aggType, cv_loggerID, r = NULL){

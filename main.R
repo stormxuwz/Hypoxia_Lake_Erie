@@ -195,10 +195,14 @@ main_analysis <- function(year,aggType){
 		basis_r = 3
 	}
 	require(NMF)
-	exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
-	saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
+	#exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
+	#saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
+
+	exploreRank <- readRDS(sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
 	nmfDecomp <- NMF_basis(d,basis_r)
 	
+	saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
+
 	tmp <- data.frame(nmfDecomp$coef)
 	names(tmp) <- colnames(nmfDecomp$coef)
 	tmp$basis  <- 1:nrow(tmp)
@@ -209,7 +213,7 @@ main_analysis <- function(year,aggType){
 	plot.list1 <- lapply(1:basis_r, function(r){
 		subData <- subset(mergedDF,basis == r)
 		baseMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = c(0,1))+ 
+			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = range(0, max(mergedDF$value)+0.1))+ 
 			ggtitle(paste0("Basis_", r)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
 	})
 
@@ -221,7 +225,7 @@ main_analysis <- function(year,aggType){
 	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
 	
 	require(gridExtra)
-	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d2.pdf",outputBaseName,year,aggType, basis_r),
+	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d.pdf",outputBaseName,year,aggType, basis_r),
 		width = 4*basis_r, height = 6)
 	print(do.call(grid.arrange, args.list))
 	dev.off()
@@ -306,8 +310,8 @@ main_analysis <- function(year,aggType){
 resultSummary()
 
 
-for(year in c(2015)){
-	for(aggType in c("hourly","daily")){
+for(year in c(2014, 2015)){
+	for(aggType in c("hourly")){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }

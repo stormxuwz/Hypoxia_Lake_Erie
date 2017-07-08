@@ -26,7 +26,7 @@ plot_variogram <- function(df, formu = "value~1"){
 NMF_basis <- function(DOdata, r){
 	require(NMF)
 	DOdata <- as.matrix(DOdata)
-	nmfRes <- nmf(DOdata, r)
+	nmfRes <- nmf(DOdata, r, nrun = 60)
 
 	W <- nmfRes@fit@W
 	H <- nmfRes@fit@H
@@ -37,7 +37,7 @@ NMF_basis <- function(DOdata, r){
 SVD_basis <- function(DOdata, r){
 	# r is the column vectors to keep
 	DOdata <- as.matrix(DOdata)
-	svdRes <- svd(DOdata) # is centered necessary? No (3/23)
+	svdRes <- svd(DOdata %>% scale()) # is centered necessary? No (3/23)
 
 	basis <- svdRes$u[,1:r]
 	t = nrow(basis)
