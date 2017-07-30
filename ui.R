@@ -90,8 +90,6 @@ shinyUI(
           actionButton("ClearAll","clear all"),
           downloadButton("downloadData", label = "Download", class = NULL)
 
-  				#actionButton("selectAllLogal","select all")
-
         ),
   			column(
   				7,
@@ -99,9 +97,6 @@ shinyUI(
             
             tabPanel("Time Series",
               dygraphOutput('timeSeriesPlot'),
-              # checkboxInput("scale", "Scaled?", value = FALSE, width = NULL),
-              # checkboxInput("twoy", "Double Y?", value = FALSE, width = NULL),
-              # checkboxInput("withOther", "With Both Variables", value = FALSE, width = NULL),
               checkboxInput("withUpperLogger", "With upper logger", value = FALSE, width = NULL),
               checkboxInput("outlier", "Show outlier", value = FALSE, width = NULL)
               ),
@@ -111,39 +106,17 @@ shinyUI(
 
             tabPanel("Variogram",
                 plotlyOutput("Variogram"),
-                # dateRangeInput('dateRangeVariogram',
-                      # label = paste("variogram date range"),
-                    # separator = " to ", format = "mm/dd/yy",
-                    # startview = 'year', weekstart =0
-                # ),
                 textInput("equation",h5("Variogram Expr"),value = "~longitude+latitude",placeholder="detrend: ~longitude+latitude＋bathymetry")),
             
             tabPanel("Daily Hypoxia Extent",
                 dygraphOutput('hypoxiaExtentPlot'),
                 # actionButton("calHypoxiaButtom","Calculate Hypoxia Extent"),
                 checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL),
+               
                 downloadButton("downloadHypoxia", label = "Download Hypoxia Area", class = NULL)
 
               )
-              #tabPanel("Instructions",
-              # label = paste("variogram date range")
-
-              #)
-           
-
-            # tabPanel("Settings",
-            #   selectInput("interpolationMethod", 
-            #       label = h5("Method"),
-            #       choices = list("IDW" = "IDW"),  
-            #       selected ="IDW"),
-            #   selectInput("inteprolationPara1", 
-            #       label = h5("Para1"),
-            #       choices = list("Para" = "Para1"),  
-            #       selected ="Para1"),
-            #   actionButton("Interpolation","Interpolate") # first is the action name, second is the UI name
-
-              # )
-
+            
           )
   			)
   		)

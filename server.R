@@ -11,10 +11,21 @@ library(raster)
 source("./src/database.R")
 source("./config.R")
 source("./src/plot.R")
-# source("./src/interpolation.R")
 source("./src/outlierDetection.R")
+source("src/classPrediction.R")
+source("src/classDef.R")
+source("src/classReConstruct.R")
+source("src/classSummary.R")
+source("src/helper.R")
+source("src/basisDecomposition.R")
 
+# the global variable for all shiny session
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
+trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
+mapDx <- 0.025
+mapDy <- 0.025
+
+varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
 
 boxcox <- function(x,lambda){return((x^lambda-1)/lambda)}
 
@@ -27,7 +38,6 @@ parseDataTypeInput <- function(dataType){
 	}
 }
 
-# ID <- input$selectedID
 
 shinyServer(function(input,output,session)
 {
@@ -48,11 +58,11 @@ shinyServer(function(input,output,session)
     updateSelectizeInput(session, 'selectedID', choices = unique(geoData()[,"loggerID"]), selected=NULL,server = FALSE)
   })
   
+  
   # Action -- Interpolation
   interpolation <- reactive({
     # input$Interpolation
     spdata <- spatialDataAll()
-  
     myGeoData <- geoData()
  
     if(input$var == "All"){
@@ -70,99 +80,118 @@ shinyServer(function(input,output,session)
 		# return()
 	}else{
 		names(spdata)[3] = "value"
-		
     	myGeoData <- subset(myGeoData,loggerID %in% spdata$logger)
+		
+		grid <- createGrid(myGeoData,by.x = 0.01, by.y = 0.01)
+		convexIndex <- grid$convexIndex
 
-		# do interpolation
-		grid <- createGrid(myGeoData)
-		#print(head(grid))
-		#print(head(spdata))
+		coordinates(spdata) = ~x + y
+		coordinates(grid) = ~x + y
 
-		grid$pred <- spatial_interpolation(spdata,grid,method = "IDW")
-		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
+		grid$pred <- NA
+		grid$pred[convexIndex == 1] <-  idw(value~1 , spdata, subset(grid, convexIndex == 1), nmax = 5)$var1.pred
+
+		grid <- grid %>% data.frame() %>% select(longitude,latitude,pred) %>% rasterFromXYZ()
 		raster::projection(grid)=CRS("+init=epsg:4326")
 		return(grid)
 	}
   })
 
   	calHypoxiaExtent <- reactive({
-
   		year <- input$year
   		print("start calculate hypoxia extent")
   		# daily <- input$dataType
 
 		loggerInfo <- retriveGeoData(year,"B")
-		data <- retriveLoggerData(loggerInfo$loggerID,year,"DO","daily","AVG",transform = TRUE) %>% na.omit()
-		
-		## hard code for progress bar
-		data <- na.omit(data)  # only remain the time where all data are available
-		times <- index(data)
-		grid <- createGrid(loggerInfo)  # will also return an area
-		
-		
-		interpolationRes <- matrix(0,nrow = nrow(grid),ncol = nrow(data))
-		loggerNames  <- as.numeric(colnames(data))
-		print("# of interpolation:")
-		print(nrow(data))
 
-		withProgress(message = 'Calculate Hypoxia Extent', value = 0, {
-		for(i in 1:nrow(data)){
-		# for(i in 1:3){
-			subData <- data.frame(logger = loggerNames,DO = as.numeric(data[i,]))
-			subData <- merge(subData, loggerInfo,by.x = "logger",by.y = "loggerID") %>% rename(value = DO)
+		erieDO <- getLakeDO(year, "B", "daily") %>% na.omit()
+		grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
+		timeIdx <- index(erieDO$samplingData)
 
-			grid$pred <- spatial_interpolation(subData,grid)
-			interpolationRes[,i] <- ifelse(grid$pred<0,0,grid$pred)
-			incProgress(1/nrow(data), detail = paste("Calculate for time", times[i]))
+		method = "basis_MLE"
+		
+		stopifnot(method %in% c("idw","basis_MLE","basis_baye"))
+		print(paste0("using ", method, " to estimate hypoxia extent"))
+		if(method == "idw"){
+			hypoxiaExtent <- predict(obj = erieDO, 
+				grid = grid, 
+				method = "idw", 
+				predictType = "extent",
+				metaFolder = NULL, 
+				nmax = 5)
+			hypoxiaExtent <- zoo(hypoxiaExtent, order.by = timeIdx)
+
+		}else if(method == "basis_MLE"){
+			hypoxiaExtent <- predict(obj = erieDO,
+					grid = grid, 
+					method = "Reml", 
+					predictType = "extent", 
+					trend = trend, 
+					r = 10, 
+					totalSim = 1000,
+					nmax = 5,
+					metaFolder = NULL)
+
+		}else if(method == "basis_baye"){
+			hypoxiaExtent <- predict(obj = erieDO,
+					grid = grid, 
+					method = "Baye", 
+					predictType = "extent", 
+					trend = trend, 
+					r = 10, 
+					totalSim = 1000,
+					nmax = 5,
+					metaFolder = NULL)
 		}
-		})
 
-		interpolationRes <- interpolationRes[grid$convexIndex == 1,] # remove the locations that are NA
+		if(method!="idw"){
+			hypoxiaExtent <- do.call(cbind, hypoxiaExtent) %>% zoo(order.by = timeIdx)
+		}
 
-		totalPx <- nrow(interpolationRes)
-
-		hypoxia_2 <- colSums(interpolationRes<2)/totalPx
-		hypoxia_0 <- colSums(interpolationRes<0.01)/totalPx
-		hypoxia_4 <- colSums(interpolationRes<4)/totalPx
-
-		hypoxiaExtent <- zoo(data.frame(below_0.01 = hypoxia_0, below_2 = hypoxia_2, below_4 = hypoxia_4),order.by = times)
-
-		# attr(hypoxiaExtent,"pixSize") <- attr(grid,"pixSize")
-		attr(hypoxiaExtent,"totalArea") <- attr(grid,"totalArea")
-
-		# hExtent <- calulateHypoxiaExtent(data,loggerInfo) # calculate hypoxia extent
-		
-
-
-		return(list(hypoxiaExtent = hypoxiaExtent, grid = grid))
+		return(list(hypoxiaExtent = hypoxiaExtent, grid = grid, method = method))
   	})
 
-  	output$hypoxiaExtentPlot <- renderDygraph({
+  	# plot the hypoxia extent
 
+  	output$hypoxiaExtentPlot <- renderDygraph({
 		hypoxiaRes  <- calHypoxiaExtent()
-		hypoxia <- hypoxiaRes[[1]]
-		grid <- hypoxiaRes[[2]]
+		hypoxia <- hypoxiaRes$hypoxiaExtent
+		grid <- hypoxiaRes$grid
+		method <- hypoxiaRes$method
+		totalArea <- attr(grid, "totalArea")
+		interpolatedNum <- sum(grid$convexIndex==1)
 		
+		# show interpolation area on the map
 		grid$pred <- NA
 		grid$pred[grid$convexIndex==1] <- 1
-		
 		pal <- colorNumeric("black", domain = NULL)(grid$pred)
-
 		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
 		raster::projection(grid)=CRS("+init=epsg:4326")
-		
 		leafletProxy("mymap") %>% clearControls() %>% clearImages() %>%
 			addRasterImage(grid, colors = pal, opacity = 0.2)
 
-		if(input$showArea){
-			hypoxia <- hypoxia*attr(hypoxia,"totalArea")
-			label = "Hypoxia extent (km^2)"
-		}else{
-			label = "Hypoxia extent ratio (km^2)"
-		}
-		
-		return(dygraph(hypoxia) %>% dyRangeSelector(retainDateWindow=TRUE)) %>% dyAxis("y", label = label)
 
+		# show hypoxia extent
+		hypoxia <- hypoxia / interpolatedNum
+		label <- "Hypoxia extent ratio (km^2)"
+
+		if(input$showArea){
+			hypoxia <- hypoxia * totalArea
+			label <- "Hypoxia extent (km^2)"
+		}
+
+		if(method == "idw"){
+			return(dygraph(hypoxia) %>% dyRangeSelector(retainDateWindow=TRUE) %>% dyAxis("y", label = label))
+			
+		}else{
+			tmpName <- c("lower","median","upper")
+			p <- dygraph(hypoxia) %>% 
+				dySeries(paste("less0",tmpName,sep = "."), label = "less0") %>% 
+				dySeries(paste("less2",tmpName,sep = "."), label = "less2") %>% 
+				dySeries(paste("less4",tmpName,sep = "."), label = "less4")
+
+			return(p %>% dyRangeSelector(retainDateWindow=TRUE) %>% dyAxis("y", label = label) )
+		}
 	})
 
 
@@ -184,8 +213,6 @@ shinyServer(function(input,output,session)
 		}
 		var <- input$var
 		
-
-
 		if(var =="All"){
 			retriveLoggerData_DO_Temp(loggerIndex,year,groupRange,dataType,timeRange=NULL)
 		}else{
@@ -193,12 +220,13 @@ shinyServer(function(input,output,session)
 		}
 	})
 
+	# get geoData
 	geoData <- reactive({
 		year <- input$year
-		# print(year)
    		retriveGeoData(year,"B")
  	})
 
+	# color scheme
 	colorpal <- reactive({
 		# to be extracted into plot.R files
       if(input$mapData == "Bathy"){
@@ -330,7 +358,7 @@ shinyServer(function(input,output,session)
 	
 
 	spatialDataAll <- reactive({
-		# get the spatial data at one certain time point with sp locations
+	  # get the spatial data at one certain time point with sp locations
 	  var <- input$var
 	  if(var == "All")
 	  	var <- "DO"
@@ -340,7 +368,6 @@ shinyServer(function(input,output,session)
 	  	return(NULL) # Raw data can't visualize spatially on the map since the time is different
 	  }
 	  groupRange <- parseDataTypeInput(input$dataType)$groupRange
-	
 
 	  if(groupRange == "daily"){
 			QueryHour <- NULL

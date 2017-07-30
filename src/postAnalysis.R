@@ -103,8 +103,8 @@ getDecompositionResults <- function(year, aggType, r){
 	require(ggplot2)
 	residuals <- model$residuals$samplingData
 	
-	#stv <- st_variogram(model$residuals$samplingData, model$residuals$loggerInfo)
-	#saveRDS(stv, sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
+	stv <- st_variogram(model$residuals$samplingData, model$residuals$loggerInfo)
+	saveRDS(stv, sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
 	stv <- readRDS(sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
 	
 	pdf(sprintf("../output/results/%d_%s_r_%d_stVgm.pdf",year,aggType, r),

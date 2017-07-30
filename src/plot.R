@@ -26,13 +26,16 @@ plot_gif <- function(year, aggType, method,r){
 		predictions <- readRDS(paste0(fileFolder,"trendModel.rds")) %>% 
 				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
 		predictions <- predictions$predValue
+
 		preidctions <- predictions*(predictions >0)
+
 		prefix <- sprintf("/movie_%d_%s_%s_%d/",year, aggType, method, r)
 	}
 
 	folder <- paste0(outputBaseName,"/results/",prefix)
 	createFolder(folder)
 	
+
 	maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData,na.rm=T)))
 
 
@@ -43,6 +46,7 @@ plot_gif <- function(year, aggType, method,r){
 	startIdx <- ifelse(year == 2014, 6, 4)
 	
 	tmp <- foreach(i =seq(startIdx,length(timeIdx),6)) %dopar% {
+
 		require(ggplot2)
 		grid$value <- predictions[i,]
 		loggerInfo$value <- as.numeric(erieDO$samplingData[i,])
