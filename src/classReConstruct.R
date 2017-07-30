@@ -28,7 +28,7 @@ reConstruct.basisModel <- function(
 	# residualPrediction is a T * n_grid matrix
 	# simulationNum 
 
-	# return a list of 1 matrix:T * n_grid and 2 variance n_grid
+	# return a list of (1) matrix:T * n_grid and (2) variance n_grid
 
 	availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
 	basisNum <- length(trendModel$predictions)

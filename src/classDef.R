@@ -55,7 +55,7 @@ idwModel <- function(x, metaFolder, nmax){
 	# separate X into different time steps
 	
 	# data <- list([[time1]]:df[x,y, value])
-	createFolder(metaFolder)
+	if(!is.null(metaFolder)) createFolder(metaFolder)
 	model <- list()
 	loggerInfo <- x$loggerInfo
 	for(i in 1:nrow(x$samplingData)){

@@ -7,12 +7,6 @@ require(sp)
 require(dplyr)
 require(geoR)
 
-source("src/spatialHelper.R")
-source("src/basisDecomposition.R")
-source("src/interpolation_base.R")
-source("src/interp_summary.R")
-
-
 idw_interpolation_main <- function(data, locationInfo, grid = NULL){
 	data <- na.omit(data)  # only remain the time where all data are available
 	times <- index(data)

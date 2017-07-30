@@ -220,8 +220,9 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 	# obj is the lakeDO object
 	metaFolder = list(...)$metaFolder
 	nmax <- list(...)$nmax
-	createFolder(metaFolder)
-
+	
+	if(!is.null(metaFolder)) createFolder(metaFolder)
+	
 	if(!method %in% c("idw","Reml","Baye")){
 		stop("interpolation method not implemented")
 	}
@@ -240,8 +241,8 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 			idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
 			predict(grid, parallel = TRUE)
 
-		saveRDS(res, paste0(metaFolder,"trendPredictions.rds"))
-
+		if(!is.null(metaFolder)) saveRDS(res, paste0(metaFolder,"trendPredictions.rds"))
+		
 		if(predictType == "extent"){
 		 	res <- summary(res)
 		}else if(predictType == "simulations"){
@@ -277,7 +278,6 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 			saveRDS(residualPredictions, paste0(metaFolder,"residualPredictions.rds"))
 			saveRDS(trendModel, paste0(metaFolder,"trendModel.rds"))
 		}
-
 
 		basisNum <- r + 1
 
