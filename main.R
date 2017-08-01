@@ -75,7 +75,7 @@ main_CV <- function(year = 2014, aggType = "daily"){
 	for(i in 1:nrow(erieDO$loggerInfo)) {
 	#for(i in 1:2) {
 		cv_loggerID <- erieDO$loggerInfo$loggerID[i]
-		subErieDO <- subset(erieDO, cv_loggerID)
+		subErieDO <- subset(erieDO, cv_loggerID)  #remove cv_loggerID from erieDO
 		grid <- erieDO$loggerInfo[i,]
 		grid$convexIndex <- 1
 
@@ -134,28 +134,95 @@ main_CV <- function(year = 2014, aggType = "daily"){
 	}
 }
 
-main_removingLogger <- function(year = 2014, aggTye = "daily", ...){
-	trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
-	erieDO <- getLakeDO(year, "B", aggType)
-	
-	grid <- createGrid(erieDO$loggerInfo, 0.025, 0.025)
 
-	removedLoggerID <- c()
-	r <- 5
+NMFReconstruct <- function(year, aggType, basis_r, loggerID, new = FALSE){
+	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	timeIdx <- index(erieDO$samplingData)
 
-	erieDO <- subset(erieDO, removedLoggerID)
+	resFileName <- sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r)
+	if(file.exists(resFileName) & !new){
+		nmfDecomp <- readRDS(resFileName) %>% NMF_scale()
+	}else{
+		print("no previous results exist, new calculation")
+		nmfDecomp <- NMF_basis(erieDO$samplingData,basis_r) %>% NMF_scale()
+		saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
+	}
+	reconstructed <- data.frame(nmfDecomp$basis %*% nmfDecomp$coef)
+	names(reconstructed) <- colnames(nmfDecomp$coef)
 
-	hypoxia_idw <- predict(erieDO, grid, "idw")
-	hypoxia_reml_cv <- predict(erieDO, grid, "Reml", predictType = "expected", trend = trend, r = r, totalSim = 10)
-	hypoxia_baye_cv <- predict(erieDO, grid, "Baye", predictType = "extent", trend = trend, r = r, totalSim = 1000)
+	res <- data.frame(nmf = reconstructed[,as.character(loggerID)], y = as.numeric(erieDO$samplingData[,loggerID]), time = timeIdx)
+	print(qplot(timeIdx, nmf, data = res) + geom_line(aes(timeIdx, y), data = res, color = "red"))
 }
 
-main_analysis <- function(year,aggType){
-	# cluster analysis
-	# year = 2014
-	# aggType = "hourly"
 
-	hypoxiaTimeSummary <- function(predictions, filePrefix){	
+
+
+NMF_analysis <- function(year, aggType, explore = FALSE){
+	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	timeIdx <- index(erieDO$samplingData)
+	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
+	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
+	
+	if(year == 2015){
+		basis_r = 5
+	}else if(year == 2014){
+		basis_r = 3
+	}else if(year == 2016){
+		basis_r = 6
+	}
+	
+	d <- erieDO$samplingData
+
+	require(NMF)
+	
+	if(explore){
+		exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
+		saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
+	}
+	# exploreRank <- readRDS(sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
+
+	resFileName <- sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r)
+	if(file.exists(resFileName)){
+		nmfDecomp <- readRDS(resFileName) %>% NMF_scale()
+	}else{
+		print("no previous results exist, new calculation")
+		nmfDecomp <- NMF_basis(erieDO$samplingData,basis_r) %>% NMF_scale()
+		saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
+	}
+
+	tmp <- data.frame(nmfDecomp$coef)
+	names(tmp) <- colnames(nmfDecomp$coef)
+	tmp$basis  <- 1:nrow(tmp)
+	tmp <- melt(tmp,id.vars = "basis") 
+	mergedDF <- merge(tmp,erieDO$loggerInfo,by.x = "variable", by.y = "loggerID")
+
+
+	# plot 
+	plot.list1 <- lapply(1:basis_r, function(r){
+		subData <- subset(mergedDF,basis == r)
+		baseMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
+			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = range(0, max(mergedDF$value)+0.1))+ 
+			ggtitle(paste0("Basis_", r)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
+	})
+	plot.list2 <- lapply(1:basis_r, function(r){
+		newDf <- data.frame(DO = nmfDecomp$basis[,r],time = timeIdx)
+		ggplot(data = newDf) + geom_line(aes(time, DO)) + theme_bw()
+	})
+	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
+	
+	require(gridExtra)
+	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d.pdf",outputBaseName,year,aggType, basis_r),
+		width = 4*basis_r, height = 6)
+	print(do.call(grid.arrange, args.list))
+	dev.off()
+}
+
+
+
+main_analysis <- function(year,aggType){
+
+	hypoxiaTimeSummary <- function(predictions, filePrefix){
+		# plot the spatial map on hypoxia time extent
 		tmp <- hypoxiaAnalysis(predictions,2)
 		grid$totolHypoxiaTime <- tmp$hypoxiaTime
 		grid$longestHypoxiaTime <- tmp$longestTime
@@ -178,59 +245,8 @@ main_analysis <- function(year,aggType){
 		dev.off()
 	}
 
-
-	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
-	timeIdx <- index(erieDO$samplingData)
-	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
-	
-	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
-	
-	d <- erieDO$samplingData %>% na.omit()
-
-	####################
-	# perform NMF clustering analysis
-	#####################
-	if(year == 2015){
-		basis_r = 5
-	}else{
-		basis_r = 3
-	}
-	require(NMF)
-	#exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
-	#saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
-
-	exploreRank <- readRDS(sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
-	nmfDecomp <- NMF_basis(d,basis_r)
-	
-	saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
-
-	tmp <- data.frame(nmfDecomp$coef)
-	names(tmp) <- colnames(nmfDecomp$coef)
-	tmp$basis  <- 1:nrow(tmp)
-	tmp <- melt(tmp,id.vars = "basis") 
-	
-	mergedDF <- merge(tmp,erieDO$loggerInfo,by.x = "variable", by.y = "loggerID")
-
-	plot.list1 <- lapply(1:basis_r, function(r){
-		subData <- subset(mergedDF,basis == r)
-		baseMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = range(0, max(mergedDF$value)+0.1))+ 
-			ggtitle(paste0("Basis_", r)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
-	})
-
-	plot.list2 <- lapply(1:basis_r, function(r){
-		newDf <- data.frame(DO = nmfDecomp$basis[,r],time = timeIdx)
-		ggplot(data = newDf) + geom_line(aes(time, DO)) + theme_bw()
-	})
-
-	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
-	
-	require(gridExtra)
-	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d.pdf",outputBaseName,year,aggType, basis_r),
-		width = 4*basis_r, height = 6)
-	print(do.call(grid.arrange, args.list))
-	dev.off()
-	
+	# do NMF analysis 
+	NMF_analysis(year, aggType)
 
 	#######################
 	# plot hypoxia curve
@@ -249,12 +265,6 @@ main_analysis <- function(year,aggType){
 	}
 	
 
-	# # get sensors linear regression
-	# for(method in c("Reml","Baye","idw")){
-	# 	for(r in rList){
-	# 		getSensorWithHypoxiaExtent(year, aggType, method, r)
-	# 	}
-	# }
 	
 	##########################
 	# analyze the hypoxia time

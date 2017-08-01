@@ -23,13 +23,42 @@ plot_variogram <- function(df, formu = "value~1"){
 	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
 }
 
+NMF_scale <- function(NMFRes, center = "basis"){
+	W <- NMFRes$basis
+	H <- NMFRes$coef
+
+	for(i in 1:ncol(W)){
+		if(center == "basis"){
+			alpha <- 12 / max(W[,i])
+			W[,i] <- W[,i]*alpha
+			H[i,] <- H[i,]/alpha
+		}else if(center == "basis2"){
+			alpha <- 6 / mean(W[,i])
+			W[,i] <- W[,i]*alpha
+			H[i,] <- H[i,]/alpha
+		}
+
+		else if(center == "coef"){
+			alpha <- 1 / max(H[i,])
+			# alpha <- 1 / max(H)
+			H[i,] <- H[i,] * alpha
+			W[,i] <- W[,i] / alpha
+		}
+	}
+	return(list(basis = W, coef = H))
+}
+
 NMF_basis <- function(DOdata, r){
 	require(NMF)
 	DOdata <- as.matrix(DOdata)
+
+	print("conducting NMF and scale max basis to 15")
 	nmfRes <- nmf(DOdata, r, nrun = 60)
 
 	W <- nmfRes@fit@W
 	H <- nmfRes@fit@H
+
+
 	return(list(basis = W, coef = H))
 }
 

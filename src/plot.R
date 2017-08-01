@@ -27,7 +27,7 @@ plot_gif <- function(year, aggType, method,r){
 				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
 		predictions <- predictions$predValue
 
-		preidctions <- predictions*(predictions >0)
+		predictions <- ifelse(predictions>0, predictions, 0)
 
 		prefix <- sprintf("/movie_%d_%s_%s_%d/",year, aggType, method, r)
 	}
@@ -43,7 +43,15 @@ plot_gif <- function(year, aggType, method,r){
 	cl <- makeCluster(2)
 	registerDoParallel(cl)
 
-	startIdx <- ifelse(year == 2014, 6, 4)
+	if(year == 2014){
+		startIdx <- 6
+	}else if(year == 2015){
+		startIdx <- 4
+	}else if(year == 2016){
+		startIdx <- 19
+	}
+	
+	# startIdx <- ifelse(year == 2014, 6, 4)
 	
 	tmp <- foreach(i =seq(startIdx,length(timeIdx),6)) %dopar% {
 
