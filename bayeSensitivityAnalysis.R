@@ -1,0 +1,158 @@
+rm(list= ls())
+setwd("/Users/wenzhaoxu/Developer/Hypoxia/Hypoxia_Lake_Erie")
+source("src/database.R")
+source("src/classPrediction.R")
+source("src/classDef.R")
+source("src/classReConstruct.R")
+source("src/classSummary.R")
+source("src/helper.R")
+source("src/postAnalysis.R")
+source("src/basisDecomposition.R")
+
+dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
+varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
+mapDx <- mapDy <- 0.025
+# rList <- c(2,5,10,15)
+rList <- c(10)
+# mapDx <- mapDy <- 0.1
+
+bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
+	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
+	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy) # grid size: 0.025, 0.025 long,lat
+	
+	for(r in rList){
+		print(paste("r:",r))
+		print("interpolating using Baye")
+		hypoxia_baye <- predict(obj = erieDO, 
+					grid = grid, 
+					method ="Baye", 
+					predictType = "extent", 
+					trend = trend, 
+					r = r, 
+					totalSim = 1000,
+					nmax = 5,
+					metaFolder = sprintf("%s%d_%s_Baye_%d/",outputBaseName, year, aggType, r))
+
+		saveRDS(hypoxia_baye, sprintf("%s%d_%s_Baye_%d/extent.rds",outputBaseName, year, aggType, r))
+	}
+
+	if(cv){
+		for(i in 1:nrow(erieDO$loggerInfo)) {
+			cv_loggerID <- erieDO$loggerInfo$loggerID[i]
+			subErieDO <- subset(erieDO, cv_loggerID)  #remove cv_loggerID from erieDO
+			grid <- erieDO$loggerInfo[i,]
+			grid$convexIndex <- 1
+
+			trueDO <- erieDO$samplingData[,cv_loggerID]
+			timeIdx <- index(trueDO)		
+
+		for(r in rList){
+			metaFolder <- sprintf("%s%d_%s_Baye_%d/cv/%s/",outputBaseName, year, aggType, r, cv_loggerID)
+			hypoxia_baye_cv <- predict(obj =subErieDO, 
+						grid = grid, 
+						method = "Baye", 
+						predictType = "simulations", 
+						trend = trend, 
+						r = r, 
+						totalSim = 1000,
+						nmax = 5,
+						metaFolder = metaFolder)
+
+			# hypoxia_baye_cv <- readRDS(sprintf("%s/simulations.rds",metaFolder))
+			statsSummary <- cvUncertainty(hypoxia_baye_cv,trueDO) %>% zoo(order.by = timeIdx)
+			saveRDS(statsSummary, sprintf("%s/simulations_stat.rds",metaFolder))
+			saveRDS(hypoxia_baye_cv, sprintf("%s/simulations.rds",metaFolder))
+			}
+		
+		}
+	}
+	
+
+}
+
+
+library(geoR)
+
+myPriorList <- list(
+
+	# change phi.prior to reciprocal
+	prior1 = prior.control(
+			phi.prior = "reciprocal",
+			phi.discrete=seq(20,70,5),
+			beta.prior = "flat",  # beta is flat
+			sigmasq.prior = "reciprocal",
+			tausq.rel.prior = "fixed",
+			tausq.rel = 0),
+
+	# change phi.prior to uniform
+	prior2 = prior.control(
+			phi.prior = "uniform",
+			# phi.discrete=seq(20,70,5),
+			beta.prior = "flat",  # beta is flat
+			sigmasq.prior = "reciprocal",
+			tausq.rel.prior = "fixed",
+			tausq.rel = 0),
+
+	# change phi.prior to squared.reciprocal
+	prior3 = prior.control(
+		phi.prior = "squared.reciprocal",
+		phi.discrete=seq(20,70,5),
+		beta.prior = "flat", 
+		sigmasq.prior = "reciprocal",
+		tausq.rel.prior = "fixed",
+		tausq.rel = 0),
+
+	# change tausq.rel.prior to 0.1
+	prior4 = prior.control(
+		phi.discrete=seq(20,70,5),
+		beta.prior = "flat",
+		sigmasq.prior = "reciprocal",
+		tausq.rel.prior = "fixed",
+		tausq.rel = 0.1),
+
+	# change tausq.rel.prior to 0.2
+	prior5 = prior.control(
+		phi.discrete=seq(20,70,5),
+		beta.prior = "flat", 
+		sigmasq.prior = "reciprocal",
+		tausq.rel.prior = "fixed",
+		tausq.rel = 0.2),
+
+	# change tausq.rel.prior to uniform
+	prior6 = prior.control(
+		phi.discrete=seq(20,70,5),
+		beta.prior = "flat",
+		sigmasq.prior = "reciprocal",
+		tausq.rel.prior = "uniform",
+		tausq.rel.discrete = seq(0, 1, 0.1)),
+
+	# change tausq.rel.prior to reciprocal
+	prior7 = prior.control(
+		phi.discrete=seq(20,70,5),
+		beta.prior = "flat",
+		sigmasq.prior = "reciprocal",
+		tausq.rel.prior = "reciprocal",
+		tausq.rel.discrete = seq(0, 1, 0.1),
+		tausq.rel = 0),
+
+
+	# change cov.model to spherical
+	prior8 = "spherical.cov",
+
+	# change sigma to sc.inv.chisq with df  = 1
+	prior9 = "df_1_sc.inv.chisq.sigmasq",
+	
+	# change sigma to sc.inv.chisq with df  = 3
+	prior10 = "df_3_sc.inv.chisq.sigmasq"
+
+	# change sigma
+	# prior11 = "fix.sigmasq"	
+)
+
+for(i in 1:10){
+	print(paste("parameter set", i))
+	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
+	myPrior <- myPriorList[[paste0("prior",i)]]
+	bayeSensitivity(year = 2014, aggType = "hourly")
+}

@@ -31,7 +31,7 @@ predict.krigModelIdw <- function(model, grid, parallel){
 		}
 	}else{
 		require(doParallel)
-		cl <- makeCluster(6)
+		cl <- makeCluster(2)
 		registerDoParallel(cl)
 
 		predictions <- foreach(i=1:length(model)) %dopar% {
@@ -81,7 +81,6 @@ predict.krigModelReml <- function(model, grid){
 			print("i=6")
 		}
 			
-	
 		df <- model[[i]] %>% 
 			dplyr::select(x, y, value,bathymetry) %>%
 			as.geodata(covar.col = c("bathymetry"))
@@ -138,7 +137,7 @@ predict.krigModelReml <- function(model, grid){
 
 
 
-predict.krigModelBaye <- function(model, grid){
+predict.krigModelBaye <- function(model, grid, defaultPrior = FALSE){
 	config <- attr(model, "config")
 	simNum <- config$simNum
 	trend <- config$trend
@@ -158,11 +157,13 @@ predict.krigModelBaye <- function(model, grid){
 		trend.spatial(trend,.)
 	
 	# specify the priors
-	PC <- prior.control(phi.discrete=seq(20,70,5),  # range is discreted
+	PC <- prior.control(
+						phi.discrete=seq(20,70,5),  # range is discreted
 						beta.prior = "flat",  # beta is flat 
 						sigmasq.prior = "reciprocal",
 						tausq.rel.prior = "fixed",
 						tausq.rel = 0)  # sigma^2 is 
+
 	OC <- output.control(n.pos = simNum, # the number of samples taking from posterior distribution
 						n.pred = simNum,   # sample to taken from the predictive distribution
 						 signal = FALSE)
@@ -175,6 +176,61 @@ predict.krigModelBaye <- function(model, grid){
 
 		trend.d <- trend.spatial(trend,df)
 		
+		# change prior distribution if indicated
+		if(!defaultPrior){
+			print ("using non-default prior")
+			if(myPrior == "spherical.cov"){
+				print("change to sperical cov.model")
+				config$cov.model = "spherical"
+			}
+			else if(myPrior == "df_1_sc.inv.chisq.sigmasq" | myPrior == "df_3_sc.inv.chisq.sigmasq"){
+				semiVariance <- variog(df,trend = trend.d)
+				print("change to sc.inv.chisq.sigmasq")
+				df.sigmasq <-  as.numeric(substr(myPrior,4,4))
+
+				ml <- likfit(df, 
+				ini = c(max(semiVariance$v),70),
+				fix.nugget = T,  # the nugget is defaulted as zero
+				lik.method = "ML",
+				cov.model = config$cov.model, # "exponential",
+				trend = trend.d,
+				fix.psiA = TRUE,
+				fix.psiR = TRUE)
+
+				PC <- prior.control(
+						phi.discrete=seq(20,70,5),  # range is discreted
+						beta.prior = "flat",  # beta is flat 
+						sigmasq.prior = "sc.inv.chisq",
+						sigmasq = ml$sigmasq,
+						df.sigmasq = df.sigmasq,
+						tausq.rel.prior = "fixed",
+						tausq.rel = 0) 
+
+			# }else if(myPrior == "fix.sigmasq"){
+			# 	print("change to fix sigmasq")
+			# 	semiVariance <- variog(df,trend = trend.d)
+			# 	ml <- likfit(df, 
+			# 		ini = c(max(semiVariance$v),70),
+			# 		fix.nugget = T,  # the nugget is defaulted as zero
+			# 		lik.method = "ML",
+			# 		cov.model = config$cov.model, # "exponential",
+			# 		trend = trend.d,
+			# 		fix.psiA = TRUE,
+			# 		fix.psiR = TRUE)
+			# 	PC <- prior.control(
+			# 			# phi.discrete=seq(20,70,5),  # range is discreted
+			# 			beta.prior = "flat",  # beta is flat 
+			# 			sigmasq.prior = "fixed",
+			# 			sigmasq = ml$sigmasq,
+			# 			tausq.rel.prior = "fixed",
+			# 			tausq.rel = 0) 
+			# }
+			}else{
+				print("change to other prior distribution")
+				PC = myPrior
+			}
+		}
+
 		MC <- model.control(
 			cov.model = config$cov.model, 
 			trend.l = trend.l, 
@@ -314,7 +370,5 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 	}else{
 		stop("method is not implemented")
 	}
-
 	return(res)
 }
-

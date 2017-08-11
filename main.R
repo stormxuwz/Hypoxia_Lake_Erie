@@ -11,7 +11,7 @@ source("src/basisDecomposition.R")
 
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
+outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output2/"
 mapDx <- 0.025
 mapDy <- 0.025
 
@@ -225,9 +225,9 @@ main_analysis <- function(year,aggType){
 }
 
 
-# function to calculate the CV resutls
+# function to calculate the CV results
 # for(year in c(2014, 2015)){
-# 	for(aggType in c("hourly")){
+# 	for(aggType in c("daily")){
 # 		print(system.time(main(year = year, aggType = aggType)))
 # 		print(system.time(main_CV(year = year, aggType = aggType)))
 # 	}
@@ -237,7 +237,7 @@ resultSummary()
 
 
 for(year in c(2014, 2015)){
-	for(aggType in c("hourly")){
+	for(aggType in c("daily")){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }

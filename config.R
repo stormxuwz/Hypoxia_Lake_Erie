@@ -14,3 +14,5 @@ trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
 #trend <- ~coords[,"y"]+bathymetry
 mapDx <- 0.025
 mapDy <- 0.025
+
+
