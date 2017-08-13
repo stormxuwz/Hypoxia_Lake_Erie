@@ -250,11 +250,12 @@ readAllData <- function(year){
 
 # function to analyze the EPA loggers
 
-filterEPA <- function(lakeDO){
+filterEPA <- function(lakeDO, changeColumnName = TRUE){
 	lakeDO$loggerInfo <- subset(lakeDO$loggerInfo, site %in% EPASite) %>%
 				arrange(site)
 	lakeDO$samplingData <- lakeDO$samplingData[,lakeDO$loggerInfo$loggerID]
-	names(lakeDO$samplingData) <- lakeDO$loggerInfo$site
+	
+	if(changeColumnName) names(lakeDO$samplingData) <- lakeDO$loggerInfo$site
 	return(lakeDO)
 }
 
