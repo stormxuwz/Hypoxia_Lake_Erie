@@ -11,7 +11,7 @@ source("src/basisDecomposition.R")
 
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
+outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output2/"
 mapDx <- 0.025
 mapDy <- 0.025
 
@@ -135,89 +135,6 @@ main_CV <- function(year = 2014, aggType = "daily"){
 }
 
 
-NMFReconstruct <- function(year, aggType, basis_r, loggerID, new = FALSE){
-	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
-	timeIdx <- index(erieDO$samplingData)
-
-	resFileName <- sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r)
-	if(file.exists(resFileName) & !new){
-		nmfDecomp <- readRDS(resFileName) %>% NMF_scale()
-	}else{
-		print("no previous results exist, new calculation")
-		nmfDecomp <- NMF_basis(erieDO$samplingData,basis_r) %>% NMF_scale()
-		saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
-	}
-	reconstructed <- data.frame(nmfDecomp$basis %*% nmfDecomp$coef)
-	names(reconstructed) <- colnames(nmfDecomp$coef)
-
-	res <- data.frame(nmf = reconstructed[,as.character(loggerID)], y = as.numeric(erieDO$samplingData[,loggerID]), time = timeIdx)
-	print(qplot(timeIdx, nmf, data = res) + geom_line(aes(timeIdx, y), data = res, color = "red"))
-}
-
-
-
-
-NMF_analysis <- function(year, aggType, explore = FALSE){
-	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
-	timeIdx <- index(erieDO$samplingData)
-	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
-	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
-	
-	if(year == 2015){
-		basis_r = 5
-	}else if(year == 2014){
-		basis_r = 3
-	}else if(year == 2016){
-		basis_r = 6
-	}
-	
-	d <- erieDO$samplingData
-
-	require(NMF)
-	
-	if(explore){
-		exploreRank <- nmfEstimateRank(as.matrix(d), c(2:10))
-		saveRDS(exploreRank,sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
-	}
-	# exploreRank <- readRDS(sprintf("%s/results/cluster/nmfEstimateRank_%d_%s.rds",outputBaseName, year,aggType))
-
-	resFileName <- sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r)
-	if(file.exists(resFileName)){
-		nmfDecomp <- readRDS(resFileName) %>% NMF_scale()
-	}else{
-		print("no previous results exist, new calculation")
-		nmfDecomp <- NMF_basis(erieDO$samplingData,basis_r) %>% NMF_scale()
-		saveRDS(nmfDecomp,sprintf("%s/results/cluster/nmfBasis_%d_%s_%d.rds",outputBaseName, year,aggType,basis_r))
-	}
-
-	tmp <- data.frame(nmfDecomp$coef)
-	names(tmp) <- colnames(nmfDecomp$coef)
-	tmp$basis  <- 1:nrow(tmp)
-	tmp <- melt(tmp,id.vars = "basis") 
-	mergedDF <- merge(tmp,erieDO$loggerInfo,by.x = "variable", by.y = "loggerID")
-
-
-	# plot 
-	plot.list1 <- lapply(1:basis_r, function(r){
-		subData <- subset(mergedDF,basis == r)
-		baseMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			scale_color_gradient(low = "white", high = "blue",name = "Basis\nCoefficients",limit = range(0, max(mergedDF$value)+0.1))+ 
-			ggtitle(paste0("Basis_", r)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
-	})
-	plot.list2 <- lapply(1:basis_r, function(r){
-		newDf <- data.frame(DO = nmfDecomp$basis[,r],time = timeIdx)
-		ggplot(data = newDf) + geom_line(aes(time, DO)) + theme_bw()
-	})
-	args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
-	
-	require(gridExtra)
-	pdf(sprintf("%s/results/cluster/cluster_%d_%s_%d.pdf",outputBaseName,year,aggType, basis_r),
-		width = 4*basis_r, height = 6)
-	print(do.call(grid.arrange, args.list))
-	dev.off()
-}
-
-
 
 main_analysis <- function(year,aggType){
 
@@ -308,9 +225,9 @@ main_analysis <- function(year,aggType){
 }
 
 
-# function to calculate the CV resutls
+# function to calculate the CV results
 # for(year in c(2014, 2015)){
-# 	for(aggType in c("hourly")){
+# 	for(aggType in c("daily")){
 # 		print(system.time(main(year = year, aggType = aggType)))
 # 		print(system.time(main_CV(year = year, aggType = aggType)))
 # 	}
@@ -320,7 +237,7 @@ resultSummary()
 
 
 for(year in c(2014, 2015)){
-	for(aggType in c("hourly")){
+	for(aggType in c("daily")){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }

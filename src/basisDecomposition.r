@@ -6,7 +6,6 @@ source("./src/plot.R")
 source("./src/helper.R")
 #source("./src/interpolation.R")
 
-
 require(sp)
 require(gstat)
 require(dplyr)
@@ -29,16 +28,19 @@ NMF_scale <- function(NMFRes, center = "basis"){
 
 	for(i in 1:ncol(W)){
 		if(center == "basis"){
+			print("conducting NMF and scale basis max to 12")
 			alpha <- 12 / max(W[,i])
 			W[,i] <- W[,i]*alpha
 			H[i,] <- H[i,]/alpha
 		}else if(center == "basis2"){
+			print("conducting NMF and scale basis mean to 6")
 			alpha <- 6 / mean(W[,i])
 			W[,i] <- W[,i]*alpha
 			H[i,] <- H[i,]/alpha
 		}
 
 		else if(center == "coef"){
+			print("conducting NMF and scale max coefficients to 1")
 			alpha <- 1 / max(H[i,])
 			# alpha <- 1 / max(H)
 			H[i,] <- H[i,] * alpha
@@ -48,17 +50,22 @@ NMF_scale <- function(NMFRes, center = "basis"){
 	return(list(basis = W, coef = H))
 }
 
-NMF_basis <- function(DOdata, r){
+NMF_basis <- function(DOdata, r, ...){
+	method <- list(...)$method
+
 	require(NMF)
 	DOdata <- as.matrix(DOdata)
 
-	print("conducting NMF and scale max basis to 15")
-	nmfRes <- nmf(DOdata, r, nrun = 60)
-
+	if(is.null(method)){
+		print("using default NMF fitting method")
+		nmfRes <- nmf(DOdata, r, nrun = 60)
+	}else{
+		print(paste0("using ",method, " fitting gmethod"))
+		nmfRes <- nmf(DOdata, r, nrun = 60, method = method, beta = 0.1)
+	}
+	
 	W <- nmfRes@fit@W
 	H <- nmfRes@fit@H
-
-
 	return(list(basis = W, coef = H))
 }
 
