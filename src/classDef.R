@@ -3,22 +3,16 @@ source("src/database.R")
 library(dplyr)
 # define the generic function
 
-getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", ...){
+getLakeDO <- function(year, depthLocation = "B", timeAggType = "hourly", variable = "DO",...){
 	loggerInfo <- retriveGeoData(year,depthLocation) %>% arrange(loggerID)
 	loggerInfo$loggerID <- as.character(loggerInfo$loggerID)
 
 	timeRange <- list(...)$timeRange
 	data <- 
-		retriveLoggerData(loggerInfo$loggerID,year,"DO",timeAggType,"AVG",timeRange = timeRange,transform = TRUE)  # %>% 
+		retriveLoggerData(loggerInfo$loggerID,year,variable,timeAggType,"AVG",timeRange = timeRange,transform = TRUE)  # %>% 
 		# na.omit()  # remove the missing data
 	data <- data[,loggerInfo$loggerID]
 	data <- data * (as.matrix(data) > 0) # put it to zero
-
-	# add a filter to remove the wrong data
-	if(year == 2015){
-		mask <- index(data) > as.POSIXct("2015-07-23",tz = "GMT")
-		data <- data[mask,]
-	}
 
 	lakeDO <- as.lakeDO(data, loggerInfo)
 

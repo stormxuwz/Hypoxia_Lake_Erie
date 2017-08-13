@@ -11,10 +11,7 @@ source("src/basisDecomposition.R")
 
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-mapDx <- mapDy <- 0.025
-# rList <- c(2,5,10,15)
-rList <- c(10)
-# mapDx <- mapDy <- 0.1
+
 
 bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
 	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
@@ -76,6 +73,7 @@ library(geoR)
 
 myPriorList <- list(
 
+	# effects of phi.prior
 	# change phi.prior to reciprocal
 	prior1 = prior.control(
 			phi.prior = "reciprocal",
@@ -103,6 +101,8 @@ myPriorList <- list(
 		tausq.rel.prior = "fixed",
 		tausq.rel = 0),
 
+
+	# effects of tarsq.rel
 	# change tausq.rel.prior to 0.1
 	prior4 = prior.control(
 		phi.discrete=seq(20,70,5),
@@ -150,9 +150,14 @@ myPriorList <- list(
 	# prior11 = "fix.sigmasq"	
 )
 
+mapDx <- mapDy <- 0.025
+# rList <- c(2,5,10,15)
+rList <- c(10)
+# mapDx <- mapDy <- 0.1
+
 for(i in 1:10){
 	print(paste("parameter set", i))
 	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
 	myPrior <- myPriorList[[paste0("prior",i)]]
-	bayeSensitivity(year = 2014, aggType = "hourly")
+	print(system.time(bayeSensitivity(year = 2014, aggType = "hourly", cv = TRUE)))
 }

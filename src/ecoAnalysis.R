@@ -2,6 +2,7 @@
 require(chron)
 
 buoyDataFolder <- "../input/"
+EPASite <- c("ER30","ER31","ER32","ER36","ER37","ER38","ER42","ER43","ER73","ER78")
 
 #buoyName <- "45005"
 #year <- 2014
@@ -244,5 +245,94 @@ readAllData <- function(year){
 	# plot(fullData[,c("NMF_1","WDIR_45005_h")])
 
 	ggplot(data = data.frame(fullData))+geom_line(aes(t,scale_0_1(NMF_3))) + geom_line(aes(t, newWDIR),color = "red")
+}
+
+
+# function to analyze the EPA loggers
+
+filterEPA <- function(lakeDO){
+	lakeDO$loggerInfo <- subset(lakeDO$loggerInfo, site %in% EPASite) %>%
+				arrange(site)
+	lakeDO$samplingData <- lakeDO$samplingData[,lakeDO$loggerInfo$loggerID]
+	names(lakeDO$samplingData) <- lakeDO$loggerInfo$site
+	return(lakeDO)
+}
+
+
+getSiteSeries <- function(allData, site){
+	d_2014 <- allData[["data2014"]]$samplingData[-c(1:100),site]
+	d_2016 <- allData[["data2016"]]$samplingData[-c(1:200),site]
+
+	if(site!="ER78"){
+		d_2015 <- allData[["data2015"]]$samplingData[-c(1:100),site]
+		d <- rbind(d_2014,d_2015,d_2016)
+	}else{
+		d <- rbind(d_2014,d_2016)
+	}
+
+	return(d)
+}
+
+getSiteDO <- function(allDO, allTemp, site_){
+
+	d_do <- getSiteSeries(allDO, site_)
+	d_temp <- getSiteSeries(allTemp, site_)
+	
+	
+
+	if(site_!="ER78"){
+		e <- sapply(allDO, function(x) subset(x$loggerInfo,site == site_)[,"bathymetry"]) + 173
+		d_elevation <- data.frame(year = c(2014,2015,2016), elevation = e)
+	}else{
+		e <- sapply(allDO[c(1,3)], function(x) subset(x$loggerInfo,site == site_)[,"bathymetry"]) + 173
+		d_elevation <- data.frame(year = c(2014,2016), elevation = e)
+	}
+
+
+	d <- cbind(d_do, d_temp)
+
+	timeIdx <- index(d)
+
+	newTime <- strftime(timeIdx, format = "%m-%d %H:%M:%S") %>% as.POSIXct(format = "%m-%d %H:%M:%S", tz = "GMT")
+
+	newd <- data.frame(d) %>% rename(DO = d_do, Temp = d_temp) %>%
+			mutate(Year = as.factor(lubridate::year(timeIdx)), 
+					Time = newTime) %>% 
+			merge(d_elevation, by.x = "Year", by.y = "year", all.x = TRUE) %>%
+			mutate(DOsat= rMR::DO.saturation(DO.mgl = DO, temp.C = Temp, elevation.m = elevation) * 100)
+
+	pdf(paste0("DO_",site_,".pdf"),width = 6, height = 3.5)
+	print(qplot(Time, DO, color = Year, data = newd,geom = "line",alpha = I(0.85)) + theme_bw() + ylab("DO (mg/L)"))
+	dev.off()
+
+	pdf(paste0("Temp_",site_,".pdf"),width = 6, height = 3.5)
+	print(qplot(Time, Temp, color = Year, data = newd,geom = "line",alpha = I(0.85)) + theme_bw() + ylab("Temp (C)"))
+	dev.off()
+
+	pdf(paste0("DOsat_",site_,".pdf"),width = 6, height = 3.5)
+	print(qplot(Time, DOsat, color = Year, data = newd,geom = "line",alpha = I(0.85)) + theme_bw() + ylab("DOsat (%)"))
+	dev.off()
+
+	return(newd)
+}
+
+EPAloggerAnalysis <- function(){
+
+	allDO <- list(
+		data2014 = getLakeDO(2014, "B", "hourly") %>% filterEPA(),
+		data2015 = getLakeDO(2015, "B", "hourly") %>% filterEPA(),
+		data2016 = getLakeDO(2016, "B", "hourly") %>% filterEPA()
+	)
+
+	allTemp <- list(
+		data2014 = getLakeDO(2014, "B", "hourly","Temp") %>% filterEPA(),
+		data2015 = getLakeDO(2015, "B", "hourly","Temp") %>% filterEPA(),
+		data2016 = getLakeDO(2016, "B", "hourly","Temp") %>% filterEPA()
+	)
+
+	for(site in EPASite){
+		newd <- getSiteDO(allDO, allTemp, site)
+	}
+
 }
 

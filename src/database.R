@@ -39,11 +39,11 @@ retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange
 
 retriveGeoData <- function(year,position,loggerIndex = NULL){
 	if(is.null(loggerIndex)){
-		sql <- sprintf("select loggerID,longitude,latitude,bathymetry from loggerInfo where available=1 and loggerPosition='%s' and year = %s",position, year)
+		sql <- sprintf("select loggerID,longitude,latitude,bathymetry,site from loggerInfo where available=1 and loggerPosition='%s' and year = %s",position, year)
 	}else{
 		loggerCondition <- sprintf("(%s)",paste( paste("loggerID =",loggerIndex),collapse=" OR "))
 
-		sql <- sprintf("select loggerID,longitude,latitude,bathymetry from loggerInfo where available=1 and year = %s and %s", year,loggerCondition)
+		sql <- sprintf("select loggerID,longitude,latitude,bathymetry,site from loggerInfo where available=1 and year = %s and %s", year,loggerCondition)
 	}
 	# print(sql)
 	res <- sqlQuery(sql) %>% lonlat2UTM()
