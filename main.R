@@ -193,9 +193,8 @@ main_analysis <- function(year,aggType){
 			residualPrediction <- readRDS(paste0(fileFolder, "residualPredictions.rds"))
 			predictions <- readRDS(paste0(fileFolder,"trendModel.rds")) %>% 
 				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
-
+			
 			hypoxiaTimeSummary(predictions$predValue, filePrefix = sprintf("%d_%s_%s_%d",year, aggType, method, r) )
-
 		}
 	}
 

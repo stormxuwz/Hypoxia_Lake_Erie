@@ -155,9 +155,62 @@ mapDx <- mapDy <- 0.025
 rList <- c(10)
 # mapDx <- mapDy <- 0.1
 
+# for(i in 1:10){
+# 	print(paste("parameter set", i))
+# 	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
+# 	# myPrior <- myPriorList[[paste0("prior",i)]]
+# 	# print(system.time(bayeSensitivity(year = 2014, aggType = "hourly", cv = TRUE)))
+# 	resultSummary(aggList = c("hourly"), yearList = c(2014), methodList = c("Baye"))
+# }
+
+# read CV results
+fullRes <- data.frame()
 for(i in 1:10){
 	print(paste("parameter set", i))
 	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
-	myPrior <- myPriorList[[paste0("prior",i)]]
-	print(system.time(bayeSensitivity(year = 2014, aggType = "hourly", cv = TRUE)))
+	
+	tmpRes <- readRDS(sprintf("%s/results/fullRes.rds", outputBaseName))
+	tmpRes$parameter <- i
+
+	p <- plotCVOnMap(year_ = 2014, aggType_ = "hourly", method_ = "Baye", r_ = 10)
+	filePrefix <- sprintf("%d_%s_%s_%d",2014, "hourly", "Baye", 10)
+	pdf(sprintf("%s/results/%s_CV_summary.pdf",outputBaseName, filePrefix), width = 6, height = 4)
+	print(p)
+	dev.off()
+
+	fullRes <- rbind(fullRes, tmpRes)
 }
+
+# read original
+
+baseRes <- readRDS("/Users/wenzhaoxu/Developer/Hypoxia/output/results/fullRes.rds") %>% 
+	dplyr::filter(year == 2014, method == "Baye", aggType == "hourly", r == 10) %>% 
+	dplyr::mutate(parameter = 0)
+
+diffRes <- merge(fullRes, baseRes, by.x = "cv_loggerID", by.y = "cv_loggerID", all.x = T) %>% 
+	mutate(rmse_diff = rmse.x - rmse.y, CI_coverage_diff = withinBoundRatio.x - withinBoundRatio.y) %>%
+	rename(parameter = parameter.x)
+diffRes$parameter <- as.factor(diffRes$parameter)
+
+ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = rmse_diff, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+xlab("Bayesian Prior Parameter Set") + ylab("Δ RMSE") + theme_bw()
+
+ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = CI_coverage_diff, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+xlab("Bayesian Prior Parameter Set") + ylab("Δ CI Coverage") + theme_bw()
+
+
+
+
+fullRes <- rbind(fullRes, baseRes)
+fullRes$parameter <- as.factor(fullRes$parameter)
+saveRDS(fullRes,"/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivityRes.rds")
+fullRes <- readRDS("/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivityRes.rds")
+
+
+ggplot(data = fullRes) + geom_boxplot(aes(x = as.factor(parameter), y = rmse, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+xlab("Bayesian Prior Parameter Set") + ylab("RMSE") + theme_bw()
+
+ggplot(data = fullRes) + geom_boxplot(aes(x = as.factor(parameter), y = withinBoundRatio, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+xlab("Bayesian Prior Parameter Set") + ylab("RMSE") + theme_bw()
+
+
