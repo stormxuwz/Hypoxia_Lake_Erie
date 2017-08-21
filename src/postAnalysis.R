@@ -1,17 +1,17 @@
 
 getHypoxiaExtent <- function(year, aggType, method, r){
 	# function to plot hypoxia time series
-	IDWFolderName <- sprintf("%s/output/%d_%s_idw/",outputBaseName, year, aggType)
+	IDWFolderName <- sprintf("%s%/d_%s_idw/",outputBaseName, year, aggType)
 	
-	folderName <- sprintf("%s/output/%d_%s_%s_%d/",outputBaseName, year, aggType, method, r)
+	folderName <- sprintf("%s/%d_%s_%s_%d/",outputBaseName, year, aggType, method, r)
 	
 	model <- readRDS(paste0(folderName,"basisModelRes.rds"))
 	trendModel <- readRDS(paste0(folderName, "trendModel.rds"))
 	grid <- trendModel$grid
 	n <- sum(grid$convexIndex)
 	timeIndex <- index(model$residuals$samplingData)
-	HEList <- readRDS(paste0(folderName,"extent.rds"))
 	
+	HEList <- readRDS(paste0(folderName,"extent.rds"))
 	idwHE <- readRDS(paste0(IDWFolderName,"extent.rds"))
 	
 	units <- list(less0 = "0.01 mg/L", less2 = "2 mg/L", less4 = "4 mg/L")
@@ -51,7 +51,9 @@ getDecompositionResults <- function(year, aggType, r){
 	basis <-attr(model$model,"basis")[,1:r] %>% data.frame()
 	names(basis) <- paste0("basis_",c(1:r))
 	
-	
+	basis[,1] <- -basis[,1] 
+	model$model[[1]]$value <- -model$model[[1]]$value
+
 	basis <- zoo(basis, order.by = timeIndex)
 	
 	# plot the basis functions
@@ -246,13 +248,15 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 		for(aggType in aggList){
 			erieDO <- getLakeDO(year, "B", aggType)
 			erieDO$samplingData <- na.omit(erieDO$samplingData)
-			for (cv_loggerID in erieDO$loggerInfo$loggerID){
+			for (i in 1:nrow(erieDO$loggerInfo)){
+				site <- erieDO$loggerInfo[i,"site"]
+				cv_loggerID <- erieDO$loggerInfo[i,"loggerID"]
 				for(method  in methodList){
 					for(r in rList){
 						if(method == "idw" & r!=5){
 							next
 						}else{
-							metaList <- list(year = year, method = method, aggType = aggType, cv_loggerID = cv_loggerID, r = r)
+							metaList <- list(year = year, method = method, aggType = aggType, cv_loggerID = cv_loggerID, r = r, site = site)
 							res <- c(metaList,plot_cv(year, method, aggType, cv_loggerID, r)) %>% data.frame()
 							fullRes <- rbind(fullRes, res)
 						}
@@ -271,35 +275,44 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 
 	fullRes$method <- factor(fullRes$method, levels = c("IDW","MLE","Baye"))
 	
-	# for(year_ in yearList){
-	# 	for(aggType_ in aggList){
+	for(year_ in yearList){
+		for(aggType_ in aggList){
 
-	# 		p_rmse <- dplyr::filter(fullRes, aggType == aggType_, year == year_) %>% 
-	# 			ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-	# 			xlab("Model Parameter") + ylab("RMSE") + theme_bw() + 
-	# 			scale_fill_manual(name="Method",
- #                         breaks=c("IDW", "MLE","Baye"),
- #                         values = c("#999999","#E69F00","#56B4E9")) + 
-	# 			theme(axis.title.x = element_text(size=8),axis.title.y = element_text(size=8))
+			p_rmse <- dplyr::filter(fullRes, aggType == aggType_, year == year_) %>% 
+				ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = rmse, fill = method),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+				xlab("Model Parameter") + ylab("RMSE") + theme_bw() + 
+				scale_fill_manual(name="Method",
+                         breaks=c("IDW", "MLE","Baye"),
+                         values = c("#999999","#E69F00","#56B4E9")) + 
+				theme(axis.title.x = element_text(size=8),axis.title.y = element_text(size=8))
 				
-	# 		pdf(sprintf("%s/results/%d_%s_CV_rmse.pdf",outputBaseName, year_, aggType_),width = 3.25, height = 2)
-	# 		print(p_rmse)
-	# 		dev.off()
+			# pdf(sprintf("%s/results/%d_%s_CV_rmse.pdf",outputBaseName, year_, aggType_),width = 3.25, height = 2)
+			# print(p_rmse)
+			# dev.off()
 			
-	# 		p_withBound <- dplyr::filter(fullRes, aggType == aggType_, year == year_, method != "IDW") %>% 
-	# 			ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-	# 			xlab("Model Parameter") + ylab("CI Coverage") + theme_bw() + 
-	# 			scale_fill_manual(name="Method",
- #                         breaks=c("MLE","Baye"),
- #                         values = c("#E69F00","#56B4E9") ) + 
-	# 			theme(axis.title.x = element_text(size=9),axis.title.y = element_text(size=9))
+			p_withBound <- dplyr::filter(fullRes, aggType == aggType_, year == year_, method != "IDW") %>% 
+				ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
+				xlab("Model Parameter") + ylab("CI Coverage") + theme_bw() + 
+				scale_fill_manual(name="Method",
+                         breaks=c("MLE","Baye"),
+                         values = c("#E69F00","#56B4E9") ) + 
+				theme(axis.title.x = element_text(size=8),axis.title.y = element_text(size=8))
 			
-	# 		pdf(sprintf("%s/results/%d_%s_CV_withinBound.pdf", outputBaseName, year_, aggType_),width = 3.25, height = 2)
-	# 		print(p_withBound)
-	# 		dev.off()	
+			prow  <- plot_grid(
+				p_rmse+theme(legend.position="none"), 
+				p_withBound+theme(legend.position = "none"),align = 'h')
+
+			legend_b <- get_legend(p_rmse + theme(legend.position="bottom"))
 			
-	# 	}
-	# }
+			pdf(sprintf("%s/results/%d_%s_CV_perf.pdf", outputBaseName, year_, aggType_),width = 6.5, height = 2.3)
+			print(plot_grid(legend_b,prow, ncol = 1, rel_heights = c(0.08,1)))
+			dev.off()
+			# pdf(sprintf("%s/results/%d_%s_CV_withinBound.pdf", outputBaseName, year_, aggType_),width = 3.25, height = 2)
+			# print(p_withBound)
+			# dev.off()	
+			
+		}
+	}
 	return(fullRes)
 }
 

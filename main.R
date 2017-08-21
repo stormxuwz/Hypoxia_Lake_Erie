@@ -11,7 +11,7 @@ source("src/basisDecomposition.R")
 
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output2/"
+outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
 mapDx <- 0.025
 mapDy <- 0.025
 
@@ -163,7 +163,7 @@ main_analysis <- function(year,aggType){
 	}
 
 	# do NMF analysis 
-	NMF_analysis(year, aggType)
+	# NMF_analysis(year, aggType)
 
 	#######################
 	# plot hypoxia curve
@@ -232,11 +232,10 @@ main_analysis <- function(year,aggType){
 # 	}
 # }
 
-resultSummary()
+resultSummary(aggList = c("hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"))
 
-
-for(year in c(2014, 2015)){
-	for(aggType in c("daily")){
+for(year in c(2014, 2015, 2016)){
+	for(aggType in c("hourly")){
 		print(system.time(main_analysis(year = year, aggType = aggType)))
 	}
 }
