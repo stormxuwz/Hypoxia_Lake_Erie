@@ -137,7 +137,7 @@ predict.krigModelReml <- function(model, grid){
 
 
 
-predict.krigModelBaye <- function(model, grid, defaultPrior = FALSE){
+predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 	config <- attr(model, "config")
 	simNum <- config$simNum
 	trend <- config$trend
@@ -169,7 +169,6 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = FALSE){
 						 signal = FALSE)
 
 	for(i in 1:length(model)){
-
 		df <- model[[i]] %>% 
 			dplyr::select(x, y, value, bathymetry) %>%
 			as.geodata(covar.col = 4)
@@ -206,31 +205,16 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = FALSE){
 						tausq.rel.prior = "fixed",
 						tausq.rel = 0) 
 
-			# }else if(myPrior == "fix.sigmasq"){
-			# 	print("change to fix sigmasq")
-			# 	semiVariance <- variog(df,trend = trend.d)
-			# 	ml <- likfit(df, 
-			# 		ini = c(max(semiVariance$v),70),
-			# 		fix.nugget = T,  # the nugget is defaulted as zero
-			# 		lik.method = "ML",
-			# 		cov.model = config$cov.model, # "exponential",
-			# 		trend = trend.d,
-			# 		fix.psiA = TRUE,
-			# 		fix.psiR = TRUE)
-			# 	PC <- prior.control(
-			# 			# phi.discrete=seq(20,70,5),  # range is discreted
-			# 			beta.prior = "flat",  # beta is flat 
-			# 			sigmasq.prior = "fixed",
-			# 			sigmasq = ml$sigmasq,
-			# 			tausq.rel.prior = "fixed",
-			# 			tausq.rel = 0) 
-			# }
 			}else{
 				print("change to other prior distribution")
 				PC = myPrior
 			}
 		}
-
+		
+		print("####### prior is ##########")
+		print(PC[c("phi.prior","phi.discrete","beta.prior","sigmasq.prior","sigmasq", "df.sigmasq", "tausq.rel.prior","tausq.rel")])
+		print(config$cov.model)
+		
 		MC <- model.control(
 			cov.model = config$cov.model, 
 			trend.l = trend.l, 
@@ -264,7 +248,7 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = FALSE){
 		predictions[[i]] <- list(simulations = predSimulation, 
 			pred = pred)
 	}
-	res <- list(predictions = predictions, grid = grid, basis = attr(model, "basis"))
+	res <- list(predictions = predictions, grid = grid0, basis = attr(model, "basis"))
 	
 	class(res) <- "basisModel"
 	return(res)
@@ -312,29 +296,32 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 		trend = list(...)$trend
 		r = list(...)$r
 		totalSim <- list(...)$totalSim
-		randomSeed <- list(...)$randomSeed
-
+		
+		defaultPrior <- list(...)$defaultPrior
+		if (is.null(defaultPrior)){
+			defaultPrior <- TRUE
+		}
+		
 		basisModelRes <- obj %>% 
 			basisModel(trend, method, r, metaFolder) 
 		
+		# predict trend model
+		print("interpolating trend")
+		trendModel  <- basisModelRes$model %>% predict(grid, defaultPrior)
+		availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
+
 		# interpolate residuals
 		print("interpolating residuals")
 		residualPredictions <- basisModelRes$residuals %>% 
-				idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
-				predict(grid, parallel = TRUE) %>% reConstruct()	
+			idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
+			predict(grid, parallel = TRUE) %>% reConstruct()	
 		
-		
-		# predict trend model
-		print("interpolating trend")
-		trendModel  <- basisModelRes$model %>% predict(grid)
-		availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
-
 		if(!is.null(metaFolder)){
 			saveRDS(basisModelRes, paste0(metaFolder,"basisModelRes.rds"))
 			saveRDS(residualPredictions, paste0(metaFolder,"residualPredictions.rds"))
 			saveRDS(trendModel, paste0(metaFolder,"trendModel.rds"))
 		}
-
+		
 		basisNum <- r + 1
 
 		set.seed(randomSeed)

@@ -1,7 +1,8 @@
+# script to do post analysis and plot
 
 getHypoxiaExtent <- function(year, aggType, method, r){
 	# function to plot hypoxia time series
-	IDWFolderName <- sprintf("%s%/d_%s_idw/",outputBaseName, year, aggType)
+	IDWFolderName <- sprintf("%s/%d_%s_idw/",outputBaseName, year, aggType)
 	
 	folderName <- sprintf("%s/%d_%s_%s_%d/",outputBaseName, year, aggType, method, r)
 	
@@ -21,7 +22,7 @@ getHypoxiaExtent <- function(year, aggType, method, r){
 	for(threshold in c("less0","less2","less4")){
 		HE <- HEList[[threshold]]
 		HE$idw <- idwHE[[threshold]]
-		HE$time <- timeIndex
+		HE$time <- timeIndex  %>% as.POSIXct()
 		
 		p <- ggplot(HE) + geom_ribbon(aes(time,ymin = lower/n, ymax = upper/n), fill = "grey70") +
 			geom_line(aes(time,median/n),color = "black") + geom_line(aes(time, idw/n), color = "blue", alpha = 0.7, size = 0.5)+
@@ -36,8 +37,85 @@ getHypoxiaExtent <- function(year, aggType, method, r){
 	}
 }
 
+getAllPredictions <- function(year, aggType, method, r, totalSim = 1000, fromExistingFile = FALSE) {
+	metaFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
+	sdMatrixFile <- sprintf("%s/sdMatrix.rds", metaFolder)
+	fullConstructionFile <- sprintf("%s/fullReconstruction.rds", metaFolder)
+	
+	print(metaFolder)
+	
+	if(!fromExistingFile){
+		residualPredictions <- readRDS(paste0(metaFolder,"residualPredictions.rds"))
+		trendModel <- readRDS(paste0(metaFolder,"trendModel.rds"))
+		
+		basisNum <- r + 1
+		availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
+		
+		set.seed(1)
+		indMatrix <- base::sample(1:availableSimNum, totalSim*basisNum,replace= TRUE) %>%
+			matrix(nrow = basisNum)
+		
+		res <- reConstruct(
+			trendModel,
+			residualPredictions,
+			simulationNum = -totalSim,
+			indMatrix = indMatrix,
+			parallel = TRUE)
+		
+		saveRDS(res, fullConstructionFile)
+	
+		# calculate meanMatrix
+		meanMatrix <- Reduce("+", res$predValue) / length(res$predValue)
+		
+		# initialize standard dev matrix
+		sdMatrix <- matrix(0, nrow = dim(meanMatrix)[1], ncol = dim(meanMatrix)[2])
+	
+		# mean over different simulation		
+		for(mat in res$predValue) {
+			sdMatrix <- sdMatrix + (mat - meanMatrix)^2
+		}
+		sdMatrix <- sqrt(sdMatrix / length(res$predValue))
+		saveRDS(sdMatrix, sdMatrixFile)
+		
+	} else {
+		# res <- readRDS(fileName)
+		sdMatrix <- readRDS(sdMatrixFile)
+	}
+	
+	plotPredictionVariance(year, aggType, method, r)
+}
 
-getDecompositionResults <- function(year, aggType, r){
+
+# get basis reconstruct results
+getBasisReconstructions <- function(year, aggType, loggerID_){
+	folderName <- sprintf("../output/%d_%s_%s_%d/",year, aggType, "Baye", 10)
+	model <- readRDS(paste0(folderName,"basisModelRes.rds"))
+	timeIndex <- index(model$residuals$samplingData) %>% as.POSIXct()
+
+	
+ 	coeff <- c()
+ 	for(i in 1:11){
+ 		coeff <- c(coeff, subset(model$model[[i]], loggerID == loggerID_)$value)
+ 	}
+
+	basis <- attr(model$model,"basis")[,1:11] %*% diag(coeff) %>% 
+			data.frame() %>% 
+			zoo(order.by =  as.POSIXlt(timeIndex))
+
+			# melt(id.vars = "time")
+
+	plot(rowSums(basis))
+	
+	plot(cbind(basis[,2],waveDO2016[,"WVHT_45169_h"]))
+
+	ggplot() + geom_col(mapping = aes(x = time, y = value, fill = variable),stat = "identity", data = basis,position = "stack")
+	# geom_line(aes(time, y), data = reconstructed)+ggtitle(loggerID))
+	
+}
+
+
+
+getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm = FALSE){
 	# function to plot basis info
 	folderName <- sprintf("../output/%d_%s_%s_%d/",year, aggType, "Baye", r)
 	
@@ -50,25 +128,34 @@ getDecompositionResults <- function(year, aggType, r){
 	
 	basis <-attr(model$model,"basis")[,1:r] %>% data.frame()
 	names(basis) <- paste0("basis_",c(1:r))
-	
-	basis[,1] <- -basis[,1] 
-	model$model[[1]]$value <- -model$model[[1]]$value
+		
+	if(reverseFirst){
+		basis[,1] <- -basis[,1] 
+		model$model[[1]]$value <- -model$model[[1]]$value
+	}
 
 	basis <- zoo(basis, order.by = timeIndex)
 	
 	# plot the basis functions
 	pdf(sprintf("../output/results/%d_%s_r_%d_basis.pdf",year,aggType, r),	width = 8, height = 3)
-	print(plot(basis[,1:3], xlab = "Time",nc = 3 , yax.flip = FALSE,cex.axis = 1.5, cex.lab = 2, main = "",oma = c(5, 0, 2, 0),
+	print(plot(basis[,1:min(r,3)], xlab = "Time",nc = 3 , yax.flip = FALSE,cex.axis = 1.5, cex.lab = 2, main = "",oma = c(5, 0, 2, 0),
 		mar = c(0, 5.1, 0, 2.1)))
 	dev.off()
 		
 	# plot coefficients on the map
-	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude") 
+	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year)) + labs(x = "Longitude", y = "Latitude") 
 	
+
+	coeffRangeAbs <- max(abs(range(c(model$model[[1]]$value, model$model[[2]]$value, model$model[[3]]$value))))
+
+	coeffRange <- c(-coeffRangeAbs, coeffRangeAbs)
+
 	plot.list1 <- lapply(seq(1,3,1), function(x){
 		subData <- model$model[[x]]
 		myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
+			# scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
+			# scale_color_gradient2(low = "red",high = "blue", mid = "white", midpoint = 0, name = "Basis\nCoefficients",limits= coeffRange)+ 
+			scale_color_gradientn(colours =c("red","yellow","white","cyan","blue"), limit = coeffRange, name = "Basis\nCoefficients")+ 
 			ggtitle(paste0("Basis_", x)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
 	})
 
@@ -102,18 +189,20 @@ getDecompositionResults <- function(year, aggType, r){
 	
 	
 	# plot the spatio-temporal variogram
-	require(ggplot2)
-	residuals <- model$residuals$samplingData
-	
-	stv <- st_variogram(model$residuals$samplingData, model$residuals$loggerInfo)
-	saveRDS(stv, sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
-	stv <- readRDS(sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
-	
-	pdf(sprintf("../output/results/%d_%s_r_%d_stVgm.pdf",year,aggType, r),
-			width = 5, height = 3)
-	par(oma = c(0, 0, 0, 0), mar = c(2, 4, 0.5, 0.5))
-	print(plot(stv$vgmModel, map = F))
-	dev.off()
+	if(stvgm){
+		require(ggplot2)
+		residuals <- model$residuals$samplingData
+		
+		stv <- st_variogram(model$residuals$samplingData, model$residuals$loggerInfo)
+		saveRDS(stv, sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
+		stv <- readRDS(sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
+		
+		pdf(sprintf("../output/results/%d_%s_r_%d_stVgm.pdf",year,aggType, r),
+				width = 5, height = 3)
+		par(oma = c(0, 0, 0, 0), mar = c(2, 4, 0.5, 0.5))
+		print(plot(stv$vgmModel, map = F))
+		dev.off()
+	}	
 }
 
 
@@ -140,7 +229,7 @@ getSensorWithHypoxiaExtent <- function(year, aggType, method, r){
 	n <- sum(grid$convexIndex)
 	threshold <- list(less4 = 4, less2 = 2, less0 = 0.01)
 	
-	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year))
+	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year))
 	
 	modelList <- list()
 	
@@ -238,7 +327,7 @@ getCoeffMatrix <- function(krigModelObj){
 }
 
 
-resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye")){
+resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"), plotSummary = TRUE){
 	# summary rmse and withinBoundRatio of each logger of each method in CV
 	createFolder(sprintf("%s/results", outputBaseName))
 
@@ -257,7 +346,7 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 							next
 						}else{
 							metaList <- list(year = year, method = method, aggType = aggType, cv_loggerID = cv_loggerID, r = r, site = site)
-							res <- c(metaList,plot_cv(year, method, aggType, cv_loggerID, r)) %>% data.frame()
+							res <- c(metaList, plot_cv(year, method, aggType, cv_loggerID, r)) %>% data.frame()
 							fullRes <- rbind(fullRes, res)
 						}
 					}
@@ -274,6 +363,10 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 	fullRes[fullRes$method == "Reml","method"] <- "MLE"
 
 	fullRes$method <- factor(fullRes$method, levels = c("IDW","MLE","Baye"))
+	
+	if(!plotSummary) {
+		return(fullRes)
+	}
 	
 	for(year_ in yearList){
 		for(aggType_ in aggList){
@@ -309,7 +402,7 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 			dev.off()
 			# pdf(sprintf("%s/results/%d_%s_CV_withinBound.pdf", outputBaseName, year_, aggType_),width = 3.25, height = 2)
 			# print(p_withBound)
-			# dev.off()	
+			# dev.off()
 			
 		}
 	}
@@ -332,7 +425,7 @@ plotCVOnMap <- function(year_, aggType_, method_, r_){
 	# myMap <- get_map(location=bbox, source="google",crop=FALSE) %>% ggmap()
 	# saveRDS(myMap,"erieGoogleMap.rds")
 
-	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year_)) + labs(x = "Longitude", y = "Latitude")
+	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year_)) + labs(x = "Longitude", y = "Latitude")
 	if(method_ == "idw"){
 		p <- myMap + geom_point(aes(longitude, latitude, color = rmse), data = res, size = 5)
 	}else{
@@ -362,7 +455,7 @@ plot_cv <- function(year, method, aggType, cv_loggerID, r = NULL){
 	}
 
 	df <- readRDS(sprintf("%s/simulations_stat.rds",metaFolder))
-	t <- index(df)
+	t <- index(df) %>% as.POSIXct()
 	
 	df <- as.data.frame(df)
 	df$time <- t

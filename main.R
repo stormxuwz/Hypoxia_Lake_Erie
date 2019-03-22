@@ -14,7 +14,7 @@ varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
 outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
 mapDx <- 0.025
 mapDy <- 0.025
-
+randomSeed <- 42
 rList <- c(2,5,10,15)
 #rList <- c(5)
 
@@ -45,7 +45,7 @@ main <- function(year = 2014, aggType = "daily"){
 		hypoxia_reml <- predict(obj = erieDO,
 					grid = grid, 
 					method = "Reml", 
-					predictType = "extent", 
+					predictType = "extent",
 					trend = trend, 
 					r = r, 
 					totalSim = 1000,
@@ -138,12 +138,12 @@ main_CV <- function(year = 2014, aggType = "daily"){
 
 main_analysis <- function(year,aggType){
 
-	hypoxiaTimeSummary <- function(predictions, filePrefix){
+	hypoxiaTimeSummary <- function(predictions, grid, filePrefix){
 		# plot the spatial map on hypoxia time extent
 		tmp <- hypoxiaAnalysis(predictions,2)
 		grid$totolHypoxiaTime <- tmp$hypoxiaTime
 		grid$longestHypoxiaTime <- tmp$longestTime
-		
+		baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year)) + labs(x = "Longitude", y = "Latitude")
 		p <- baseMap + 
 			geom_tile(aes(longitude,latitude,fill = totolHypoxiaTime),data = subset(grid, convexIndex == 1))+
 			scale_fill_gradient(name = "Total\nhypoxic\ntime\n(hour)",low = "cyan",high = "red")
@@ -191,16 +191,19 @@ main_analysis <- function(year,aggType){
 			fileFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
 
 			residualPrediction <- readRDS(paste0(fileFolder, "residualPredictions.rds"))
-			predictions <- readRDS(paste0(fileFolder,"trendModel.rds")) %>% 
+			
+			trendModel <- readRDS(paste0(fileFolder,"trendModel.rds"))
+			predictions <-  trendModel %>% 
 				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
 			
-			hypoxiaTimeSummary(predictions$predValue, filePrefix = sprintf("%d_%s_%s_%d",year, aggType, method, r) )
+			grid <- trendModel$grid
+			hypoxiaTimeSummary(predictions$predValue, trendModel$grid, filePrefix = sprintf("%d_%s_%s_%d",year, aggType, method, r) )
 		}
 	}
 
 	predictions <- readRDS(sprintf("%s/%d_%s_idw/trendPredictions.rds", outputBaseName, year, aggType)) %>%
 				reConstruct()
-	hypoxiaTimeSummary(predictions, filePrefix = sprintf("%d_%s_%s",year, aggType, "idw") )
+	hypoxiaTimeSummary(predictions, grid, filePrefix = sprintf("%d_%s_%s",year, aggType, "idw") ) # reuse previous grid
 
 	#######################
 	# Summarize CV results
@@ -225,14 +228,15 @@ main_analysis <- function(year,aggType){
 
 
 # function to calculate the CV results
-# for(year in c(2014, 2015)){
-# 	for(aggType in c("daily")){
+# for(aggType in c("daily", "hourly")){
+# 	for(year in c(2014, 2015, 2016)){
 # 		print(system.time(main(year = year, aggType = aggType)))
 # 		print(system.time(main_CV(year = year, aggType = aggType)))
 # 	}
 # }
 
-resultSummary(aggList = c("hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"))
+
+# resultSummary(aggList = c("hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"))
 
 for(year in c(2014, 2015, 2016)){
 	for(aggType in c("hourly")){
@@ -240,31 +244,6 @@ for(year in c(2014, 2015, 2016)){
 	}
 }
 
-
-
-# for(year in c(2014, 2015)){
-# 	for(aggType in c("hourly","daily")){
-		
-# 		# get hypoxia extent
-# 		# for(method in c("Reml","Baye")){
-# 		# 	for(r in rList){
-# 		# 		getHypoxiaExtent(year, aggType, method, r)
-# 		# 	}
-# 		# }
-		
-# 		# analyze the decomposition results
-# 		for(r in rList){
-# 			getDecompositionResults(year, aggType, r)
-# 		}
-		
-# 		# get sensors linear regression
-# 		# for(method in c("Reml","Baye","idw")){
-# 		# 	for(r in rList){
-# 		# 		getSensorWithHypoxiaExtent(year, aggType, method, r)
-# 		# 	}
-# 		# }
-# 	}
-# }
 
 
 

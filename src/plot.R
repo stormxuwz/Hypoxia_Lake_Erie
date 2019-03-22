@@ -3,13 +3,61 @@ require(dygraphs)
 require(reshape2)
 require(leaflet)
 require(ggmap)
+require(raster)
+require(zoo)
+require(RMySQL)
+require(gridExtra)
+require(cowplot)
+
+fixGgMap <- function(year) {
+	# function to fix the map rds saved by previous code
+	oldMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year))
+	lonRange <- range(oldMap$data$lon)
+	latRange <- range(oldMap$data$lat)
+	
+	myMap <- get_googlemap(center = c(lon = mean(lonRange), lat = mean(latRange)), crop=TRUE, maptype = "terrain", scale = 2, zoom = 9)
+	ggmap(myMap) %>% saveRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year))
+}
+
+
+plotPredictionVariance <- function(year, aggType, method, r) {
+	metaFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
+	sdMatrix <- readRDS(sprintf("%s/sdMatrix.rds", metaFolder))
+	
+	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
+	
+	loggerInfo <- erieDO$loggerInfo
+	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year))
+	
+	for(varAgg in c("mean", "max")) {
+		if(varAgg == "mean") {
+			grid$value <- colMeans(sdMatrix)
+		} else if(varAgg == "max") {
+			grid$value <- apply(sdMatrix, 2, max)
+		} else {
+			stop("varAgg must in (mean, max)")
+		}
+		maxCol <- max(grid$value, na.rm = TRUE) + 0.01
+		
+		p <- baseMap + geom_tile(aes(longitude,latitude,fill = value), data = subset(grid, convexIndex==1), na.rm = TRUE) + 
+			scale_fill_gradient2(name = "SD(mg/L)",low = "cyan",mid = "yellow", midpoint = maxCol / 2, high = "firebrick1",limit = c(0, maxCol))
+		
+		p <- p + geom_point(aes(longitude,latitude), size = I(2), color = "black",shape = 21, data  = loggerInfo)
+		
+		png(sprintf("%s/predictionUncertainty_%s.png",metaFolder, varAgg),width = 800, height =600, res =200)
+		print(p)
+		dev.off()
+	}
+}
+
 
 
 plot_gif <- function(year, aggType, method,r){
 	# data is a matrix with rows as different time and columns as different locations
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
 	timeIdx <- index(erieDO$samplingData)
-	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year)) + labs(x = "Longitude", y = "Latitude")
+	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year)) + labs(x = "Longitude", y = "Latitude")
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 
 	loggerInfo <- erieDO$loggerInfo
@@ -38,7 +86,7 @@ plot_gif <- function(year, aggType, method,r){
 
 	maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData,na.rm=T)))
 
-
+	# do parallel plot
 	require(doParallel)
 	cl <- makeCluster(2)
 	registerDoParallel(cl)

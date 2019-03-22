@@ -9,9 +9,13 @@ source("src/helper.R")
 source("src/postAnalysis.R")
 source("src/basisDecomposition.R")
 
+require(latex2exp)
+library(geoR)
+
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
 
+randomSeed <- 1
 
 bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
 	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
@@ -29,7 +33,8 @@ bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
 					r = r, 
 					totalSim = 1000,
 					nmax = 5,
-					metaFolder = sprintf("%s%d_%s_Baye_%d/",outputBaseName, year, aggType, r))
+					metaFolder = sprintf("%s%d_%s_Baye_%d/",outputBaseName, year, aggType, r),
+					defaultPrior = FALSE)
 
 		saveRDS(hypoxia_baye, sprintf("%s%d_%s_Baye_%d/extent.rds",outputBaseName, year, aggType, r))
 	}
@@ -54,7 +59,8 @@ bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
 						r = r, 
 						totalSim = 1000,
 						nmax = 5,
-						metaFolder = metaFolder)
+						metaFolder = metaFolder,
+						defaultPrior = FALSE)
 
 			# hypoxia_baye_cv <- readRDS(sprintf("%s/simulations.rds",metaFolder))
 			statsSummary <- cvUncertainty(hypoxia_baye_cv,trueDO) %>% zoo(order.by = timeIdx)
@@ -64,12 +70,7 @@ bayeSensitivity <- function(year = 2014, aggType = "daily", cv = FALSE){
 		
 		}
 	}
-	
-
 }
-
-
-library(geoR)
 
 myPriorList <- list(
 
@@ -155,13 +156,13 @@ mapDx <- mapDy <- 0.025
 rList <- c(10)
 # mapDx <- mapDy <- 0.1
 
-# for(i in 1:10){
-# 	print(paste("parameter set", i))
-# 	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
-# 	# myPrior <- myPriorList[[paste0("prior",i)]]
-# 	# print(system.time(bayeSensitivity(year = 2014, aggType = "hourly", cv = TRUE)))
-# 	resultSummary(aggList = c("hourly"), yearList = c(2014), methodList = c("Baye"))
-# }
+for(i in 1:10){
+	print(paste("parameter set", i))
+	outputBaseName <- paste0("/Users/wenzhaoxu/Developer/Hypoxia/output_sensitivity_", i,"/")
+	myPrior <- myPriorList[[paste0("prior",i)]]
+	print(system.time(bayeSensitivity(year = 2014, aggType = "hourly", cv = TRUE)))
+	resultSummary(aggList = c("hourly"), yearList = c(2014), methodList = c("Baye"), FALSE)
+}
 
 # read CV results
 fullRes <- data.frame()
@@ -181,17 +182,18 @@ for(i in 1:10){
 	fullRes <- rbind(fullRes, tmpRes)
 }
 
-# read original
-
+# Read original
 baseRes <- readRDS("/Users/wenzhaoxu/Developer/Hypoxia/output/results/fullRes.rds") %>% 
 	dplyr::filter(year == 2014, method == "Baye", aggType == "hourly", r == 10) %>% 
 	dplyr::mutate(parameter = 0)
 
+# Calculate differences
 diffRes <- merge(fullRes, baseRes, by.x = "cv_loggerID", by.y = "cv_loggerID", all.x = T) %>% 
 	mutate(rmse_diff = rmse.x - rmse.y, CI_coverage_diff = withinBoundRatio.x - withinBoundRatio.y) %>% # altervative - base, negative rmse or positive CI means altervative better
 	rename(parameter = parameter.x)
 diffRes$parameter <- as.factor(diffRes$parameter)
 
+# plot
 pdf("/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivity_dRMSE.pdf", width = 5.8, height = 2.5)
 ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = rmse_diff),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
 xlab("Hyper parameter set") + ylab(TeX("$\\Delta$ RMSE")) + theme_bw()
@@ -201,30 +203,3 @@ pdf("/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivity_dCICover.pdf", width = 5
 ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = CI_coverage_diff),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
 xlab("Hyper parameter Set") + ylab(TeX("$\\Delta$ CI coverage")) + theme_bw()
 dev.off()
-
-
-
-ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = rmse_diff),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-xlab("Hyper parameter set") + ylab(TeX("$\\Delta$ RMSE")) + theme_bw() + geom_text(aes(parameter, rmse_diff, label = cv_loggerID))
-
-ggplot(data = diffRes) + geom_boxplot(aes(x = as.factor(parameter), y = CI_coverage_diff),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-xlab("Hyper parameter set") + ylab(TeX("$\\Delta$ RMSE")) + theme_bw() + geom_text(aes(parameter, CI_coverage_diff, label = cv_loggerID))
-
-fullRes$parameter <- as.factor(fullRes$parameter)
-# saveRDS(fullRes,"/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivityRes.rds")
-# fullRes <- readRDS("/Users/wenzhaoxu/Developer/Hypoxia/bayeSensitivityRes.rds")
-
-# fullRes <- rbind(fullRes, baseRes)
-# ggplot(data = fullRes) + geom_boxplot(aes(x = as.factor(parameter), y = rmse, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-# xlab("Bayesian Prior Parameter Set") + ylab("RMSE") + theme_bw()
-
-# ggplot(data = fullRes) + geom_boxplot(aes(x = as.factor(parameter), y = withinBoundRatio, fill = parameter),size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
-# xlab("Bayesian Prior Parameter Set") + ylab("RMSE") + theme_bw()
-
-fullRes <- readRDS(sprintf("%s/results/fullRes.rds",outputBaseName))
-EPA <- dplyr::filter(fullRes,site %in% EPASite, aggType == "hourly", r == 10, method == "Baye")
-ggplot(data = EPA) + geom_bar(aes(x = site, y = rmse, fill = factor(year)), stat = "identity", position=position_dodge()) + 
-theme_bw()
-
-ggplot(data = EPA) + geom_bar(aes(x = site, y = withinBoundRatio, fill = factor(year)), stat = "identity", position=position_dodge()) + 
-theme_bw()

@@ -57,7 +57,7 @@ NMFReconstruct <- function(year, aggType, basis_r, loggerID, new = FALSE,...){
 	reconstructed_basis <- melt(reconstructed, id.vars = "time")
 	reconstructed$y <- as.numeric(erieDO$samplingData[,loggerID])
 
-	print(ggplot() + geom_bar(mapping = aes(x = time, y =value, fill = variable),stat = "identity", data = reconstructed_basis) +
+	print(ggplot() + geom_col(mapping = aes(x = time, y =value, fill = variable),stat = "identity", data = reconstructed_basis) +
 	geom_line(aes(time, y), data = reconstructed)+ggtitle(loggerID))
 
 
