@@ -1,3 +1,5 @@
+library(float)
+
 reConstruct <- function(x,...){
 	UseMethod("reConstruct")
 }
@@ -58,10 +60,11 @@ reConstruct.basisModel <- function(
 	}else if(simulationNum < 0){
 		# reConstruct all simulations
 		if(parallel){
+			warning("hourly data full reconstruction may require a lot of memory")
 			require(doParallel)
 			cl <- makeCluster(6)
 			registerDoParallel(cl)		
-
+			
 			prediction <- foreach(simIdx = 1:totalSim) %dopar% {
 					source("src/classReConstruct.R")
 					source("src/classSummary.R")
@@ -71,6 +74,8 @@ reConstruct.basisModel <- function(
 			variance <- reConstruct(trendModel, residualPrediction, 1, indMatrix)$predVariance
 			stopCluster(cl)
 			gc()		
+		} else{
+			stop("not implemented non-parallel version")
 		}
 	}else{
 		# generate from each basis predictions
@@ -80,7 +85,7 @@ reConstruct.basisModel <- function(
 			prediction <- prediction + basis[,i] %*% t(coeff)
 			variance <- variance + trendModel$predictions[[i]]$pred[,2]
 		}
-		prediction <- prediction + residualPrediction
+		prediction <- fl(prediction + residualPrediction)
 	}
 
 	return(list(predValue = prediction, predVariance = variance))

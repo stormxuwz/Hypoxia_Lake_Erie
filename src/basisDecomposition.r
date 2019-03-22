@@ -55,8 +55,8 @@ NMF_basis <- function(DOdata, r, ...){
 
 	require(NMF)
 	DOdata <- as.matrix(DOdata)
-
-	if(is.null(method)){
+	DOdata <- ifelse(DOdata<0.01, 0.01, DOdata)
+	if(is.null(method) | method == "brunet"){
 		print("using default NMF fitting method")
 		nmfRes <- nmf(DOdata, r, nrun = 60)
 	}else{
@@ -75,7 +75,7 @@ SVD_basis <- function(DOdata, r){
 	DOdata <- as.matrix(DOdata)
 
 	print("Doing Scaling!!")
-	svdRes <- svd(DOdata %>% scale()) # is centered necessary? No (3/23) // Yes (the original paper did so)
+	svdRes <- svd(DOdata %>% scale()) # Yes (the original paper did so)
 
 
 	basis <- svdRes$u[,1:r]
