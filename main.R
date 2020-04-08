@@ -11,7 +11,7 @@ source("src/basisDecomposition.R")
 
 dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
+outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output2020/"
 mapDx <- 0.025
 mapDy <- 0.025
 randomSeed <- 42
@@ -280,6 +280,8 @@ for(year in c(2014, 2015, 2016)){
 # trendPrediction <- reConstruct(tmp, residualPredictions, 0)
 # hypoxiaExtent <- summary(tmp, residualPredictions, parallel = TRUE, totalSim = 10, randomSeed = 0)
 
-
+for (year in c(2015)) {
+	plot_gif(year, "hourly", "Baye", 10)
+}
 
 

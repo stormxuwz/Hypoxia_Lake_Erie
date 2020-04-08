@@ -11,7 +11,6 @@ library(raster)
 source("./src/database.R")
 source("./config.R")
 source("./src/plot.R")
-source("./src/outlierDetection.R")
 source("src/classPrediction.R")
 source("src/classDef.R")
 source("src/classReConstruct.R")
@@ -19,7 +18,7 @@ source("src/classSummary.R")
 source("src/helper.R")
 source("src/basisDecomposition.R")
 
-# the global variable for all shiny session
+# Define global variables for shiny session
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
 mapDx <- 0.025
@@ -27,7 +26,7 @@ mapDy <- 0.025
 
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
 
-boxcox <- function(x,lambda){return((x^lambda-1)/lambda)}
+boxcox <- function(x, lambda){return((x^lambda-1)/lambda)}
 
 parseDataTypeInput <- function(dataType){
 	if(dataType == "Raw"){
@@ -108,7 +107,7 @@ shinyServer(function(input,output,session)
 		grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 		timeIdx <- index(erieDO$samplingData)
 
-		method = "basis_MLE"
+		method <- "basis_baye"
 		
 		stopifnot(method %in% c("idw","basis_MLE","basis_baye"))
 		print(paste0("using ", method, " to estimate hypoxia extent"))

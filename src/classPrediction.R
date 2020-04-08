@@ -55,7 +55,7 @@ predict.krigModelIdw <- function(model, grid, parallel){
 }
 
 
-predict.krigModelReml <- function(model, grid){
+predict.krigModelReml <- function(model, grid, ...){
 	config <- attr(model, "config")
 	simNum <- config$simNum
 	trend <- config$trend

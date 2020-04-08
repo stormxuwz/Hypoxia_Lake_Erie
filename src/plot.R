@@ -38,14 +38,23 @@ plotPredictionVariance <- function(year, aggType, method, r) {
 		} else {
 			stop("varAgg must in (mean, max)")
 		}
-		maxCol <- max(grid$value, na.rm = TRUE) + 0.01
+		# maxCol <- max(grid$value, na.rm = TRUE) + 0.01
+		
+		if (year == 2014 || year == 2016) {
+			 maxCol <- 2.5
+		} else{
+			maxCol <- 2.5
+		}
+		
+		print(max(grid$value, na.rm = TRUE))
 		
 		p <- baseMap + geom_tile(aes(longitude,latitude,fill = value), data = subset(grid, convexIndex==1), na.rm = TRUE) + 
+			#scale_fill_gradientn(colours = rainbow(10), limit = c(0, maxCol), name = "SD(mg/L)")
 			scale_fill_gradient2(name = "SD(mg/L)",low = "cyan",mid = "yellow", midpoint = maxCol / 2, high = "firebrick1",limit = c(0, maxCol))
 		
 		p <- p + geom_point(aes(longitude,latitude), size = I(2), color = "black",shape = 21, data  = loggerInfo)
 		
-		png(sprintf("%s/predictionUncertainty_%s.png",metaFolder, varAgg),width = 800, height =600, res =200)
+		png(sprintf("%s/predictionUncertainty_%s.png",metaFolder, varAgg),width = 1000, height =800, res =200)
 		print(p)
 		dev.off()
 	}
@@ -84,8 +93,8 @@ plot_gif <- function(year, aggType, method,r){
 	createFolder(folder)
 	
 
-	maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData,na.rm=T)))
-
+	# maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData,na.rm=T)))
+	maxCol <- 12.5
 	# do parallel plot
 	require(doParallel)
 	cl <- makeCluster(2)
@@ -94,7 +103,7 @@ plot_gif <- function(year, aggType, method,r){
 	if(year == 2014){
 		startIdx <- 6
 	}else if(year == 2015){
-		startIdx <- 4
+		startIdx <- 5
 	}else if(year == 2016){
 		startIdx <- 19
 	}
