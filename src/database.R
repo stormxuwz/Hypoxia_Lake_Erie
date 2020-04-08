@@ -18,7 +18,6 @@ retriveLoggerData_DO_Temp <- function(loggerIndex,year,groupRange,dataType,timeR
 	return(data)
 }
 
-
 retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange=NULL,transform=TRUE){
 	data <- data.frame()
 	sqlRes <- getTimeSeriesSQL(loggerIndex,year,var,groupRange,dataType,timeRange = timeRange)

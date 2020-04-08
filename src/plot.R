@@ -9,16 +9,11 @@ require(RMySQL)
 require(gridExtra)
 require(cowplot)
 
-fixGgMap <- function(year) {
-	# function to fix the map rds saved by previous code
-	oldMap <- readRDS(sprintf("./resources/erieGoogleMap_%d.rds",year))
-	lonRange <- range(oldMap$data$lon)
-	latRange <- range(oldMap$data$lat)
-	
-	myMap <- get_googlemap(center = c(lon = mean(lonRange), lat = mean(latRange)), crop=TRUE, maptype = "terrain", scale = 2, zoom = 9)
-	ggmap(myMap) %>% saveRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year))
-}
 
+plot_variogram <- function(df, formu = "value~1"){
+	coordinates(df) = ~x+y
+	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
+}
 
 plotPredictionVariance <- function(year, aggType, method, r) {
 	metaFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
@@ -38,8 +33,7 @@ plotPredictionVariance <- function(year, aggType, method, r) {
 		} else {
 			stop("varAgg must in (mean, max)")
 		}
-		# maxCol <- max(grid$value, na.rm = TRUE) + 0.01
-		
+
 		if (year == 2014 || year == 2016) {
 			 maxCol <- 2.5
 		} else{
@@ -49,7 +43,6 @@ plotPredictionVariance <- function(year, aggType, method, r) {
 		print(max(grid$value, na.rm = TRUE))
 		
 		p <- baseMap + geom_tile(aes(longitude,latitude,fill = value), data = subset(grid, convexIndex==1), na.rm = TRUE) + 
-			#scale_fill_gradientn(colours = rainbow(10), limit = c(0, maxCol), name = "SD(mg/L)")
 			scale_fill_gradient2(name = "SD(mg/L)",low = "cyan",mid = "yellow", midpoint = maxCol / 2, high = "firebrick1",limit = c(0, maxCol))
 		
 		p <- p + geom_point(aes(longitude,latitude), size = I(2), color = "black",shape = 21, data  = loggerInfo)
@@ -59,8 +52,6 @@ plotPredictionVariance <- function(year, aggType, method, r) {
 		dev.off()
 	}
 }
-
-
 
 plot_gif <- function(year, aggType, method,r){
 	# data is a matrix with rows as different time and columns as different locations
@@ -92,8 +83,6 @@ plot_gif <- function(year, aggType, method,r){
 	folder <- paste0(outputBaseName,"/results/",prefix)
 	createFolder(folder)
 	
-
-	# maxCol <-  ceiling(max(max(predictions,na.rm = T), max(erieDO$samplingData,na.rm=T)))
 	maxCol <- 12.5
 	# do parallel plot
 	require(doParallel)
@@ -107,8 +96,6 @@ plot_gif <- function(year, aggType, method,r){
 	}else if(year == 2016){
 		startIdx <- 19
 	}
-	
-	# startIdx <- ifelse(year == 2014, 6, 4)
 	
 	tmp <- foreach(i =seq(startIdx,length(timeIdx),6)) %dopar% {
 
@@ -129,37 +116,26 @@ plot_gif <- function(year, aggType, method,r){
 	gc()
 }
 
-
-
-
 plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 	# data is a zoo dataframe
-	# this is a test on the program
 	if(type == "ggplot"){
 		data <- as.data.frame(data)
 		data$time <- strptime(rownames(data))
 		data <- melt(data,id.vars="time")
-		# ggplot(data)+geom_point(aes(time,value,color=))
 	}
 	else if (type=="dygrphs"){
-		
 		if(!is.null(outlierSeries)){
-			# adding outlier series
 			print("Plot with outliers")
-			
 			data <- combindWithOutlier(data,outlierSeries)
 			p <- dygraph(data) %>% 
 				dyRangeSelector(retainDateWindow=TRUE) %>% 
 				dyAxis("y", label = label) %>% 
 				dyHighlight(highlightSeriesOpts = list(strokeWidth = 3))
-				#dySeries("outlier", color = "red")
 		}else{
 			p <- dygraph(data) %>% 
 				dyRangeSelector(retainDateWindow=TRUE) %>% 
 				dyAxis("y", label = label)
 		}
-
-		
 	}
 	else{
 		stop ("invalid plot type")
@@ -168,7 +144,6 @@ plot_value<- function(data,label="value",type="dygrphs",outlierSeries = NULL){
 
 plot_spatial_matrix <- function(resultMatrix,outputFolder,prefix = NULL){
 	# resultMatrix is a matrix, each raw represent a point on the map
-
 	lonRange <- range(resultMatrix$longitude)
 	latRange <- range(resultMatrix$latitude)
 
@@ -180,7 +155,6 @@ plot_spatial_matrix <- function(resultMatrix,outputFolder,prefix = NULL){
 		subDf <- resultMatrix[,c(as.character(i),"longitude","latitude")]
 		names(subDf)[1] <- "pred"
 		q <- p+geom_tile(aes(longitude,latitude,fill = pred),data = subDf)+scale_fill_gradient(name = "DO (mg/L)",low = "red",high = "cyan",limit = c(0,15))
-		# +geom_point(aes(longitude,latitude),data =locationInfo,size = I(3))+ggtitle(df_time)
 		png(paste(outputFolder,prefix,"_",i,"_",".png",sep=""))
 		print(q)
 		dev.off()
@@ -206,9 +180,7 @@ plot_spatial <- function(dataList,locationInfo,outputFolder){
 		print(q)
 		dev.off()
 	}
-
 }
-
 
 plot_DO_temp <- function(data){
 	TempIndex <- grepl("Temp",names(data))
@@ -241,9 +213,6 @@ plot_wave_DO <- function(meta_available){
 		dev.off()
 	}
 }
-
-
-
 
 plotMultipleDO <- function(startTime,endTime,loggerList=c(),colorList=c()){
 	p <- ggplot()

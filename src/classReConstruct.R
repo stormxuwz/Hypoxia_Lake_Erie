@@ -4,10 +4,8 @@ reConstruct <- function(x,...){
 	UseMethod("reConstruct")
 }
 
-
 reConstruct.idwModel <- function(model){
 	# res is a list containing predictions (list of pred) and grid
-
 	prediction <- matrix(NA, nrow = length(model$predictions), ncol = nrow(model$grid))
 
 	for(i in 1:length(model$predictions)){
@@ -16,20 +14,18 @@ reConstruct.idwModel <- function(model){
 	return(prediction)
 }
 
-
 reConstruct.basisModel <- function(
 	trendModel,
 	residualPrediction, 
 	simulationNum = -1,
 	indMatrix = NULL,
-	parallel = FALSE){
+	parallel = FALSE) {
 	# trendModel: list containing 
 		# predictions (list of pred, simulations)
 		# grid
 		# basis
 	# residualPrediction is a T * n_grid matrix
 	# simulationNum 
-
 	# return a list of (1) matrix:T * n_grid and (2) variance n_grid
 
 	availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)

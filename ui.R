@@ -9,7 +9,6 @@ shinyUI(
   		fluidRow(
   			column(
   				3,
-  				# h4("This is a test to control time and variable"),
   				selectInput("year", 
   						label = h5("Year"),
        					choices = list("2014" = 2014, "2015"=2015,"2016"=2016),
@@ -29,13 +28,7 @@ shinyUI(
   					label = h5("Date"), 
   					value = "2014-08-01")
   			),
-        # column(
-        #   3,
-        #   selectInput("GroupRange", 
-        #       label = h5("Aggregrate Range"),
-        #         choices = list("Daily" = "daily", "Hourly"="hourly"),
-        #         selected="daily")
-        # )
+       
          column(
           2,
           selectInput("colors", h5("Color Scheme"),
@@ -68,12 +61,6 @@ shinyUI(
   					label = h5("Hour"), 
   					min = 0, max = 23,value=12)
   			),
-  			column(
-  				3,
-  				actionButton("Instruction","Instructions"),
-  				tags$style(type='text/css', "#Instruction { width: 60%; margin-top: 25px;}")
-  			)
-  			
   		),
 
   		hr(),
@@ -110,7 +97,6 @@ shinyUI(
             
             tabPanel("Daily Hypoxia Extent",
                 dygraphOutput('hypoxiaExtentPlot'),
-                # actionButton("calHypoxiaButtom","Calculate Hypoxia Extent"),
                 checkboxInput("showArea", "Using hypoxia area (km^2)", value = TRUE, width = NULL),
                
                 downloadButton("downloadHypoxia", label = "Download Hypoxia Area", class = NULL)

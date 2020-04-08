@@ -16,7 +16,6 @@ mapDx <- 0.025
 mapDy <- 0.025
 randomSeed <- 42
 rList <- c(2,5,10,15)
-#rList <- c(5)
 
 main <- function(year = 2014, aggType = "daily"){
 	#year <- 2014

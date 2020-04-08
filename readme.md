@@ -1,1 +1,1 @@
-install.packages(c("cowplot", "geoR", "RMySQL", "rgdal", "float"))
+install.packages(c("cowplot", "geoR", "RMySQL", "rgdal", "float", "leaflet", "ggmap"))

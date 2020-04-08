@@ -1,4 +1,5 @@
 # script to do post analysis and plot
+library(ggmap)
 
 getHypoxiaExtent <- function(year, aggType, method, r){
 	# function to plot hypoxia time series
@@ -41,8 +42,6 @@ getAllPredictions <- function(year, aggType, method, r, totalSim = 1000, fromExi
 	metaFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
 	sdMatrixFile <- sprintf("%s/sdMatrix.rds", metaFolder)
 	fullConstructionFile <- sprintf("%s/fullReconstruction.rds", metaFolder)
-	
-	print(metaFolder)
 	
 	if(!fromExistingFile){
 		residualPredictions <- readRDS(paste0(metaFolder,"residualPredictions.rds"))
@@ -92,7 +91,6 @@ getBasisReconstructions <- function(year, aggType, loggerID_){
 	model <- readRDS(paste0(folderName,"basisModelRes.rds"))
 	timeIndex <- index(model$residuals$samplingData) %>% as.POSIXct()
 
-	
  	coeff <- c()
  	for(i in 1:11){
  		coeff <- c(coeff, subset(model$model[[i]], loggerID == loggerID_)$value)
@@ -101,19 +99,13 @@ getBasisReconstructions <- function(year, aggType, loggerID_){
 	basis <- attr(model$model,"basis")[,1:11] %*% diag(coeff) %>% 
 			data.frame() %>% 
 			zoo(order.by =  as.POSIXlt(timeIndex))
-
-			# melt(id.vars = "time")
-
+	
 	plot(rowSums(basis))
 	
 	plot(cbind(basis[,2],waveDO2016[,"WVHT_45169_h"]))
 
 	ggplot() + geom_col(mapping = aes(x = time, y = value, fill = variable),stat = "identity", data = basis,position = "stack")
-	# geom_line(aes(time, y), data = reconstructed)+ggtitle(loggerID))
-	
 }
-
-
 
 getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm = FALSE){
 	# function to plot basis info
@@ -145,7 +137,6 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 	# plot coefficients on the map
 	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year)) + labs(x = "Longitude", y = "Latitude") 
 	
-
 	coeffRangeAbs <- max(abs(range(c(model$model[[1]]$value, model$model[[2]]$value, model$model[[3]]$value))))
 
 	coeffRange <- c(-coeffRangeAbs, coeffRangeAbs)
@@ -153,25 +144,15 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 	plot.list1 <- lapply(seq(1,3,1), function(x){
 		subData <- model$model[[x]]
 		myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-			# scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
-			# scale_color_gradient2(low = "red",high = "blue", mid = "white", midpoint = 0, name = "Basis\nCoefficients",limits= coeffRange)+ 
 			scale_color_gradientn(colours =c("red","yellow","white","cyan","blue"), limit = coeffRange, name = "Basis\nCoefficients")+ 
 			ggtitle(paste0("Basis_", x)) + theme(axis.title.x = element_text(size=11),axis.title.y = element_text(size=11))
 	})
 
-	# plot.list2 <- lapply(seq(2,r,2), function(x){
-	# 	subData <- model$model[[x]]
-	# 	myMap + geom_point(aes(longitude,latitude, color = value),data = subData, size = 4) + 
-	# 		scale_color_gradientn(colours = topo.colors(10), name = "Basis\nCoefficients")+ 
-	# 		ggtitle(paste0("Basis_", x))
-	# })
 	args.list <- c(c(plot.list1),list(nrow=1))
-	# args.list <- c(c(plot.list1,plot.list2),list(nrow=2))
 	pdf(sprintf("../output/results/%d_%s_r_%d_basisCoeff.pdf",year,aggType, r),	
 			width = 3*4, height = 3)
 	print(do.call(grid.arrange, args.list))
 	dev.off()
-	
 	
 	# plot residuals
 	pdf(sprintf("../output/results/%d_%s_r_%d_residuals.pdf",year,aggType, r),
@@ -186,7 +167,6 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 	par(oma = c(0, 0, 0, 0), mar = c(2, 4, 0.5, 0.5))
 	print(boxplot(newRes, ylab = "Residuals (mg/L)"))
 	dev.off()
-	
 	
 	# plot the spatio-temporal variogram
 	if(stvgm){
@@ -204,7 +184,6 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 		dev.off()
 	}	
 }
-
 
 getSensorWithHypoxiaExtent <- function(year, aggType, method, r){
 	# plot the sensor importances in determining hypoxia extent
@@ -241,9 +220,7 @@ getSensorWithHypoxiaExtent <- function(year, aggType, method, r){
 		}
 		
 		lmModel <- identifyKeyLoggersToHypoxia(erieDO, hypoxiaExtentStream, threshold[[thres]])
-		
 		loggerInfo$value <- lmModel$coefficients
-		
 		# plot the coefficients 
 		p <- myMap + geom_point(aes(longitude,latitude, color = value),data = loggerInfo, size = 4) + 
 			scale_color_gradientn(colours = topo.colors(10), name = "Coefficients")
@@ -254,14 +231,9 @@ getSensorWithHypoxiaExtent <- function(year, aggType, method, r){
 		dev.off()
 		
 		modelList[[thres]] <- lmModel
-		
 	}
-	
 	saveRDS(modelList, sprintf("../output/results/%d_%s_%s_%d_sensorLM_HE_fit.rds",year,aggType, method, r))
-	
 }
-
-
 
 hypoxiaAnalysis <- function(DO_predictions, DOthreshold){
 	# Return the longest hypoxia of a point
@@ -286,33 +258,7 @@ hypoxiaAnalysis <- function(DO_predictions, DOthreshold){
 			longestTime[i] <- max(tmp$lengths[tmp$values == TRUE])
 		}
 	}
-
 	return(list(hypoxiaTime = hypoxiaTime, longestTime = longestTime))
-}
-
-
-identifyKeyLoggersToHypoxia <- function(lakeDOObj, hypoxiaExtentStream, DOthreshold){
-	# quick way to estimate hypoxia extent
-	# to identitfy which loggers plays a key role in determining the area of hypoxia
-	# so that worth to put sensor on 
-	loggerNames <- names(lakeDOObj$samplingData)
-	loggerNames <- paste0("logger_", loggerNames)
-	
-	# using whether loggers are less than DO threshold
-	hypoxiaMatrix <- (lakeDOObj$samplingData < DOthreshold) %>% 
-				data.frame() %>% 
-				data.matrix() %>% 
-				data.frame()
-	
-	names(hypoxiaMatrix) <- loggerNames
-	# or using the pure values (which needs a non-linear model to do)
-	hypoxiaMatrix$Y <- hypoxiaExtentStream
-
-	formu <- paste0("Y~",paste(loggerNames, collapse = "+"),"-1") %>% formula()
-	
-	model <- lm(formu, data = hypoxiaMatrix)
-
-	return(model)
 }
 
 getCoeffMatrix <- function(krigModelObj){
@@ -325,7 +271,6 @@ getCoeffMatrix <- function(krigModelObj){
 	}
 	return(basisCoeffMatrix)
 }
-
 
 resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"), plotSummary = TRUE){
 	# summary rmse and withinBoundRatio of each logger of each method in CV
@@ -378,11 +323,7 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
                          breaks=c("IDW", "MLE","Baye"),
                          values = c("#999999","#E69F00","#56B4E9")) + 
 				theme(axis.title.x = element_text(size=8),axis.title.y = element_text(size=8))
-				
-			# pdf(sprintf("%s/results/%d_%s_CV_rmse.pdf",outputBaseName, year_, aggType_),width = 3.25, height = 2)
-			# print(p_rmse)
-			# dev.off()
-			
+
 			p_withBound <- dplyr::filter(fullRes, aggType == aggType_, year == year_, method != "IDW") %>% 
 				ggplot(data = .)+geom_boxplot(aes(x = factor(r), y = withinBoundRatio, fill = method), size = I(0.5), position = position_dodge(width = 0.8),outlier.size = 0.5) + 
 				xlab("Model Parameter") + ylab("CI Coverage") + theme_bw() + 
@@ -400,42 +341,26 @@ resultSummary <- function(aggList = c("daily","hourly"), yearList = c(2014, 2015
 			pdf(sprintf("%s/results/%d_%s_CV_perf.pdf", outputBaseName, year_, aggType_),width = 6.5, height = 2.3)
 			print(plot_grid(legend_b,prow, ncol = 1, rel_heights = c(0.08,1)))
 			dev.off()
-			# pdf(sprintf("%s/results/%d_%s_CV_withinBound.pdf", outputBaseName, year_, aggType_),width = 3.25, height = 2)
-			# print(p_withBound)
-			# dev.off()
-			
 		}
 	}
 	return(fullRes)
 }
 
 plotCVOnMap <- function(year_, aggType_, method_, r_){
-	# function to plot CV rmse and withinBoundRatio on the map
-	library(ggmap)
-
 	if(method_ == "idw") r_ = 5
 	erieDO <- getLakeDO(year_, "B", aggType_) %>% na.omit()
 	res <- readRDS(sprintf("%s/results/fullRes.rds",outputBaseName)) %>% 
 	subset(year == year_ & aggType == aggType_ & method == method_ & r == r_) %>% 
 	merge(erieDO$loggerInfo, by.x = "cv_loggerID", by.y = "loggerID", all.x = TRUE)
 
-	# lonRange <- range(res$longitude)
-	# latRange <- range(res$latitude)
-	# bbox <- make_bbox(lonRange,latRange,f = 0.2)
-	# myMap <- get_map(location=bbox, source="google",crop=FALSE) %>% ggmap()
-	# saveRDS(myMap,"erieGoogleMap.rds")
-
 	myMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year_)) + labs(x = "Longitude", y = "Latitude")
 	if(method_ == "idw"){
 		p <- myMap + geom_point(aes(longitude, latitude, color = rmse), data = res, size = 5)
 	}else{
-		# p <- myMap + geom_point(aes(longitude, latitude, size = withinBoundRatio, color = rmse), data = res)
 		p <- myMap + geom_point(aes(longitude, latitude, size = rmse, color = withinBoundRatio), data = res)
 	}
 	p <- p + scale_color_gradientn(colours=rainbow(6,end=4/6), name = "CI Coverage") + scale_size_continuous(name = "RMSE")
 	return(p)
-	#p_rmse <-  myMap + geom_point(aes(longitude, latitude, color = rmse), data = res)
-	#p_inBound <- myMap + geom_point(aes(longitude, latitude, color = withinBoundRatio), data = res)
 }
 
 
