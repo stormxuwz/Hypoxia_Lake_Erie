@@ -89,11 +89,7 @@ retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIn
 		data$id <- 1:nrow(data)
 		return(data)
 	}
-	
-
 }
-
-
 
 sqlQuery <- function (sql) {
 	if(nchar(sql)<1){

@@ -37,6 +37,9 @@ predict.krigModelIdw <- function(model, grid, parallel){
 		registerDoParallel(cl)
 
 		predictions <- foreach(i=1:length(model)) %dopar% {
+			require(fields)
+			require(gstat)
+			require(sp)
 			df <- model[[i]]
 			coordinates(df) = ~x + y
 			pred[convexIndex == 1,1] <- idw(trend , df, grid, nmax = config$nmax)$var1.pred
@@ -128,7 +131,6 @@ predict.krigModelReml <- function(model, grid, ...){
 }
 
 # predict for Baye estimation model
-
 predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 	config <- attr(model, "config")
 	simNum <- config$simNum
@@ -192,7 +194,7 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 						phi.discrete=seq(20,70,5),  # range is discreted
 						beta.prior = "flat",  # beta is flat 
 						sigmasq.prior = "sc.inv.chisq",
-						sigmasq = ml$sigmasq,
+						sigmasq = ml$sigmasq, # this will not be used since sigmasq.prior != FALSE.
 						df.sigmasq = df.sigmasq,
 						tausq.rel.prior = "fixed",
 						tausq.rel = 0) 
@@ -318,7 +320,8 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 		indMatrix <- base::sample(1:availableSimNum, totalSim*basisNum,replace= TRUE) %>%
 				matrix(nrow = basisNum)
 		
-		if(predictType == "extent"){
+		if(predictType == "extent"){ 
+			# return summary of hypoxia extent
 			res <- summary(
 				trendModel,
 				residualPredictions, 
@@ -327,7 +330,7 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 				indMatrix = indMatrix)
 
 		}else if(predictType == "expected"){
-			# return all values
+			# return the expected predictions
 			res <- reConstruct(
 				trendModel, 
 				residualPredictions,
@@ -335,6 +338,7 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 				indMatrix = NULL)
 
 		}else if(predictType == "simulations"){
+			# return all simulations
 			res <- reConstruct(
 				trendModel,
 				residualPredictions,

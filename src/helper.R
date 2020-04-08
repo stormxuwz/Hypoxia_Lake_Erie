@@ -6,7 +6,6 @@ require(raster)
 require(dismo)
 
 createGogleMapFiles <- function(year, folder) {
-	# function to fix the map rds saved by previous code
 	if(year == 2014) {
 		lonRange <- c(-82.45828, -80.70047)
 		latRange <- c(41.34530, 42.65157)
@@ -47,7 +46,7 @@ createGrid <- function(loggerInfo, by.x = 0.05, by.y = 0.05){
 		latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% 
 	lonlat2UTM()
 
-	grid$bathymetry <- findBathy(grid,"/Users/wenzhaoxu/Developer/Hypoxia/input/erie_lld/erie_lld.asc")
+	grid$bathymetry <- findBathy(grid, erieBathymetryFile)
 	convexHullModel <- convHull(loggerInfo[,c("longitude","latitude")])
 	
 	totalArea = diff(range(grid$x))*diff(range(grid$y)) # may need to modify slightly

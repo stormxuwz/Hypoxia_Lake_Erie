@@ -1,4 +1,6 @@
-install.packages(c(""))
+install.packages(c("cowplot", "RMySQL", "rgdal", "float", "leaflet", "ggmap", "cowplot", 
+									 "geoR", "RMySQL", "rgdal", "float", "leaflet", "ggmap", "fields", 
+									 "raster", "dismo", "rgdal", "sp", "float", "doParallel"))
 
 source("src/helper.R")
 

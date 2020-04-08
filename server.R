@@ -18,6 +18,7 @@ source("src/classReConstruct.R")
 source("src/classSummary.R")
 source("src/helper.R")
 source("src/basisDecomposition.R")
+source("src/outlierDetection.R")
 
 # Define global variables for shiny session
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
@@ -26,6 +27,7 @@ mapDx <- 0.025
 mapDy <- 0.025
 
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
+method <- "basis_baye" # "basis_MLE"
 
 parseDataTypeInput <- function(dataType){
 	if(dataType == "Raw"){
@@ -99,7 +101,7 @@ shinyServer(
 		grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 		timeIdx <- index(erieDO$samplingData)
 
-		method <- "basis_baye"
+		
 		
 		stopifnot(method %in% c("idw","basis_MLE","basis_baye"))
 		print(paste0("using ", method, " to estimate hypoxia extent"))
@@ -410,11 +412,9 @@ shinyServer(
 		if(is.null(spdata))
 		  return()
 		names(spdata)[3]="var"
-		coordinates(spdata)= ~longitude+latitude
-		projection(spdata)=CRS("+init=epsg:4326")
-		#print(spdata)
+		coordinates(spdata) = ~longitude+latitude
+		projection(spdata) = CRS("+init=epsg:4326")
 		eq <- paste("var",input$equation)
-		#print(eq)
 		v <- data.frame(variogram(as.formula(eq),data=spdata,cloud=T,cutoff=10000))
 		
 		v$leftLogger <- spdata$logger[v$left]
@@ -422,13 +422,10 @@ shinyServer(
 
 		v$leftValue <- spdata$var[v$left]
 		v$rightValue <- spdata$var[v$right]
-		# saveRDS(v,"test.rds")
 		print(v)
 		p <- plot_ly(v, x = ~dist, y=~gamma, mode="markers",hoverinfo = "text",
           text = ~paste(leftLogger,"(",round(leftValue,2),")--",rightLogger,"(",round(rightValue,2),")",sep=""))
-		#p
-	  #p <- plot_ly(v,x=dist,y=leftValue)
-	  p
 
+	  p
 	})
 })

@@ -1,4 +1,5 @@
 library(float)
+# function to reconstruct the predictions from interpolated coefficient and basis
 
 reConstruct <- function(x,...){
 	UseMethod("reConstruct")
@@ -58,7 +59,7 @@ reConstruct.basisModel <- function(
 		if(parallel){
 			warning("hourly data full reconstruction may require a lot of memory")
 			require(doParallel)
-			cl <- makeCluster(6)
+			cl <- makeCluster(6) # use 6 processes
 			registerDoParallel(cl)		
 			
 			prediction <- foreach(simIdx = 1:totalSim) %dopar% {

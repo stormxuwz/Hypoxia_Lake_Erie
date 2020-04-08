@@ -9,7 +9,6 @@ require(RMySQL)
 require(gridExtra)
 require(cowplot)
 
-
 plot_variogram <- function(df, formu = "value~1"){
 	coordinates(df) = ~x+y
 	print(plot(variogram(as.formula(formu),data =df,cutoff = 120, cloud=TRUE)))
