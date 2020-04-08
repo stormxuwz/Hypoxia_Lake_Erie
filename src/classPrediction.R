@@ -1,3 +1,5 @@
+# classPrediction defines how `predict` works for different object
+
 require(fields)
 require(gstat)
 require(sp)
@@ -13,7 +15,6 @@ predict.krigModelIdw <- function(model, grid, parallel){
 	config <- attr(model, "config")
 	trend <- as.formula(config$trend) # "value ~ 1"
 	simNum <- config$simNum  # how many simulations for this prediction
-
 
 	grid0 <- grid
 	predictions <- list()
@@ -31,6 +32,7 @@ predict.krigModelIdw <- function(model, grid, parallel){
 		}
 	}else{
 		require(doParallel)
+		# do parallel computating
 		cl <- makeCluster(2)
 		registerDoParallel(cl)
 
@@ -38,7 +40,6 @@ predict.krigModelIdw <- function(model, grid, parallel){
 			require(fields)
 			require(gstat)
 			require(sp)
-			
 			df <- model[[i]]
 			coordinates(df) = ~x + y
 			pred[convexIndex == 1,1] <- idw(trend , df, grid, nmax = config$nmax)$var1.pred
@@ -50,12 +51,12 @@ predict.krigModelIdw <- function(model, grid, parallel){
 	
 	res <- list(predictions = predictions, grid = grid0)
 	class(res) <- "idwModel"
-
 	return(res)
 }
 
 
-predict.krigModelReml <- function(model, grid){
+# predict for MLE estimation model
+predict.krigModelReml <- function(model, grid, ...){
 	config <- attr(model, "config")
 	simNum <- config$simNum
 	trend <- config$trend
@@ -77,10 +78,7 @@ predict.krigModelReml <- function(model, grid){
 			trend.spatial(trend,.)
 
 	for(i in 1:length(model)){
-		if(i == 6){
-			print("i=6")
-		}
-			
+	
 		df <- model[[i]] %>% 
 			dplyr::select(x, y, value,bathymetry) %>%
 			as.geodata(covar.col = c("bathymetry"))
@@ -93,13 +91,13 @@ predict.krigModelReml <- function(model, grid){
 			ini = c(max(semiVariance$v),70),
 			fix.nugget = T,  # the nugget is defaulted as zero
 			lik.method = "ML",
-			cov.model = config$cov.model, # "exponential",
+			cov.model = config$cov.model,
 			trend = trend.d,
 			fix.psiA = TRUE,
 			fix.psiR = TRUE)
-			# psiA = pi/4)
-			# limits = pars.limits(psiR = c(lower = 1, upper = 10)))
+
 		print(ml)
+		
 		if(!is.null(metaFolder)){
 			print("saving prediction meta to metaFolder")
 			png(paste0(metaFolder,"basis_",i,"_data.png"))
@@ -115,7 +113,6 @@ predict.krigModelReml <- function(model, grid){
 			dev.off()
 		}
 		
-
 		modelPred <- krige.conv(df, 
 				locations = grid[,c("x","y")], 
 				krige = krige.control(obj.m = ml, trend.d = trend.d, trend.l = trend.l),
@@ -133,10 +130,7 @@ predict.krigModelReml <- function(model, grid){
 	return(res)
 }
 
-
-
-
-
+# predict for Baye estimation model
 predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 	config <- attr(model, "config")
 	simNum <- config$simNum
@@ -200,7 +194,7 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 						phi.discrete=seq(20,70,5),  # range is discreted
 						beta.prior = "flat",  # beta is flat 
 						sigmasq.prior = "sc.inv.chisq",
-						sigmasq = ml$sigmasq,
+						sigmasq = ml$sigmasq, # this will not be used since sigmasq.prior != FALSE.
 						df.sigmasq = df.sigmasq,
 						tausq.rel.prior = "fixed",
 						tausq.rel = 0) 
@@ -254,10 +248,9 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 	return(res)
 }
 
-
-
+# predict for lakeDO object
 predict.lakeDO <- function(obj, grid, method, predictType, ...){
-	# obj is the lakeDO object
+	
 	metaFolder = list(...)$metaFolder
 	nmax <- list(...)$nmax
 	
@@ -270,7 +263,6 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 	if(!predictType %in% c("extent","expected","simulations")){
 		stop("predictType not implemented")
 	}
-
 
 	if(method == "idw"){
 		if(is.null(nmax)){
@@ -328,7 +320,8 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 		indMatrix <- base::sample(1:availableSimNum, totalSim*basisNum,replace= TRUE) %>%
 				matrix(nrow = basisNum)
 		
-		if(predictType == "extent"){
+		if(predictType == "extent"){ 
+			# return summary of hypoxia extent
 			res <- summary(
 				trendModel,
 				residualPredictions, 
@@ -337,7 +330,7 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 				indMatrix = indMatrix)
 
 		}else if(predictType == "expected"){
-			# return all values
+			# return the expected predictions
 			res <- reConstruct(
 				trendModel, 
 				residualPredictions,
@@ -345,6 +338,7 @@ predict.lakeDO <- function(obj, grid, method, predictType, ...){
 				indMatrix = NULL)
 
 		}else if(predictType == "simulations"){
+			# return all simulations
 			res <- reConstruct(
 				trendModel,
 				residualPredictions,

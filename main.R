@@ -9,20 +9,16 @@ source("src/helper.R")
 source("src/postAnalysis.R")
 source("src/basisDecomposition.R")
 
-dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
-varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
+# dbConfig <- list(dbname = "DO", username="root", password="XuWenzhaO", host="127.0.0.1")
+# varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
+# mapDx <- 0.025
+# mapDy <- 0.025
+
 outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
-mapDx <- 0.025
-mapDy <- 0.025
 randomSeed <- 42
 rList <- c(2,5,10,15)
-#rList <- c(5)
 
 main <- function(year = 2014, aggType = "daily"){
-	#year <- 2014
-	#aggType <- "daily"
-	#r <- 5
-	# trend <- ~coords[,"x"]+coords[,"y"] + bathymetry + I(bathymetry^2)
 	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
 
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
@@ -162,9 +158,6 @@ main_analysis <- function(year,aggType){
 		dev.off()
 	}
 
-	# do NMF analysis 
-	# NMF_analysis(year, aggType)
-
 	#######################
 	# plot hypoxia curve
 	#######################
@@ -180,8 +173,6 @@ main_analysis <- function(year,aggType){
 	for(r in rList){
 		getDecompositionResults(year, aggType, r)
 	}
-	
-
 	
 	##########################
 	# analyze the hypoxia time
@@ -228,15 +219,14 @@ main_analysis <- function(year,aggType){
 
 
 # function to calculate the CV results
-# for(aggType in c("daily", "hourly")){
-# 	for(year in c(2014, 2015, 2016)){
-# 		print(system.time(main(year = year, aggType = aggType)))
-# 		print(system.time(main_CV(year = year, aggType = aggType)))
-# 	}
-# }
+for(aggType in c("daily", "hourly")){
+	for(year in c(2014, 2015, 2016)){
+		print(system.time(main(year = year, aggType = aggType)))
+		print(system.time(main_CV(year = year, aggType = aggType)))
+	}
+}
 
-
-# resultSummary(aggList = c("hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"))
+resultSummary(aggList = c("hourly"), yearList = c(2014, 2015, 2016), methodList = c("idw","Reml","Baye"))
 
 for(year in c(2014, 2015, 2016)){
 	for(aggType in c("hourly")){
@@ -244,29 +234,10 @@ for(year in c(2014, 2015, 2016)){
 	}
 }
 
+for (year in c(2014, 2015, 2016)) {
+	plot_gif(year, "hourly", "Baye", 10)
+}
 
-
-
-
-
-
-
-# system.time(main_CV(year = 2014, aggType = "daily"))
-# system.time(main_CV(year = 2014, aggType = "hourly"))
-# system.time(main_CV(year = 2015, aggType = "daily"))
-# system.time(main_CV(year = 2015, aggType = "hourly"))
-# resultSummary()
-
-
-# function to calculate the hypoxia extent
-#print(system.time(main(year = 2014, aggType = "daily")))
-#system.time(main(year = 2014, aggType = "hourly"))
-#system.time(main(year = 2015, aggType = "daily"))
-#system.time(main(year = 2015, aggType = "hourly"))
-
-
-# function to do post analysis
-# main_analysis()
 
 # API testing
 # basisModel_REML <- basisModel(erieDO, trend, "Reml", 10,  "tmp")
@@ -279,7 +250,3 @@ for(year in c(2014, 2015, 2016)){
 # tmp <- predict(trendModel, grid)
 # trendPrediction <- reConstruct(tmp, residualPredictions, 0)
 # hypoxiaExtent <- summary(tmp, residualPredictions, parallel = TRUE, totalSim = 10, randomSeed = 0)
-
-
-
-

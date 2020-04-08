@@ -11,7 +11,7 @@ EPASite <- c("ER30","ER31","ER32","ER36","ER37","ER38","ER42","ER43","ER73","ER7
 #V1. V2.V3 V4 V5 V6.  V7.   V8.  V9.   V10.  V11 V12.   V13.  V14.  V15. V16.  V17.  V18
 #YY  MM DD hh mm WDIR WSPD GST  WVHT   DPD   APD MWD   PRES  ATMP  WTMP  DEWP  VIS  TIDE
 
-# evernote:///view/1223127095/s45/1819a5a5-3513-4ce4-9731-eb8927322eb7/1819a5a5-3513-4ce4-9731-eb8927322eb7/
+# https://www.ndbc.noaa.gov/measdes.shtml
 
 # WDIR
 # Wind direction (the direction the wind is coming from in degreesclockwise from true N) during the same period used for WSPD. See Wind Averaging Methods

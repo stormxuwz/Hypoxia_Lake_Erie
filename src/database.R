@@ -18,7 +18,6 @@ retriveLoggerData_DO_Temp <- function(loggerIndex,year,groupRange,dataType,timeR
 	return(data)
 }
 
-
 retriveLoggerData <- function(loggerIndex,year,var,groupRange,dataType,timeRange=NULL,transform=TRUE){
 	data <- data.frame()
 	sqlRes <- getTimeSeriesSQL(loggerIndex,year,var,groupRange,dataType,timeRange = timeRange)
@@ -90,11 +89,7 @@ retriveSnapShot <- function(variable, dataType, year, day, hour = NULL, loggerIn
 		data$id <- 1:nrow(data)
 		return(data)
 	}
-	
-
 }
-
-
 
 sqlQuery <- function (sql) {
 	if(nchar(sql)<1){

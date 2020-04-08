@@ -8,26 +8,26 @@ library(plotly)
 library(sp)
 library(gstat)
 library(raster)
-source("./src/database.R")
 source("./config.R")
-source("./src/plot.R")
-source("./src/outlierDetection.R")
+
+source("src/database.R")
+source("src/plot.R")
 source("src/classPrediction.R")
 source("src/classDef.R")
 source("src/classReConstruct.R")
 source("src/classSummary.R")
 source("src/helper.R")
 source("src/basisDecomposition.R")
+source("src/outlierDetection.R")
 
-# the global variable for all shiny session
+# Define global variables for shiny session
 emptyData <- zoo(c(rep(NA, 4)),order.by=as.Date(c("2014-1-1","2014-1-2")))
 trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
 mapDx <- 0.025
 mapDy <- 0.025
 
 varUnit <- list(DO="DO(mg/L)",Temp="Temperature(C)")
-
-boxcox <- function(x,lambda){return((x^lambda-1)/lambda)}
+method <- "basis_baye" # "basis_MLE"
 
 parseDataTypeInput <- function(dataType){
 	if(dataType == "Raw"){
@@ -38,10 +38,8 @@ parseDataTypeInput <- function(dataType){
 	}
 }
 
-
-shinyServer(function(input,output,session)
-{
-
+shinyServer(
+	function(input,output,session){
 	# Plot the map
 	output$mymap <- renderLeaflet({
        	leaflet("mymap") %>% clearShapes() %>% addTiles() %>% fitBounds(-82.41, 41.59,-80.75, 42.43)
@@ -58,10 +56,8 @@ shinyServer(function(input,output,session)
     updateSelectizeInput(session, 'selectedID', choices = unique(geoData()[,"loggerID"]), selected=NULL,server = FALSE)
   })
   
-  
   # Action -- Interpolation
-  interpolation <- reactive({
-    # input$Interpolation
+	interpolation <- reactive({
     spdata <- spatialDataAll()
     myGeoData <- geoData()
  
@@ -75,9 +71,7 @@ shinyServer(function(input,output,session)
     }
 
 	if(is.null(spdata)){
-		# if no data is returned, plot the original data
-		# leafletProxy("mymap", data = spdata) %>% clearShapes()
-		# return()
+		# do nothing
 	}else{
 		names(spdata)[3] = "value"
     	myGeoData <- subset(myGeoData,loggerID %in% spdata$logger)
@@ -94,13 +88,12 @@ shinyServer(function(input,output,session)
 		grid <- grid %>% data.frame() %>% select(longitude,latitude,pred) %>% rasterFromXYZ()
 		raster::projection(grid)=CRS("+init=epsg:4326")
 		return(grid)
-	}
+		}
   })
 
-  	calHypoxiaExtent <- reactive({
-  		year <- input$year
-  		print("start calculate hypoxia extent")
-  		# daily <- input$dataType
+	calHypoxiaExtent <- reactive({
+  	year <- input$year
+  	print("start calculate hypoxia extent")
 
 		loggerInfo <- retriveGeoData(year,"B")
 
@@ -108,7 +101,7 @@ shinyServer(function(input,output,session)
 		grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 		timeIdx <- index(erieDO$samplingData)
 
-		method = "basis_MLE"
+		
 		
 		stopifnot(method %in% c("idw","basis_MLE","basis_baye"))
 		print(paste0("using ", method, " to estimate hypoxia extent"))
@@ -144,16 +137,15 @@ shinyServer(function(input,output,session)
 					metaFolder = NULL)
 		}
 
-		if(method!="idw"){
+		if(method != "idw"){
 			hypoxiaExtent <- do.call(cbind, hypoxiaExtent) %>% zoo(order.by = timeIdx)
 		}
 
 		return(list(hypoxiaExtent = hypoxiaExtent, grid = grid, method = method))
   	})
 
-  	# plot the hypoxia extent
-
-  	output$hypoxiaExtentPlot <- renderDygraph({
+	# plot the hypoxia extent
+	output$hypoxiaExtentPlot <- renderDygraph({
 		hypoxiaRes  <- calHypoxiaExtent()
 		hypoxia <- hypoxiaRes$hypoxiaExtent
 		grid <- hypoxiaRes$grid
@@ -167,9 +159,11 @@ shinyServer(function(input,output,session)
 		pal <- colorNumeric("black", domain = NULL)(grid$pred)
 		grid <- grid[,c("longitude","latitude","pred")] %>% rasterFromXYZ()
 		raster::projection(grid)=CRS("+init=epsg:4326")
-		leafletProxy("mymap") %>% clearControls() %>% clearImages() %>%
+		
+		leafletProxy("mymap") %>% 
+			clearControls() %>% 
+			clearImages() %>%
 			addRasterImage(grid, colors = pal, opacity = 0.2)
-
 
 		# show hypoxia extent
 		hypoxia <- hypoxia / interpolatedNum
@@ -194,15 +188,9 @@ shinyServer(function(input,output,session)
 		}
 	})
 
-
-
 	visData <- reactive({
 	  	year <- isolate(input$year)
-	  	
 	  	tmpDataType <- parseDataTypeInput(input$dataType)
-	  	
-	  	print(tmpDataType)
-
 	  	dataType <- tmpDataType$dataType
 	  	groupRange <- tmpDataType$groupRange
 		
@@ -228,37 +216,39 @@ shinyServer(function(input,output,session)
 
 	# color scheme
 	colorpal <- reactive({
-		# to be extracted into plot.R files
-      if(input$mapData == "Bathy"){
-        colorNumeric(input$colors, geoData()$bathymetry)
-      }
-	    else if(input$mapData == "logData"){
-	      colorNumeric(input$colors, spatialDataAll()[,3])
-	    }
-	    else{
-	    	grid <- interpolation()
-	    	print(grid)
-	    	if(is.null(grid)){
-	    		return(colorNumeric(input$colors, spatialDataAll()[,3]))
-	    	}else{
-	    		domain <- range(c(range(values(grid),na.rm = TRUE),range(spatialDataAll()[,3],na.rm = TRUE)))
-	    		colorNumeric(input$colors, domain, na.color = "transparent")
-	    	}
-	    }
-	    
-  	})
+    if(input$mapData == "Bathy"){
+      colorNumeric(input$colors, geoData()$bathymetry)
+    }
+    else if(input$mapData == "logData"){
+      colorNumeric(input$colors, spatialDataAll()[,3])
+    }
+    else{
+    	grid <- interpolation()
+    	print(grid)
+    	if(is.null(grid)){
+    		return(colorNumeric(input$colors, spatialDataAll()[,3]))
+    	}else{
+    		domain <- range(c(range(values(grid),na.rm = TRUE),range(spatialDataAll()[,3],na.rm = TRUE)))
+    		colorNumeric(input$colors, domain, na.color = "transparent")
+    	}
+    }
+  })
 
 	# Map ploting functions
 	observe({
 	   pal <- colorpal()
-
+		
+	  # plot data on the map
 	  if(input$mapData=="Bathy"){
 		   	mygeodata <- geoData()
-		    leafletProxy("mymap", data = mygeodata) %>% clearImages() %>% clearShapes()%>% clearControls() %>% addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8) %>% addLegend(position = "bottomright",pal = pal, values = ~bathymetry, title = "Bathymetry")
-	   }
-	  else if(input$mapData == "logData"){
+		    leafletProxy("mymap", data = mygeodata) %>% 
+		    	clearImages() %>% 
+		    	clearShapes()%>% 
+		    	clearControls() %>% 
+		    	addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8) %>% 
+		    	addLegend(position = "bottomright",pal = pal, values = ~bathymetry, title = "Bathymetry")
+	  }else if(input$mapData == "logData"){
 	    spdata <- spatialDataAll()
-	    # names(spdata[,3]) = "avg"
 	    if(is.null(spdata)){
 	    	print("no spdata")
 	      leafletProxy("mymap", data = spdata) %>% clearImages() %>% clearShapes() %>% clearControls()
@@ -271,7 +261,6 @@ shinyServer(function(input,output,session)
 	  else{
 	  	# do the interpolation
 			spdata <- spatialDataAll()
-			#print(spdata)
 			grid <- interpolation()
 
 			if(is.null(grid)){
@@ -299,7 +288,7 @@ shinyServer(function(input,output,session)
 
 		  leafletProxy("mymap")%>%addPopups(click$lng,click$lat, paste(click$id),options=popupOptions(maxHeight=20,zoomAnimation=FALSE))
 
-       	# use isolate to avoid repeat call to input$selectedID
+     	# use isolate to avoid repeat call to input$selectedID
     	ID <- isolate(input$selectedID)
     	updateSelectizeInput(session, 'selectedID', choices = unique(isolate(geoData())[,"loggerID"]), selected= c(ID,click$id), server = FALSE)
 	})
@@ -314,7 +303,6 @@ shinyServer(function(input,output,session)
 		}
 		return(outliers)
 	})
-
 
 	output$timeSeriesPlot <- renderDygraph({
 		if(is.null(input$selectedID)){
@@ -346,8 +334,6 @@ shinyServer(function(input,output,session)
 			return(NULL)
 		if(input$dataType=="Raw")
 			return(NULL)
-		# if(input$var==""){}
-		# print(cor(visData(),use="pairwise.complete.obs"))
 		return(cor(visData(),use="pairwise.complete.obs"))
 	},rownames = TRUE)
 
@@ -356,7 +342,6 @@ shinyServer(function(input,output,session)
 	  leafletProxy("mymap") %>% clearPopups()
 	})
 	
-
 	spatialDataAll <- reactive({
 	  # get the spatial data at one certain time point with sp locations
 	  var <- input$var
@@ -380,12 +365,11 @@ shinyServer(function(input,output,session)
 	  return(data)
 	})
 	
-
 	output$downloadData <- downloadHandler(
-  		filename = function() {
+		filename = function() {
     		paste('data-', isolate(input$year), '.csv', sep='')
   		},
-  		content = function(con) {
+		content = function(con) {
   			
   			if(length(input$selectedID)==0){
   				write.csv(NULL, con)
@@ -403,15 +387,15 @@ shinyServer(function(input,output,session)
 
 	output$downloadHypoxia <- downloadHandler(
 		filename = function() {
-    		paste('Hypoxia Area', isolate(input$year), '.csv', sep='')
-  		},
-  		content = function(con) {
+    	paste('Hypoxia Area', isolate(input$year), '.csv', sep='')
+		},
+		content = function(con) {
 			data <- calHypoxiaExtent()[[1]]
 			print(data)
 			data <- data * attr(data,"totalArea")
 
 			write.zoo(data, con,sep = ",")
-  		}
+		}
 	)
 
 	output$Variogram <- renderPlotly({
@@ -425,17 +409,12 @@ shinyServer(function(input,output,session)
 		
 		#  logger,Time,Temp,longitude,latitude,bathymetry,id
 		spdata[,3] <- ifelse(spdata[,3]>0.01,spdata[,3],0.01)
-		# spdata[,3] <- boxcox(spdata[,3],0.2)
-		#print(head(spdata))
-		# print(spdata$Time)
 		if(is.null(spdata))
 		  return()
 		names(spdata)[3]="var"
-		coordinates(spdata)= ~longitude+latitude
-		projection(spdata)=CRS("+init=epsg:4326")
-		#print(spdata)
+		coordinates(spdata) = ~longitude+latitude
+		projection(spdata) = CRS("+init=epsg:4326")
 		eq <- paste("var",input$equation)
-		#print(eq)
 		v <- data.frame(variogram(as.formula(eq),data=spdata,cloud=T,cutoff=10000))
 		
 		v$leftLogger <- spdata$logger[v$left]
@@ -443,14 +422,10 @@ shinyServer(function(input,output,session)
 
 		v$leftValue <- spdata$var[v$left]
 		v$rightValue <- spdata$var[v$right]
-		# saveRDS(v,"test.rds")
 		print(v)
 		p <- plot_ly(v, x = ~dist, y=~gamma, mode="markers",hoverinfo = "text",
           text = ~paste(leftLogger,"(",round(leftValue,2),")--",rightLogger,"(",round(rightValue,2),")",sep=""))
-		#p
-	  #p <- plot_ly(v,x=dist,y=leftValue)
+
 	  p
-
 	})
-
 })
