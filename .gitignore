@@ -12,3 +12,4 @@ test.rds
 *.png
 *.log
 *.png
+*.DS_Store

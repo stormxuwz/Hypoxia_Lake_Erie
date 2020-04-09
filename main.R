@@ -16,15 +16,19 @@ source("src/basisDecomposition.R")
 
 outputBaseName <- "/Users/wenzhaoxu/Developer/Hypoxia/output/"
 randomSeed <- 42
-rList <- c(2,5,10,15)
+rList <- c(2,5,10,15) # the number of basis function to try
 
 main <- function(year = 2014, aggType = "daily"){
 	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
 
+	# create a as.lakeDO object that handles data and interpolation 
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
+	
+	# create interpolation area with grid size of mapDx * mapDy. 
+	# The interpolation area is created by convex hull formed by logger locations
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy) # grid size: 0.025, 0.025 long,lat
 	
-	# using IDW
+	# using IDW to interpolate. nmax is the number of nearest points to be considered
 	print("interpolationg using IDW")
 	hypoxia_idw <- predict(obj = erieDO, 
 				grid = grid, 
@@ -38,6 +42,9 @@ main <- function(year = 2014, aggType = "daily"){
 	for(r in rList){
 		print(paste("r:",r))
 		print("interpolating using Reml")
+		
+		# Use basis decomposition, then do kriging interpolation on basis coefficient by MLE estimation
+		# finally estimate hypoxia extent based on conditional simulation
 		hypoxia_reml <- predict(obj = erieDO,
 					grid = grid, 
 					method = "Reml", 
@@ -50,6 +57,9 @@ main <- function(year = 2014, aggType = "daily"){
 		saveRDS(hypoxia_reml, sprintf("%s%d_%s_Reml_%d/extent.rds",outputBaseName, year, aggType, r))
 	
 		print("interpolating using Baye")
+		
+		# Use basis decomposition, then do interpolation on basis coefficient by bayesian kriging
+		# finally estimate hypoxia extent based on conditional simulation
 		hypoxia_baye <- predict(obj = erieDO, 
 					grid = grid, 
 					method ="Baye", 
