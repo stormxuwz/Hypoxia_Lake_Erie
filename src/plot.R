@@ -56,7 +56,10 @@ plot_gif <- function(year, aggType, method,r){
 	# data is a matrix with rows as different time and columns as different locations
 	erieDO <- getLakeDO(year, "B", aggType) %>% na.omit()
 	timeIdx <- index(erieDO$samplingData)
-	baseMap <- readRDS(sprintf("./resources/erieGoogleMap_%d_new.rds",year)) + labs(x = "Longitude", y = "Latitude")
+
+	# plot using stamen map
+	map <- get_map(c(left = -83.3, bottom = 41.40675, right = -80.0, top = 42.71177))
+	baseMap <- ggmap(map) + labs(x = "Longitude", y = "Latitude")
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 
 	loggerInfo <- erieDO$loggerInfo
@@ -69,6 +72,7 @@ plot_gif <- function(year, aggType, method,r){
 
 	}else{
 		fileFolder <- sprintf("%s/%d_%s_%s_%d/", outputBaseName, year, aggType, method, r)
+		print(fileFolder)
 		residualPrediction <- readRDS(paste0(fileFolder, "residualPredictions.rds"))
 		predictions <- readRDS(paste0(fileFolder,"trendModel.rds")) %>% 
 				reConstruct(residualPrediction = residualPrediction, simulationNum = 0)
@@ -94,9 +98,11 @@ plot_gif <- function(year, aggType, method,r){
 		startIdx <- 5
 	}else if(year == 2016){
 		startIdx <- 19
+	} else {
+		startIdx <- 1
 	}
 	
-	tmp <- foreach(i =seq(startIdx,length(timeIdx),6)) %dopar% {
+	tmp <- foreach(i =seq(startIdx,length(timeIdx),1)) %dopar% {
 
 		require(ggplot2)
 		grid$value <- predictions[i,]

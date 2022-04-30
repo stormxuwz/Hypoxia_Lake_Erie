@@ -11,7 +11,7 @@ shinyUI(
   				3,
   				selectInput("year", 
   						label = h5("Year"),
-       					choices = list("2014" = 2014, "2015"=2015,"2016"=2016),
+       					choices = list("2014" = 2014, "2015"=2015,"2016"=2016, "2021"=2021),
        					selected=2014)
   			),
         column(

@@ -79,14 +79,14 @@ shinyServer(
 		grid <- createGrid(myGeoData,by.x = 0.01, by.y = 0.01)
 		convexIndex <- grid$convexIndex
 
-		coordinates(spdata) = ~x + y
-		coordinates(grid) = ~x + y
+		coordinates(spdata) <-  ~x + y
+		coordinates(grid) <-  ~x + y
 
 		grid$pred <- NA
 		grid$pred[convexIndex == 1] <-  idw(value~1 , spdata, subset(grid, convexIndex == 1), nmax = 5)$var1.pred
 
 		grid <- grid %>% data.frame() %>% select(longitude,latitude,pred) %>% rasterFromXYZ()
-		raster::projection(grid)=CRS("+init=epsg:4326")
+		raster::projection(grid) <- CRS("+init=epsg:4326")
 		return(grid)
 		}
   })
@@ -228,13 +228,13 @@ shinyServer(
     	if(is.null(grid)){
     		return(colorNumeric(input$colors, spatialDataAll()[,3]))
     	}else{
-    		domain <- range(c(range(values(grid),na.rm = TRUE),range(spatialDataAll()[,3],na.rm = TRUE)))
+    		domain <- range(c(range(values(grid),na.rm = TRUE), range(spatialDataAll()[,3], na.rm = TRUE)))
     		colorNumeric(input$colors, domain, na.color = "transparent")
     	}
     }
   })
 
-	# Map ploting functions
+	# Map plotting functions
 	observe({
 	   pal <- colorpal()
 		
@@ -245,8 +245,8 @@ shinyServer(
 		    	clearImages() %>% 
 		    	clearShapes()%>% 
 		    	clearControls() %>% 
-		    	addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8) %>% 
-		    	addLegend(position = "bottomright",pal = pal, values = ~bathymetry, title = "Bathymetry")
+		    	addCircles(layerId=~loggerID,lng=~longitude,lat=~latitude,radius = 3000, weight = 1, color = "#777777",fillColor = ~pal(bathymetry), fillOpacity = 0.8) %>%
+		        addLegend(position = "bottomright", pal = pal, values = ~bathymetry, title = "Bathymetry")
 	  }else if(input$mapData == "logData"){
 	    spdata <- spatialDataAll()
 	    if(is.null(spdata)){

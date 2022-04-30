@@ -31,7 +31,7 @@ getHypoxiaExtent <- function(year, aggType, method, r){
 			ggtitle(paste0("When DO <", units[[threshold]])) +
 			theme(axis.title.x = element_text(size=9),axis.title.y = element_text(size=9), plot.title = element_text(size=9))
 		
-		pdf(sprintf("../output/results/%d_%s_%s_%d_extent_%s.pdf",year, aggType, method, r, threshold), 
+		pdf(sprintf("%s/results/%d_%s_%s_%d_extent_%s.pdf",outputBaseName,year, aggType, method, r, threshold), 
 				width = 5, height = 3)
 		print(p)
 		dev.off()
@@ -109,7 +109,7 @@ getBasisReconstructions <- function(year, aggType, loggerID_){
 
 getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm = FALSE){
 	# function to plot basis info
-	folderName <- sprintf("../output/%d_%s_%s_%d/",year, aggType, "Baye", r)
+	folderName <- sprintf("%s/%d_%s_%s_%d/",outputBaseName,year, aggType, "Baye", r)
 	
 	model <- readRDS(paste0(folderName,"basisModelRes.rds"))
 	timeIndex <- index(model$residuals$samplingData)
@@ -129,7 +129,7 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 	basis <- zoo(basis, order.by = timeIndex)
 	
 	# plot the basis functions
-	pdf(sprintf("../output/results/%d_%s_r_%d_basis.pdf",year,aggType, r),	width = 8, height = 3)
+	pdf(sprintf("%s/results/%d_%s_r_%d_basis.pdf",outputBaseName, year,aggType, r),	width = 8, height = 3)
 	print(plot(basis[,1:min(r,3)], xlab = "Time",nc = 3 , yax.flip = FALSE,cex.axis = 1.5, cex.lab = 2, main = "",oma = c(5, 0, 2, 0),
 		mar = c(0, 5.1, 0, 2.1)))
 	dev.off()
@@ -149,13 +149,13 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 	})
 
 	args.list <- c(c(plot.list1),list(nrow=1))
-	pdf(sprintf("../output/results/%d_%s_r_%d_basisCoeff.pdf",year,aggType, r),	
+	pdf(sprintf("%s/results/%d_%s_r_%d_basisCoeff.pdf",outputBaseName,year,aggType, r),	
 			width = 3*4, height = 3)
 	print(do.call(grid.arrange, args.list))
 	dev.off()
 	
 	# plot residuals
-	pdf(sprintf("../output/results/%d_%s_r_%d_residuals.pdf",year,aggType, r),
+	pdf(sprintf("%s/results/%d_%s_r_%d_residuals.pdf",outputBaseName,year,aggType, r),
 			width = 6.5, height = 7)
 	print(plot(residuals, xlab = "Time", main = "",nc = 3, oma = c(5, 0, 2, 0), mar = c(0, 4.6, 0, 1.1)))
 	dev.off()
@@ -163,7 +163,7 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
  	newRes <- data.frame(residuals)
 	names(newRes) <- c(1:ncol(newRes))
 
-	pdf(sprintf("../output/results/%d_%s_r_%d_resBoxplot.pdf",year,aggType, r), width = 5, height = 3)
+	pdf(sprintf("%s/results/%d_%s_r_%d_resBoxplot.pdf",outputBaseName,year,aggType, r), width = 5, height = 3)
 	par(oma = c(0, 0, 0, 0), mar = c(2, 4, 0.5, 0.5))
 	print(boxplot(newRes, ylab = "Residuals (mg/L)"))
 	dev.off()
@@ -174,8 +174,8 @@ getDecompositionResults <- function(year, aggType, r,reverseFirst = FALSE, stvgm
 		residuals <- model$residuals$samplingData
 		
 		stv <- st_variogram(model$residuals$samplingData, model$residuals$loggerInfo)
-		saveRDS(stv, sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
-		stv <- readRDS(sprintf("../output/results/%d_%s_r_%d_stVgm.rds",year,aggType, r))
+		saveRDS(stv, sprintf("%s/results/%d_%s_r_%d_stVgm.rds",outputBaseName,year,aggType, r))
+		stv <- readRDS(sprintf("%s/results/%d_%s_r_%d_stVgm.rds",outputBaseName, year,aggType, r))
 		
 		pdf(sprintf("../output/results/%d_%s_r_%d_stVgm.pdf",year,aggType, r),
 				width = 5, height = 3)

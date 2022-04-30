@@ -41,18 +41,24 @@ createGrid <- function(loggerInfo, by.x = 0.05, by.y = 0.05){
 	# create grid based on sampling locations
 	longitudeRange <- range(loggerInfo$longitude)
 	latitudeRange <- range(loggerInfo$latitude)
-	
-	grid <- expand.grid(longitude=seq(longitudeRange[1],longitudeRange[2],by = by.x),
+
+	grid <- expand.grid(longitude=seq(longitudeRange[1], longitudeRange[2],by = by.x),
 		latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% 
 	lonlat2UTM()
-
-	grid$bathymetry <- findBathy(grid, erieBathymetryFile)
-	convexHullModel <- convHull(loggerInfo[,c("longitude","latitude")])
 	
+	# somehow convHull is not able to find the convexhull based on all points
+	# use the following step to by-pass
+	valid <- chull(loggerInfo[,c("longitude","latitude")])
+	grid$bathymetry <- findBathy(grid, erieBathymetryFile)
+	convexHullModel <- convHull(loggerInfo[valid, c("longitude","latitude")])
+
 	totalArea = diff(range(grid$x))*diff(range(grid$y)) # may need to modify slightly
 	
+	grid$convexIndex <- 1
 	grid$convexIndex <- predict(convexHullModel,grid)
-	grid$convexIndex[grid$bathymetry>(-12)] <- 0
+	
+	# warning::modify this for bathymetry threshold
+	grid$convexIndex[grid$bathymetry>(-2)] <- 0
 
 	attr(grid,"totalArea") <- totalArea*sum(grid$convexIndex)/nrow(grid)  # km^2
 	print(attr(grid,"totalArea"))
@@ -63,11 +69,11 @@ createGrid <- function(loggerInfo, by.x = 0.05, by.y = 0.05){
 lonlat2UTM <- function(xy){
 	# xy is a data frame contains longitude and latitude, add UTM x and y
 	xy0 <- xy 
-	coordinates(xy)=~longitude+latitude
-	proj4string(xy) <- CRS("+proj=longlat +datum=WGS84")
-	res <- spTransform(xy, CRS("+proj=utm +zone=17T ellps=WGS84"))
+	coordinates(xy) <- ~longitude + latitude
+	proj4string(xy) <- CRS("+proj=longlat")
+	res <- spTransform(xy, CRS("+proj=utm +zone=17 +ellps=WGS84"))
 	
-	UTMxy <- as.data.frame(coordinates(res))/1000
+	UTMxy <- as.data.frame(coordinates(res)) / 1000
 	names(UTMxy) <- c("x","y")
 	
 	return(cbind(xy0,UTMxy))
