@@ -85,7 +85,7 @@ predict.krigModelReml <- function(model, grid, ...){
 
 		trend.d <- trend.spatial(trend,df)
 		
-		semiVariance <- variog(df,trend = trend.d)
+		semiVariance <- variog(df,trend = trend)
 
 		ml <- likfit(df, 
 			ini = c(max(semiVariance$v),70),
@@ -106,9 +106,9 @@ predict.krigModelReml <- function(model, grid, ...){
 
 			png(paste0(metaFolder,"basis_",i, "_reml_vgm",".png"))
 			par(mfrow = c(1,2))
-			print(plot(variog(df,trend = trend.d,option = "cloud",direction = pi/4)))
+			print(plot(variog(df,trend = trend,option = "cloud",direction = pi/4)))
 			print(lines(ml))
-			print(plot(variog(df,trend = trend.d,option = "cloud",direction = 3*pi/4)))
+			print(plot(variog(df,trend = trend,option = "cloud",direction = 3*pi/4)))
 			print(lines(ml))
 			dev.off()
 		}
@@ -177,7 +177,7 @@ predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
 				config$cov.model = "spherical"
 			}
 			else if(myPrior == "df_1_sc.inv.chisq.sigmasq" | myPrior == "df_3_sc.inv.chisq.sigmasq"){
-				semiVariance <- variog(df,trend = trend.d)
+				semiVariance <- variog(df,trend = trend)
 				print("change to sc.inv.chisq.sigmasq")
 				df.sigmasq <-  as.numeric(substr(myPrior,4,4))
 
