@@ -10,8 +10,10 @@ To run:
 (1) run the following cmd to install packages
 
 ```
-install.packages(c("cowplot", "RMySQL", "rgdal", "float", "leaflet", "ggmap", "geoR", "fields", "raster", "dismo", "sp", "doParallel", "dplyr", "reshape2", "zoo" ,"gstat", "ggplot"))
+install.packages(c("cowplot", "RMySQL", "rgdal", "float", "leaflet", "ggmap", "geoR", "fields", "raster", "dismo", "sp", "doParallel", "dplyr", "reshape2", "zoo" ,"gstat", "ggplot", "httr", "rgdal"))
 ```
+
+you may also need to install xquartz, from https://www.xquartz.org/index.html
 
 (2) Download and create some resources. 
 
