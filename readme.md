@@ -16,18 +16,7 @@ you may also need to install xquartz, from https://www.xquartz.org/index.html
 
 (2) Download and create some resources. 
 
-a. Run the following code to get google map on Lake Erie for further plot and save into `./resources` folder (a google API is needed, so the generated files (e.g. `erieGoogleMap_2014_new.rds`) are provided for convenience)
-
-```
-source("src/helper.R")
-resourceFolder <- "./resources"
-createFolder(resourceFolder)
-for(year in c(2014, 2015, 2016)) {
-	createGogleMapFiles(year, resourceFolder)
-}
-```
-
-b. Download Lake Erie bathymetry file from https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html (ARC ASCII version), and modify `config.R` to specify the file location
+a. Download Lake Erie bathymetry file from https://www.ngdc.noaa.gov/mgg/greatlakes/erie.html (ARC ASCII version, https://www.ngdc.noaa.gov/mgg/greatlakes/erie/data/arc_ascii/erie_lld.asc.tar.gz), and modify `config.R` to specify the file location
 
 
 (3) Create a SQL database to store the data
