@@ -6,4 +6,4 @@ trend <- ~coords[,"x"]+coords[,"y"]+bathymetry+I(bathymetry^2)
 mapDx <- 0.025
 mapDy <- 0.025
 
-erieBathymetryFile <- "/Users/wenzhaoxu/Developer/Hypoxia/input/erie_lld/erie_lld.asc"
+erieBathymetryFile <- "/Users/wenzhaoxu/Developer/Hypoxia_Lake_Erie/input/erie_lld/erie_lld.asc"

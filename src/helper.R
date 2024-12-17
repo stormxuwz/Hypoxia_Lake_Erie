@@ -1,7 +1,7 @@
 # several helper functions
 
 library(sp)
-require(rgdal)
+# require(rgdal)
 require(raster)
 require(dismo)
 

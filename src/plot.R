@@ -58,8 +58,9 @@ plot_gif <- function(year, aggType, method,r){
 	timeIdx <- index(erieDO$samplingData)
 
 	# plot using stamen map
-	map <- get_map(c(left = -83.3, bottom = 41.40675, right = -80.0, top = 42.71177))
-	baseMap <- ggmap(map) + labs(x = "Longitude", y = "Latitude")
+	# map <- get_map(c(left = -83.3, bottom = 41.40675, right = -80.0, top = 42.71177), source="google")
+	# baseMap <- ggmap(map) + labs(x = "Longitude", y = "Latitude")
+	baseMap <- readRDS("./resources/google_map_latest.rds") + labs(x = "Longitude", y = "Latitude")
 	grid <- createGrid(erieDO$loggerInfo, mapDx, mapDy)
 
 	loggerInfo <- erieDO$loggerInfo
