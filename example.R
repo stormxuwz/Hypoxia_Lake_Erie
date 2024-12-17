@@ -18,10 +18,6 @@ if (!dir.exists(outputBaseName)) {dir.create(outputBaseName)}
 if (!dir.exists(resultFolder)) {dir.create(resultFolder)}
 
 randomSeed <- 42 # random seed for reproducibility
-# rList <- c(2,5,10,15) # the number of basis function to try, use 10 for now
-rList <- c(10)
-interpolation_methods <- c("Reml", "Baye")
-
 
 main <- function(year = 2014, aggType = "daily"){
 	trend <- ~coords[,"x"]+ coords[,"y"] + bathymetry + I(bathymetry^2)
@@ -85,11 +81,24 @@ main <- function(year = 2014, aggType = "daily"){
 	}
 }
 
+# set configurations
+# rList <- c(2,5,10,15) # the number of basis function to try, use 10 for now
+rList <- c(10)
+interpolation_methods <- c("Reml", "Baye")
+
+
 # run for 2014 daily DO data
 # the intermediate results are saved in the output folder
 # the final results are saved in the output folder
-# main(2014, "daily")
+main(2014, aggType="daily") # you can change the year and aggregation type here. possible aggType: "daily", "hourly"
 
 # plot the DO interpolations for each time
-plot_gif(2014, "daily", "Reml", 10)
+plot_gif(2014, aggType="daily", method="Reml", r=10)
 
+
+# to retrieve hypoxia extent for a specific year and aggregation type
+hypoxia <- readRDS(sprintf("%s%d_%s_Baye_%d/extent.rds",outputBaseName, 2014, "daily", 10))
+hypoxia
+
+# to plot time series of hypoxia extent
+getHypoxiaExtent(2014, aggType="daily", method="Baye", r=10) # result saved to output/results
