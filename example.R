@@ -92,28 +92,30 @@ main <- function(year = 2014, aggType = "daily") {
 # erieDO <- getLakeDO(year, "B", "daily") %>% na.omit()
 # erieDO$samplingData
 
-###
-# Run interpolations
-###
-# rList <- c(2,5,10,15) # the number of basis function to try, use 10 for now
-rList <- c(10)
+############
+# Run interpolations using r = 10 and method = "Baye"
+############
+rList <- c(10) # rList <- c(2,5,10,15) # the number of basis function to try, use 10 for now
 interpolation_methods <- c("Baye")
 
 # the intermediate results are saved in the output folder
 # the final results are saved in the output folder
 main(2021, aggType = "hourly")
+main(2021, aggType = "daily")
 main(2022, aggType = "hourly")
+main(2022, aggType = "daily")
 main(2023, aggType = "hourly")
+main(2023, aggType = "daily")
 
 
-#### 
+############   
 # Start analysis
-####
+############  
 
 year <- 2023
 # target_method = "Reml"
 target_method <- "Baye"
-target_time_agg <- "daily"
+target_time_agg <- "hourly"
 
 # to plot time series of hypoxia extent
 getHypoxiaExtent(year, aggType = target_time_agg, method = target_method, r = 10) # result saved to output/results
@@ -140,15 +142,15 @@ hypoxia$less4 <- hypoxia$less4 * grid_size
 hypoxia$average_DO
 
 # plot logger locations
-erieDO <- getLakeDO(2022, "B", "daily") %>% na.omit()
-loggerInfo <- erieDO$loggerInfo
+# erieDO <- getLakeDO(2022, "B", "daily") %>% na.omit()
+# loggerInfo <- erieDO$loggerInfo
 
-baseMap <- readRDS("./resources/larger_google_map.rds") + labs(x = "Longitude", y = "Latitude") 
-p <- baseMap + geom_point(
-  aes(longitude, latitude),
-  size = I(2),
-  color = "black",
-  shape = 21,
-  data = loggerInfo
-)
-print(p)
+# baseMap <- readRDS("./resources/larger_google_map.rds") + labs(x = "Longitude", y = "Latitude") 
+# p <- baseMap + geom_point(
+#   aes(longitude, latitude),
+#   size = I(2),
+#   color = "black",
+#   shape = 21,
+#   data = loggerInfo
+# )
+# print(p)
