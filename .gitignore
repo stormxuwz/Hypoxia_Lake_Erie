@@ -5,7 +5,7 @@
 
 *.csv
 
-test.rds
+*.rds
 
 *.csv
 *.pdf

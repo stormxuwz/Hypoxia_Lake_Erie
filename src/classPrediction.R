@@ -6,350 +6,359 @@ require(sp)
 require(dplyr)
 require(geoR)
 
-predict.krigModelIdw <- function(model, grid, parallel){
-	# model is a list of data frames with x,y and value
-	# grid is a data frame with x,y and other covariates
-	metaFolder <- attr(model, "metaFolder")
-	convexIndex <- grid$convexIndex
-	
-	config <- attr(model, "config")
-	trend <- as.formula(config$trend) # "value ~ 1"
-	simNum <- config$simNum  # how many simulations for this prediction
+predict.krigModelIdw <- function(model, grid, parallel) {
+  # model is a list of data frames with x,y and value
+  # grid is a data frame with x,y and other covariates
+  metaFolder <- attr(model, "metaFolder")
+  convexIndex <- grid$convexIndex
 
-	grid0 <- grid
-	predictions <- list()
-	pred <- matrix(NA, nrow = nrow(grid), ncol = simNum)
+  config <- attr(model, "config")
+  trend <- as.formula(config$trend) # "value ~ 1"
+  simNum <- config$simNum # how many simulations for this prediction
 
-	grid <- subset(grid, convexIndex == 1)
-	coordinates(grid) = ~x + y
-	
-	if(!parallel){
-		for(i in 1:length(model)){
-			df <- model[[i]]
-			coordinates(df) = ~x + y
-			pred[convexIndex == 1,1] <- idw(trend , df, grid, nmax = config$nmax)$var1.pred
-			predictions[[i]] <- list(pred = pred)
-		}
-	}else{
-		require(doParallel)
-		# do parallel computating
-		cl <- makeCluster(2)
-		registerDoParallel(cl)
+  grid0 <- grid
+  predictions <- list()
+  pred <- matrix(NA, nrow = nrow(grid), ncol = simNum)
 
-		predictions <- foreach(i=1:length(model)) %dopar% {
-			require(fields)
-			require(gstat)
-			require(sp)
-			df <- model[[i]]
-			coordinates(df) = ~x + y
-			pred[convexIndex == 1,1] <- idw(trend , df, grid, nmax = config$nmax)$var1.pred
-			list(pred = pred)
-		}
-		stopCluster(cl)
-		gc()
-	}
-	
-	res <- list(predictions = predictions, grid = grid0)
-	class(res) <- "idwModel"
-	return(res)
+  grid <- subset(grid, convexIndex == 1)
+  coordinates(grid) <- ~ x + y
+
+  if (!parallel) {
+    for (i in 1:length(model)) {
+      df <- model[[i]]
+      coordinates(df) <- ~ x + y
+      pred[convexIndex == 1, 1] <- idw(trend, df, grid, nmax = config$nmax)$var1.pred
+      predictions[[i]] <- list(pred = pred)
+    }
+  } else {
+    require(doParallel)
+    # do parallel computating
+    cl <- makeCluster(2)
+    registerDoParallel(cl)
+
+    predictions <- foreach(i = 1:length(model)) %dopar% {
+      require(fields)
+      require(gstat)
+      require(sp)
+      df <- model[[i]]
+      coordinates(df) <- ~ x + y
+      pred[convexIndex == 1, 1] <- idw(trend, df, grid, nmax = config$nmax)$var1.pred
+      list(pred = pred)
+    }
+    stopCluster(cl)
+    gc()
+  }
+
+  res <- list(predictions = predictions, grid = grid0)
+  class(res) <- "idwModel"
+  return(res)
 }
 
 
 # predict for MLE estimation model
-predict.krigModelReml <- function(model, grid, ...){
-	config <- attr(model, "config")
-	simNum <- config$simNum
-	trend <- config$trend
-	metaFolder <- attr(model, "metaFolder")
-	convexIndex <- grid$convexIndex
+predict.krigModelReml <- function(model, grid, ...) {
+  config <- attr(model, "config")
+  simNum <- config$simNum
+  trend <- config$trend
+  metaFolder <- attr(model, "metaFolder")
+  convexIndex <- grid$convexIndex
 
-	# x should be a data frame with x,y and value
-	predSimulation <- matrix(NA,nrow = nrow(grid), ncol = simNum) # n_grid * simNum
-	pred <- matrix(NA, nrow = nrow(grid),ncol = 2) 
-	# one for prediction, one for variance
+  # x should be a data frame with x,y and value
+  predSimulation <- matrix(NA, nrow = nrow(grid), ncol = simNum) # n_grid * simNum
+  pred <- matrix(NA, nrow = nrow(grid), ncol = 2)
+  # one for prediction, one for variance
 
-	# start predictions
-	predictions <- list()
-	grid0 <- grid
-	grid <- subset(grid,convexIndex==1)
-	
-	trend.l <- dplyr::select(grid, x,y,bathymetry) %>%  
-			as.geodata(covar.col = 3) %>% 
-			trend.spatial(trend,.)
+  # start predictions
+  predictions <- list()
+  grid0 <- grid
+  grid <- subset(grid, convexIndex == 1)
 
-	for(i in 1:length(model)){
-	
-		df <- model[[i]] %>% 
-			dplyr::select(x, y, value,bathymetry) %>%
-			as.geodata(covar.col = c("bathymetry"))
+  trend.l <- dplyr::select(grid, x, y, bathymetry) %>%
+    as.geodata(covar.col = 3) %>%
+    trend.spatial(trend, .)
 
-		trend.d <- trend.spatial(trend,df)
-		
-		semiVariance <- variog(df,trend = trend)
+  for (i in 1:length(model)) {
+    df <- model[[i]] %>%
+      dplyr::select(x, y, value, bathymetry) %>%
+      as.geodata(covar.col = c("bathymetry"))
 
-		ml <- likfit(df, 
-			ini = c(max(semiVariance$v),70),
-			fix.nugget = T,  # the nugget is defaulted as zero
-			lik.method = "ML",
-			cov.model = config$cov.model,
-			trend = trend.d,
-			fix.psiA = TRUE,
-			fix.psiR = TRUE)
+    trend.d <- trend.spatial(trend, df)
 
-		print(ml)
-		
-		if(!is.null(metaFolder)){
-			print("saving prediction meta to metaFolder")
-			png(paste0(metaFolder,"basis_",i,"_data.png"))
-			print(plot(df))
-			dev.off()
+    semiVariance <- variog(df, trend = trend)
 
-			png(paste0(metaFolder,"basis_",i, "_reml_vgm",".png"))
-			par(mfrow = c(1,2))
-			print(plot(variog(df,trend = trend,option = "cloud",direction = pi/4)))
-			print(lines(ml))
-			print(plot(variog(df,trend = trend,option = "cloud",direction = 3*pi/4)))
-			print(lines(ml))
-			dev.off()
-		}
-		
-		modelPred <- krige.conv(df, 
-				locations = grid[,c("x","y")], 
-				krige = krige.control(obj.m = ml, trend.d = trend.d, trend.l = trend.l),
-				output = output.control(n.predictive = simNum))
+    ml <- likfit(df,
+      ini = c(max(semiVariance$v), 70),
+      fix.nugget = T, # the nugget is defaulted as zero
+      lik.method = "ML",
+      cov.model = config$cov.model,
+      trend = trend.d,
+      fix.psiA = TRUE,
+      fix.psiR = TRUE
+    )
 
-		predSimulation[convexIndex == 1, ] <- modelPred$simulations
-		pred[convexIndex == 1, 1] <- modelPred$predict
-		pred[convexIndex == 1, 2] <- modelPred$krige.var
+    print(ml)
 
-		predictions[[i]] <- list(simulations = predSimulation, pred = pred)
+    if (!is.null(metaFolder)) {
+      print("saving prediction meta to metaFolder")
+      png(paste0(metaFolder, "basis_", i, "_data.png"))
+      print(plot(df))
+      dev.off()
 
-	}
-	res <- list(predictions = predictions, grid = grid0, basis = attr(model, "basis"))
-	class(res) <- "basisModel"
-	return(res)
+      png(paste0(metaFolder, "basis_", i, "_reml_vgm", ".png"))
+      par(mfrow = c(1, 2))
+      print(plot(variog(df, trend = trend, option = "cloud", direction = pi / 4)))
+      print(lines(ml))
+      print(plot(variog(df, trend = trend, option = "cloud", direction = 3 * pi / 4)))
+      print(lines(ml))
+      dev.off()
+    }
+
+    modelPred <- krige.conv(df,
+      locations = grid[, c("x", "y")],
+      krige = krige.control(obj.m = ml, trend.d = trend.d, trend.l = trend.l),
+      output = output.control(n.predictive = simNum)
+    )
+
+    predSimulation[convexIndex == 1, ] <- modelPred$simulations
+    pred[convexIndex == 1, 1] <- modelPred$predict
+    pred[convexIndex == 1, 2] <- modelPred$krige.var
+
+    predictions[[i]] <- list(simulations = predSimulation, pred = pred)
+  }
+  res <- list(predictions = predictions, grid = grid0, basis = attr(model, "basis"))
+  class(res) <- "basisModel"
+  return(res)
 }
 
 # predict for Baye estimation model
-predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE){
-	config <- attr(model, "config")
-	simNum <- config$simNum
-	trend <- config$trend
-	convexIndex <- grid$convexIndex
-	metaFolder <- attr(model, "metaFolder")
+predict.krigModelBaye <- function(model, grid, defaultPrior = TRUE) {
+  config <- attr(model, "config")
+  simNum <- config$simNum
+  trend <- config$trend
+  convexIndex <- grid$convexIndex
+  metaFolder <- attr(model, "metaFolder")
 
-	grid0 <- grid
-	predSimulation <- matrix(NA,nrow = nrow(grid), ncol = simNum) # n_grid * simNum
-	pred <- matrix(NA, nrow = nrow(grid),ncol = 2)  # one for prediction, one for variance
+  grid0 <- grid
+  predSimulation <- matrix(NA, nrow = nrow(grid), ncol = simNum) # n_grid * simNum
+  pred <- matrix(NA, nrow = nrow(grid), ncol = 2) # one for prediction, one for variance
 
-	# start predictions
-	predictions <- list()
-	grid <- subset(grid,convexIndex==1)
+  # start predictions
+  predictions <- list()
+  grid <- subset(grid, convexIndex == 1)
 
-	trend.l <- dplyr::select(grid, x,y,bathymetry) %>%  
-		as.geodata(covar.col = 3) %>%
-		trend.spatial(trend,.)
-	
-	# specify the priors
-	PC <- prior.control(
-						phi.discrete=seq(20,70,5),  # range is discreted
-						beta.prior = "flat",  # beta is flat 
-						sigmasq.prior = "reciprocal",
-						tausq.rel.prior = "fixed",
-						tausq.rel = 0)  # sigma^2 is 
+  trend.l <- dplyr::select(grid, x, y, bathymetry) %>%
+    as.geodata(covar.col = 3) %>%
+    trend.spatial(trend, .)
 
-	OC <- output.control(n.pos = simNum, # the number of samples taking from posterior distribution
-						n.pred = simNum,   # sample to taken from the predictive distribution
-						 signal = FALSE)
+  # specify the priors
+  PC <- prior.control(
+    phi.discrete = seq(20, 70, 5), # range is discreted
+    beta.prior = "flat", # beta is flat
+    sigmasq.prior = "reciprocal",
+    tausq.rel.prior = "fixed",
+    tausq.rel = 0
+  ) # sigma^2 is
 
-	for(i in 1:length(model)){
-		df <- model[[i]] %>% 
-			dplyr::select(x, y, value, bathymetry) %>%
-			as.geodata(covar.col = 4)
+  OC <- output.control(
+    n.pos = simNum, # the number of samples taking from posterior distribution
+    n.pred = simNum, # sample to taken from the predictive distribution
+    signal = FALSE
+  )
 
-		trend.d <- trend.spatial(trend,df)
-		
-		# change prior distribution if indicated
-		if(!defaultPrior){
-			print ("using non-default prior")
-			if(myPrior == "spherical.cov"){
-				print("change to sperical cov.model")
-				config$cov.model = "spherical"
-			}
-			else if(myPrior == "df_1_sc.inv.chisq.sigmasq" | myPrior == "df_3_sc.inv.chisq.sigmasq"){
-				semiVariance <- variog(df,trend = trend)
-				print("change to sc.inv.chisq.sigmasq")
-				df.sigmasq <-  as.numeric(substr(myPrior,4,4))
+  for (i in 1:length(model)) {
+    df <- model[[i]] %>%
+      dplyr::select(x, y, value, bathymetry) %>%
+      as.geodata(covar.col = 4)
 
-				ml <- likfit(df, 
-				ini = c(max(semiVariance$v),70),
-				fix.nugget = T,  # the nugget is defaulted as zero
-				lik.method = "ML",
-				cov.model = config$cov.model, # "exponential",
-				trend = trend.d,
-				fix.psiA = TRUE,
-				fix.psiR = TRUE)
+    trend.d <- trend.spatial(trend, df)
 
-				PC <- prior.control(
-						phi.discrete=seq(20,70,5),  # range is discreted
-						beta.prior = "flat",  # beta is flat 
-						sigmasq.prior = "sc.inv.chisq",
-						sigmasq = ml$sigmasq, # this will not be used since sigmasq.prior != FALSE.
-						df.sigmasq = df.sigmasq,
-						tausq.rel.prior = "fixed",
-						tausq.rel = 0) 
+    # change prior distribution if indicated
+    if (!defaultPrior) {
+      print("using non-default prior")
+      if (myPrior == "spherical.cov") {
+        print("change to sperical cov.model")
+        config$cov.model <- "spherical"
+      } else if (myPrior == "df_1_sc.inv.chisq.sigmasq" | myPrior == "df_3_sc.inv.chisq.sigmasq") {
+        semiVariance <- variog(df, trend = trend)
+        print("change to sc.inv.chisq.sigmasq")
+        df.sigmasq <- as.numeric(substr(myPrior, 4, 4))
 
-			}else{
-				print("change to other prior distribution")
-				PC = myPrior
-			}
-		}
-		
-		print("####### prior is ##########")
-		print(PC[c("phi.prior","phi.discrete","beta.prior","sigmasq.prior","sigmasq", "df.sigmasq", "tausq.rel.prior","tausq.rel")])
-		print(config$cov.model)
-		
-		MC <- model.control(
-			cov.model = config$cov.model, 
-			trend.l = trend.l, 
-			trend.d = trend.d) 
+        ml <- likfit(df,
+          ini = c(max(semiVariance$v), 70),
+          fix.nugget = T, # the nugget is defaulted as zero
+          lik.method = "ML",
+          cov.model = config$cov.model, # "exponential",
+          trend = trend.d,
+          fix.psiA = TRUE,
+          fix.psiR = TRUE
+        )
 
-		modelRes <- krige.bayes(geodata = df, 
-								 locations = grid[,c("x","y")], 
-								 model = MC,
-								 prior = PC,
-								 output = OC)
-    
-		modelPred <- modelRes$predictive
-		
-		if(!is.null(metaFolder)){
-			print("saving prediction meta to metaFolder")
-			png(paste0(metaFolder,"basis_",i,"_data.png"))
-			print(plot(df))
-			dev.off()
-			variogramSummary <- function(x){quantile(x, prob = c(0.05, 0.5, 0.95))}
+        PC <- prior.control(
+          phi.discrete = seq(20, 70, 5), # range is discreted
+          beta.prior = "flat", # beta is flat
+          sigmasq.prior = "sc.inv.chisq",
+          sigmasq = ml$sigmasq, # this will not be used since sigmasq.prior != FALSE.
+          df.sigmasq = df.sigmasq,
+          tausq.rel.prior = "fixed",
+          tausq.rel = 0
+        )
+      } else {
+        print("change to other prior distribution")
+        PC <- myPrior
+      }
+    }
 
-			png(paste0(metaFolder,"basis_",i, "_bayes_vgm",".png"))
-			print(plot(variog(df,option = "cloud",trend = "1st")))
-			print(lines(modelRes, summ = variogramSummary, ty="l", lty=c(2,1,2), col=1))
-			dev.off()
-		}
-		
-		predSimulation[convexIndex == 1, ] <- modelPred$simulations
-		pred[convexIndex == 1, 1] <- modelPred$mean
-		pred[convexIndex == 1, 2] <- modelPred$variance
+    print("####### prior is ##########")
+    print(PC[c("phi.prior", "phi.discrete", "beta.prior", "sigmasq.prior", "sigmasq", "df.sigmasq", "tausq.rel.prior", "tausq.rel")])
+    print(config$cov.model)
 
-		predictions[[i]] <- list(simulations = predSimulation, 
-			pred = pred)
-	}
-	res <- list(predictions = predictions, grid = grid0, basis = attr(model, "basis"))
-	
-	class(res) <- "basisModel"
-	return(res)
+    MC <- model.control(
+      cov.model = config$cov.model,
+      trend.l = trend.l,
+      trend.d = trend.d
+    )
+
+    modelRes <- krige.bayes(
+      geodata = df,
+      locations = grid[, c("x", "y")],
+      model = MC,
+      prior = PC,
+      output = OC
+    )
+
+    modelPred <- modelRes$predictive
+
+    if (!is.null(metaFolder)) {
+      print("saving prediction meta to metaFolder")
+      png(paste0(metaFolder, "basis_", i, "_data.png"))
+      print(plot(df))
+      dev.off()
+      variogramSummary <- function(x) {
+        quantile(x, prob = c(0.05, 0.5, 0.95))
+      }
+
+      png(paste0(metaFolder, "basis_", i, "_bayes_vgm", ".png"))
+      print(plot(variog(df, option = "cloud", trend = "1st")))
+      print(lines(modelRes, summ = variogramSummary, ty = "l", lty = c(2, 1, 2), col = 1))
+      dev.off()
+    }
+
+    predSimulation[convexIndex == 1, ] <- modelPred$simulations
+    pred[convexIndex == 1, 1] <- modelPred$mean
+    pred[convexIndex == 1, 2] <- modelPred$variance
+
+    predictions[[i]] <- list(
+      simulations = predSimulation,
+      pred = pred
+    )
+  }
+  res <- list(predictions = predictions, grid = grid0, basis = attr(model, "basis"))
+
+  class(res) <- "basisModel"
+  return(res)
 }
 
 # predict for lakeDO object
-predict.lakeDO <- function(obj, grid, method, predictType, ...){
-	
-	metaFolder = list(...)$metaFolder
-	nmax <- list(...)$nmax
-	
-	if(!is.null(metaFolder)) createFolder(metaFolder)
-	
-	if(!method %in% c("idw","Reml","Baye")){
-		stop("interpolation method not implemented")
-	}
+predict.lakeDO <- function(obj, grid, method, predictType, ...) {
+  metaFolder <- list(...)$metaFolder
+  nmax <- list(...)$nmax
 
-	if(!predictType %in% c("extent","expected","simulations")){
-		stop("predictType not implemented")
-	}
+  if (!is.null(metaFolder)) createFolder(metaFolder)
 
-	if(method == "idw"){
-		if(is.null(nmax)){
-			stop("nmax is not specify")
-		}
+  if (!method %in% c("idw", "Reml", "Baye")) {
+    stop("interpolation method not implemented")
+  }
 
-		res <- obj %>% 
-			idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
-			predict(grid, parallel = TRUE)
+  if (!predictType %in% c("extent", "expected", "simulations")) {
+    stop("predictType not implemented")
+  }
 
-		if(!is.null(metaFolder)) saveRDS(res, paste0(metaFolder,"trendPredictions.rds"))
-		
-		if(predictType == "extent"){
-		 	res <- summary(res)
-		}else if(predictType == "simulations"){
-			res <- reConstruct(res)
-		}else{
-			stop("predictType not implemented")
-		}
+  if (method == "idw") {
+    if (is.null(nmax)) {
+      stop("nmax is not specify")
+    }
 
-	}else if(method %in% c("Reml","Baye")){
+    res <- obj %>%
+      idwModel(metaFolder = metaFolder, nmax = nmax) %>%
+      predict(grid, parallel = TRUE)
 
-		trend = list(...)$trend
-		r = list(...)$r
-		totalSim <- list(...)$totalSim
-		
-		defaultPrior <- list(...)$defaultPrior
-		if (is.null(defaultPrior)){
-			defaultPrior <- TRUE
-		}
-		
-		basisModelRes <- obj %>% 
-			basisModel(trend, method, r, metaFolder) 
-		
-		# predict trend model
-		print("interpolating trend")
-		trendModel  <- basisModelRes$model %>% predict(grid, defaultPrior)
-		availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
+    if (!is.null(metaFolder)) saveRDS(res, paste0(metaFolder, "trendPredictions.rds"))
 
-		# interpolate residuals
-		print("interpolating residuals")
-		residualPredictions <- basisModelRes$residuals %>% 
-			idwModel(metaFolder = metaFolder, nmax = nmax) %>% 
-			predict(grid, parallel = TRUE) %>% reConstruct()	
-		
-		if(!is.null(metaFolder)){
-			saveRDS(basisModelRes, paste0(metaFolder,"basisModelRes.rds"))
-			saveRDS(residualPredictions, paste0(metaFolder,"residualPredictions.rds"))
-			saveRDS(trendModel, paste0(metaFolder,"trendModel.rds"))
-		}
-		
-		basisNum <- r + 1
+    if (predictType == "extent") {
+      res <- summary(res)
+    } else if (predictType == "simulations") {
+      res <- reConstruct(res)
+    } else {
+      stop("predictType not implemented")
+    }
+  } else if (method %in% c("Reml", "Baye")) {
+    trend <- list(...)$trend
+    r <- list(...)$r
+    totalSim <- list(...)$totalSim
 
-		set.seed(randomSeed)
-		indMatrix <- base::sample(1:availableSimNum, totalSim*basisNum,replace= TRUE) %>%
-				matrix(nrow = basisNum)
-		
-		if(predictType == "extent"){ 
-			# return summary of hypoxia extent
-			res <- summary(
-				trendModel,
-				residualPredictions, 
-				parallel = TRUE, 
-				totalSim = totalSim, 
-				indMatrix = indMatrix)
+    defaultPrior <- list(...)$defaultPrior
+    if (is.null(defaultPrior)) {
+      defaultPrior <- TRUE
+    }
 
-		}else if(predictType == "expected"){
-			# return the expected predictions
-			res <- reConstruct(
-				trendModel, 
-				residualPredictions,
-				simulationNum = 0,
-				indMatrix = NULL)
+    basisModelRes <- obj %>%
+      basisModel(trend, method, r, metaFolder)
 
-		}else if(predictType == "simulations"){
-			# return all simulations
-			res <- reConstruct(
-				trendModel,
-				residualPredictions,
-				simulationNum = -totalSim,
-				indMatrix = indMatrix,
-				parallel = TRUE)
-		}else{
-			stop("predictType not implemented")
-		}
-	}else{
-		stop("method is not implemented")
-	}
-	return(res)
+    # predict trend model
+    print("interpolating trend")
+    trendModel <- basisModelRes$model %>% predict(grid, defaultPrior)
+    availableSimNum <- ncol(trendModel$predictions[[1]]$simulations)
+
+    # interpolate residuals
+    print("interpolating residuals")
+    residualPredictions <- basisModelRes$residuals %>%
+      idwModel(metaFolder = metaFolder, nmax = nmax) %>%
+      predict(grid, parallel = TRUE) %>%
+      reConstruct()
+
+    if (!is.null(metaFolder)) {
+      saveRDS(basisModelRes, paste0(metaFolder, "basisModelRes.rds"))
+      saveRDS(residualPredictions, paste0(metaFolder, "residualPredictions.rds"))
+      saveRDS(trendModel, paste0(metaFolder, "trendModel.rds"))
+    }
+
+    basisNum <- r + 1
+
+    set.seed(randomSeed)
+    indMatrix <- base::sample(1:availableSimNum, totalSim * basisNum, replace = TRUE) %>%
+      matrix(nrow = basisNum)
+
+    if (predictType == "extent") {
+      # return summary of hypoxia extent
+      res <- summary(
+        trendModel,
+        residualPredictions,
+        parallel = TRUE,
+        totalSim = totalSim,
+        indMatrix = indMatrix
+      )
+    } else if (predictType == "expected") {
+      # return the expected predictions
+      res <- reConstruct(
+        trendModel,
+        residualPredictions,
+        simulationNum = 0,
+        indMatrix = NULL
+      )
+    } else if (predictType == "simulations") {
+      # return all simulations
+      res <- reConstruct(
+        trendModel,
+        residualPredictions,
+        simulationNum = -totalSim,
+        indMatrix = indMatrix,
+        parallel = TRUE
+      )
+    } else {
+      stop("predictType not implemented")
+    }
+  } else {
+    stop("method is not implemented")
+  }
+  return(res)
 }

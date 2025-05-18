@@ -5,133 +5,148 @@ library(sp)
 require(raster)
 require(dismo)
 
+calculate_total_interpolation_area <- function(grid) {
+  totalArea <- diff(range(grid$x)) * diff(range(grid$y))
+  totalArea <- totalArea * sum(grid$convexIndex) / nrow(grid)
+  return(totalArea)
+}
+
+calculate_average_grid_tile_area <- function(grid) {
+  totalArea <- diff(range(grid$x)) * diff(range(grid$y))
+  return(totalArea / nrow(grid))
+}
+
+
 createGogleMapFiles <- function(year, folder) {
-	if(year == 2014) {
-		lonRange <- c(-82.45828, -80.70047)
-		latRange <- c(41.34530, 42.65157)
-	} else if (year == 2015) {
-		lonRange <- c(-82.40251, -80.64470)
-		latRange <- c(41.38663, 42.69205)
-	} else if (year == 2016) {
-		lonRange <- c(-82.38872, -80.63091)
-		latRange <- c(41.40675, 42.71177)
-	}
-	
-	myMap <- get_googlemap(center = c(lon = mean(lonRange), lat = mean(latRange)), crop=TRUE, maptype = "terrain", scale = 2, zoom = 9)
-	ggmap(myMap) %>% saveRDS(sprintf("%s/erieGoogleMap_%d_new.rds",folder, year))
+  if (year == 2014) {
+    lonRange <- c(-82.45828, -80.70047)
+    latRange <- c(41.34530, 42.65157)
+  } else if (year == 2015) {
+    lonRange <- c(-82.40251, -80.64470)
+    latRange <- c(41.38663, 42.69205)
+  } else if (year == 2016) {
+    lonRange <- c(-82.38872, -80.63091)
+    latRange <- c(41.40675, 42.71177)
+  }
+
+  myMap <- get_googlemap(center = c(lon = mean(lonRange), lat = mean(latRange)), crop = TRUE, maptype = "terrain", scale = 2, zoom = 9)
+  ggmap(myMap) %>% saveRDS(sprintf("%s/erieGoogleMap_%d_new.rds", folder, year))
 }
 
-findBathy <- function(spData, bathyRasterFile){
-	coordinates(spData)=~longitude+latitude
-	bathymetry_raster <- raster(bathyRasterFile)
-	bathymetry <- extract(bathymetry_raster,spData)
-	return(bathymetry)
+findBathy <- function(spData, bathyRasterFile) {
+  coordinates(spData) <- ~ longitude + latitude
+  bathymetry_raster <- raster(bathyRasterFile)
+  bathymetry <- extract(bathymetry_raster, spData)
+  return(bathymetry)
 }
 
-transformGeo <- function(geo, isGrid = TRUE){
-	if(!isGrid){
-		geo <- arrange(geo,loggerID)
-	}
-	coordinates(geo)=~longitude+latitude
-	raster::projection(geo)=CRS("+init=epsg:4326")
-	return(geo)
+transformGeo <- function(geo, isGrid = TRUE) {
+  if (!isGrid) {
+    geo <- arrange(geo, loggerID)
+  }
+  coordinates(geo) <- ~ longitude + latitude
+  raster::projection(geo) <- CRS("+init=epsg:4326")
+  return(geo)
 }
 
-createGrid <- function(loggerInfo, by.x = 0.05, by.y = 0.05){
-	# create grid based on sampling locations
-	longitudeRange <- range(loggerInfo$longitude)
-	latitudeRange <- range(loggerInfo$latitude)
+createGrid <- function(loggerInfo, by.x = 0.05, by.y = 0.05) {
+  # create grid based on sampling locations
+  longitudeRange <- range(loggerInfo$longitude)
+  latitudeRange <- range(loggerInfo$latitude)
 
-	grid <- expand.grid(longitude=seq(longitudeRange[1], longitudeRange[2],by = by.x),
-		latitude=seq(latitudeRange[1],latitudeRange[2],by = by.y)) %>% 
-	lonlat2UTM()
-	
-	# somehow convHull is not able to find the convexhull based on all points
-	# use the following step to by-pass
-	valid <- chull(loggerInfo[,c("longitude","latitude")])
-	grid$bathymetry <- findBathy(grid, erieBathymetryFile)
-	convexHullModel <- convHull(loggerInfo[valid, c("longitude","latitude")])
+  grid <- expand.grid(
+    longitude = seq(longitudeRange[1], longitudeRange[2], by = by.x),
+    latitude = seq(latitudeRange[1], latitudeRange[2], by = by.y)
+  ) %>%
+    lonlat2UTM()
 
-	totalArea = diff(range(grid$x))*diff(range(grid$y)) # may need to modify slightly
-	
-	grid$convexIndex <- 1
-	grid$convexIndex <- predict(convexHullModel,grid)
-	
-	# warning::modify this for bathymetry threshold
-	grid$convexIndex[grid$bathymetry>(-2)] <- 0
+  # somehow convHull is not able to find the convexhull based on all points
+  # use the following step to by-pass
+  valid <- chull(loggerInfo[, c("longitude", "latitude")])
+  grid$bathymetry <- findBathy(grid, erieBathymetryFile)
+  convexHullModel <- convHull(loggerInfo[valid, c("longitude", "latitude")])
 
-	attr(grid,"totalArea") <- totalArea*sum(grid$convexIndex)/nrow(grid)  # km^2
-	print(attr(grid,"totalArea"))
+  totalArea <- diff(range(grid$x)) * diff(range(grid$y)) # may need to modify slightly
 
-	return(grid)
+  grid$convexIndex <- 1
+  grid$convexIndex <- predict(convexHullModel, grid)
+
+  # warning::modify this for bathymetry threshold
+  grid$convexIndex[grid$bathymetry > (-2)] <- 0
+
+  attr(grid, "totalArea") <- totalArea * sum(grid$convexIndex) / nrow(grid) # km^2
+  print(attr(grid, "totalArea"))
+
+  return(grid)
 }
 
-lonlat2UTM <- function(xy){
-	# xy is a data frame contains longitude and latitude, add UTM x and y
-	xy0 <- xy 
-	coordinates(xy) <- ~longitude + latitude
-	proj4string(xy) <- CRS("+proj=longlat")
-	res <- spTransform(xy, CRS("+proj=utm +zone=17 +ellps=WGS84"))
-	
-	UTMxy <- as.data.frame(coordinates(res)) / 1000
-	names(UTMxy) <- c("x","y")
-	
-	return(cbind(xy0,UTMxy))
+lonlat2UTM <- function(xy) {
+  # xy is a data frame contains longitude and latitude, add UTM x and y
+  xy0 <- xy
+  coordinates(xy) <- ~ longitude + latitude
+  proj4string(xy) <- CRS("+proj=longlat")
+  res <- spTransform(xy, CRS("+proj=utm +zone=17 +ellps=WGS84"))
+
+  UTMxy <- as.data.frame(coordinates(res)) / 1000
+  names(UTMxy) <- c("x", "y")
+
+  return(cbind(xy0, UTMxy))
 }
 
-scale2Unit <- function(s){
-	return((s-min(s,na.rm=T))/(max(s,na.rm=T)-min(s,na.rm=T)))
-}     
-
-ft2meter <- function(ft){
-	return(ft/3.2808399)
+scale2Unit <- function(s) {
+  return((s - min(s, na.rm = T)) / (max(s, na.rm = T) - min(s, na.rm = T)))
 }
 
-unPivtData <- function(data,logger_geo){
-	res <- as.data.frame(data)
-	logger_time <- as.POSIXct(index(data),origin = "1970-1-1")
-	res$samplingTime <- logger_time
-	res$timeInd <- 1:nrow(res)
-	res <- melt(res, id.vars = c("samplingTime","timeInd")) %>%
-		arrange(samplingTime,variable) %>% merge(logger_geo, by.x = "variable", by.y = "loggerID")
-	return(res)
+ft2meter <- function(ft) {
+  return(ft / 3.2808399)
 }
 
-createFolder <- function(folderName){
-	system(paste("mkdir","-p", folderName))
+unPivtData <- function(data, logger_geo) {
+  res <- as.data.frame(data)
+  logger_time <- as.POSIXct(index(data), origin = "1970-1-1")
+  res$samplingTime <- logger_time
+  res$timeInd <- 1:nrow(res)
+  res <- melt(res, id.vars = c("samplingTime", "timeInd")) %>%
+    arrange(samplingTime, variable) %>%
+    merge(logger_geo, by.x = "variable", by.y = "loggerID")
+  return(res)
 }
 
-st_variogram <- function(zooDF,logger_geo, detrendExpr = "~1",...){
-	# get spatial temporal veriogram
-	# zooDF is a zoo object with columns as each logger's data
-	# logger_geo has columns of loggerID, lon,lat, bathy, x and y
-	
-	require(spacetime)
-	require(gstat)
-	
-	args <- list(...)
-	logger_geo <- transformGeo(logger_geo)
-	logger_time <- as.POSIXct(index(zooDF),origin = "1970-1-1")
-	
-	n <- ncol(zooDF) # the number of sensors
-	T <- nrow(zooDF) # the number of sampling periods
-	
-	trend <- 0
-	
-	res <- (zooDF - trend) %>% as.data.frame() 
-	
-	res$samplingTime <- logger_time
-	res <- melt(res, id.vars = c("samplingTime")) %>%
-		arrange(samplingTime,variable)
-	
-	timeDF <- STFDF(sp=logger_geo,time=logger_time,data=data.frame(value = res$value))
-	vST <- variogramST(as.formula(paste("value", detrendExpr)), timeDF, tlags = 0:10, boundaries = seq(0,100,10))
-	prodSumModel <- vgmST("productSum",space = vgm(1, "Exp", 150, 0.5),time = vgm(1, "Exp", 5, 0.5),k = 50) 
-	metricModel <- vgmST("metric",joint = vgm(50,"Mat", 500, 0), stAni=200)
-	
-	plot(vST, fit.StVariogram(vST, metricModel, fit.method = 6),map = F)
-	
-	vST_fit <- fit.StVariogram(vST, prodSumModel, fit.method=6)
-	
-	return(list(vgmModel = vST, fit_vgmModel = vST_fit, timeDF = timeDF))
+createFolder <- function(folderName) {
+  system(paste("mkdir", "-p", folderName))
+}
+
+st_variogram <- function(zooDF, logger_geo, detrendExpr = "~1", ...) {
+  # get spatial temporal veriogram
+  # zooDF is a zoo object with columns as each logger's data
+  # logger_geo has columns of loggerID, lon,lat, bathy, x and y
+
+  require(spacetime)
+  require(gstat)
+
+  args <- list(...)
+  logger_geo <- transformGeo(logger_geo)
+  logger_time <- as.POSIXct(index(zooDF), origin = "1970-1-1")
+
+  n <- ncol(zooDF) # the number of sensors
+  T <- nrow(zooDF) # the number of sampling periods
+
+  trend <- 0
+
+  res <- (zooDF - trend) %>% as.data.frame()
+
+  res$samplingTime <- logger_time
+  res <- melt(res, id.vars = c("samplingTime")) %>%
+    arrange(samplingTime, variable)
+
+  timeDF <- STFDF(sp = logger_geo, time = logger_time, data = data.frame(value = res$value))
+  vST <- variogramST(as.formula(paste("value", detrendExpr)), timeDF, tlags = 0:10, boundaries = seq(0, 100, 10))
+  prodSumModel <- vgmST("productSum", space = vgm(1, "Exp", 150, 0.5), time = vgm(1, "Exp", 5, 0.5), k = 50)
+  metricModel <- vgmST("metric", joint = vgm(50, "Mat", 500, 0), stAni = 200)
+
+  plot(vST, fit.StVariogram(vST, metricModel, fit.method = 6), map = F)
+
+  vST_fit <- fit.StVariogram(vST, prodSumModel, fit.method = 6)
+
+  return(list(vgmModel = vST, fit_vgmModel = vST_fit, timeDF = timeDF))
 }
