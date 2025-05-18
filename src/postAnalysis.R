@@ -52,7 +52,7 @@ getHypoxiaExtent <- function(year, aggType, method, r, unit) {
       geom_ribbon(aes(time, ymin = lower * grid_size, ymax = upper * grid_size), fill = "grey70") +
       geom_line(aes(time, median * grid_size), color = "black") +
       geom_line(aes(time, idw * grid_size), color = "blue", alpha = 0.7, size = 0.5) +
-      ylab("Hypoxia Extent") +
+      ylab("Hypoxia Extent (km2)") +
       theme_bw() +
       ggtitle(paste0("When DO <", units[[threshold]])) +
       theme(axis.title.x = element_text(size = 9), axis.title.y = element_text(size = 9), plot.title = element_text(size = 9))
