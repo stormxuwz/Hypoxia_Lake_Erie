@@ -100,20 +100,22 @@ interpolation_methods <- c("Baye")
 
 # the intermediate results are saved in the output folder
 # the final results are saved in the output folder
-main(2021, aggType = "hourly")
+
 main(2021, aggType = "daily")
-main(2022, aggType = "hourly")
 main(2022, aggType = "daily")
-main(2023, aggType = "hourly")
 main(2023, aggType = "daily")
 
 
-############   
-# Start analysis
-############  
+main(2021, aggType = "hourly")
+main(2022, aggType = "hourly")
+main(2023, aggType = "hourly")
 
+
+
+############   
+# Get summary
+############  
 year <- 2023
-# target_method = "Reml"
 target_method <- "Baye"
 target_time_agg <- "hourly"
 
@@ -124,24 +126,31 @@ getHypoxiaExtent(year, aggType = target_time_agg, method = target_method, r = 10
 plot_gif(year, aggType = target_time_agg, method = target_method, r = 10)
 
 
+# To get detail data, take 2023 hourly interpolations as an examples
+year <- 2023
+target_method <- "Baye"
+target_time_agg <- "hourly"
 
-# To get detail data
 intermediate_result_folder = sprintf("%s%d_%s_%s_%d/", outputBaseName, year, target_time_agg, target_method, 10)
 basisModel <- readRDS(sprintf("%s/basisModelRes.rds", intermediate_result_folder))
 trendModel <- readRDS(sprintf("%s/trendModel.rds", intermediate_result_folder))
 hypoxia <- readRDS(sprintf("%s/extent.rds", intermediate_result_folder))
 grid_size <- calculate_average_grid_tile_area(trendModel$grid)
 
-# hypoxia$less0 contains the number of grid tiles with DO < 0.01, convert to km2 by multiplying grid_size
-timeSeries <- index(basisModel$residuals$samplingData)
-hypoxia$less0 <- hypoxia$less0 * grid_size
-hypoxia$less2 <- hypoxia$less2 * grid_size
-hypoxia$less4 <- hypoxia$less4 * grid_size
+# get time steps
+# time series are stored in UTC internally
+timeSeries <- index(basisModel$residuals$samplingData)  %>% as.POSIXct() %>% as.POSIXct(tz = "America/New_York")
+less0_area <- hypoxia$less0 * grid_size
+less2_area <- hypoxia$less2 * grid_size
+less4_area <- hypoxia$less4 * grid_size
+average_DO <- hypoxia$average_DO
 
-# average hypoxia
-hypoxia$average_DO
 
-# plot logger locations
+
+
+
+
+# plot logger locations, for debugging
 # erieDO <- getLakeDO(2022, "B", "daily") %>% na.omit()
 # loggerInfo <- erieDO$loggerInfo
 

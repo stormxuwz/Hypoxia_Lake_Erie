@@ -5,7 +5,7 @@
 
 *.csv
 
-*.rds
+
 
 *.csv
 *.pdf
@@ -13,3 +13,7 @@
 *.log
 *.png
 *.DS_Store
+output/*
+input/erie_lld/erie_lld.asc
+.gitignore
+input/erie_lld/erie_lld.prj

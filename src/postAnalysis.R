@@ -24,7 +24,7 @@ getHypoxiaExtent <- function(year, aggType, method, r, unit) {
   for (threshold in c("less0", "less2", "less4")) {
     HE <- HEList[[threshold]]
     HE$idw <- idwHE[[threshold]]
-    HE$time <- timeIndex %>% as.POSIXct()
+    HE$time <- timeIndex %>% as.POSIXct() %>% as.POSIXct(tz = "America/New_York")
 
     p <- ggplot(HE) +
       geom_ribbon(aes(time, ymin = lower / n, ymax = upper / n), fill = "grey70") +
@@ -46,7 +46,7 @@ getHypoxiaExtent <- function(year, aggType, method, r, unit) {
   for (threshold in c("less0", "less2", "less4")) {
     HE <- HEList[[threshold]]
     HE$idw <- idwHE[[threshold]]
-    HE$time <- timeIndex %>% as.POSIXct()
+    HE$time <- timeIndex %>% as.POSIXct() %>% as.POSIXct(tz = "America/New_York")
 
     p <- ggplot(HE) +
       geom_ribbon(aes(time, ymin = lower * grid_size, ymax = upper * grid_size), fill = "grey70") +
