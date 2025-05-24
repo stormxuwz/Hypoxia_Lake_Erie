@@ -113,7 +113,7 @@ main(2023, aggType = "hourly")
 
 
 ############   
-# Get summary
+# Get summary for year, target_method and target_time_agg
 ############  
 year <- 2023
 target_method <- "Baye"
@@ -127,10 +127,6 @@ plot_gif(year, aggType = target_time_agg, method = target_method, r = 10)
 
 
 # To get detail data, take 2023 hourly interpolations as an examples
-year <- 2023
-target_method <- "Baye"
-target_time_agg <- "hourly"
-
 intermediate_result_folder = sprintf("%s%d_%s_%s_%d/", outputBaseName, year, target_time_agg, target_method, 10)
 basisModel <- readRDS(sprintf("%s/basisModelRes.rds", intermediate_result_folder))
 trendModel <- readRDS(sprintf("%s/trendModel.rds", intermediate_result_folder))

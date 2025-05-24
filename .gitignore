@@ -17,3 +17,4 @@ output/*
 input/erie_lld/erie_lld.asc
 .gitignore
 input/erie_lld/erie_lld.prj
+.DS_Store
