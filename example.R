@@ -135,6 +135,7 @@ grid_size <- calculate_average_grid_tile_area(trendModel$grid)
 
 # get time steps
 # time series are stored in UTC internally
+# hypoxia$less0/less2/less4 times grid_size gives the area of hypoxia extent
 timeSeries <- index(basisModel$residuals$samplingData)  %>% as.POSIXct() %>% as.POSIXct(tz = "America/New_York")
 less0_area <- hypoxia$less0 * grid_size
 less2_area <- hypoxia$less2 * grid_size
