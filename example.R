@@ -139,10 +139,10 @@ grid_size <- calculate_average_grid_tile_area(trendModel$grid)
 # time series are stored in UTC internally
 # hypoxia$less0/less2/less4 times grid_size gives the area of hypoxia extent
 timeSeries <- index(basisModel$residuals$samplingData)  %>% as.POSIXct() %>% as.POSIXct(tz = "America/New_York")
-less0_area <- hypoxia$less0 * grid_size
-less2_area <- hypoxia$less2 * grid_size
-less4_area <- hypoxia$less4 * grid_size
-average_DO <- hypoxia$average_DO
+less0_area <- hypoxia$less0 * grid_size # hypoxia extent in km2 area with DO < 0.01 mg/L
+less2_area <- hypoxia$less2 * grid_size # hypoxia extent in km2 area with DO < 2 mg/L
+less4_area <- hypoxia$less4 * grid_size # hypoxia extent in km2 area with DO < 4 mg/L
+average_DO <- hypoxia$average_DO # average DO in the interpolation area mg/L
 
 
 
