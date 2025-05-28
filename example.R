@@ -127,6 +127,8 @@ plot_gif(year, aggType = target_time_agg, method = target_method, r = 10)
 
 
 # To get detail data, take 2023 hourly interpolations as an examples
+# hypoxia stores the raw grid count data, which is the number of grid cells that are hypoxic
+# to get the area of hypoxia extent, we need to multiply the grid count by the grid size
 intermediate_result_folder = sprintf("%s%d_%s_%s_%d/", outputBaseName, year, target_time_agg, target_method, 10)
 basisModel <- readRDS(sprintf("%s/basisModelRes.rds", intermediate_result_folder))
 trendModel <- readRDS(sprintf("%s/trendModel.rds", intermediate_result_folder))
